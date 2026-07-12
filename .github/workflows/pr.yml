@@ -24,7 +24,7 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: create marriage registration
       run: |
-        python src/main.py
+        python src/main.py config-public.yaml
     - uses: actions/upload-artifact@v2
       with:
         name: mariage_registration
