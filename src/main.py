@@ -1,4 +1,5 @@
 import os
+import sys
 import yaml
 from pathlib import Path
 from reportlab.pdfgen import canvas
@@ -10,9 +11,12 @@ from pdfrw.buildxobj import pagexobj
 from pdfrw.toreportlab import makerl
 
 base_dir = os.path.dirname(__file__)
+repo_root = Path(base_dir).resolve().parents[0]
 TEMPLATE_PDF = os.path.join(base_dir, "template/tmpl_marriage_registration.pdf")
 RESULT_PDF = "result.pdf"
-CONFIG_PATH = os.path.join(Path(base_dir).resolve().parents[0], "config.yaml")
+# Local runs default to the gitignored private config; GitHub Actions passes
+# config-public.yaml explicitly as the first argument.
+DEFAULT_CONFIG_PATH = os.path.join(repo_root, "config-private.yaml")
 pdfmetrics.registerFont(TTFont("ipaexm", os.path.join(base_dir, "fonts/ipaexm.ttf")))
 pdfmetrics.registerFont(TTFont("ipaexg", os.path.join(base_dir, "fonts/ipaexg.ttf")))
 
@@ -25,8 +29,21 @@ def setup():
     return cc
 
 
-def load_config():
-    with open(CONFIG_PATH, encoding="utf-8") as f:
+def resolve_config_path():
+    if len(sys.argv) > 1:
+        return sys.argv[1]
+    if not os.path.exists(DEFAULT_CONFIG_PATH):
+        sys.exit(
+            "config-private.yaml not found.\n"
+            "Create your local config by copying the public sample and filling "
+            "in your details:\n"
+            "    cp config-public.yaml config-private.yaml"
+        )
+    return DEFAULT_CONFIG_PATH
+
+
+def load_config(config_path):
+    with open(config_path, encoding="utf-8") as f:
         cfg = yaml.safe_load(f)
     return cfg
 
@@ -284,8 +301,9 @@ def other_info(cfg, cc):
 
 
 def main():
+    config_path = resolve_config_path()
     cc = setup()
-    cfg = load_config()
+    cfg = load_config(config_path)
     husband_name_info(cfg["husband"], cc)
     husband_address_info(cfg["husband"], cc)
     husband_legally_domiciled_info(cfg["husband"], cc)
