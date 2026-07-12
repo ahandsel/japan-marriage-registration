@@ -130,3 +130,9 @@ dmypy.json
 
 # idea
 .idea
+
+# Generated output
+result.pdf
+
+# Local private config (holds your real PII - never commit)
+config-private.yaml
