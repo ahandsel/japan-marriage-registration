@@ -1,296 +1,278 @@
-# 婚姻届
+# Marriage registration form field translations
 
-> 原本: 品川区の婚姻届様式 1ページ
+A term-by-term reference for the Japanese on the marriage registration form (婚姻届).
+The English column is a plain-language rendering, not an official translation, and nothing here is legal advice.
+The context column explains what the term means in Japanese family law and what a person actually writes in the box.
 
-婚姻届の全ページ画像。左側に届出人欄、中央に夫と妻の情報欄、右側に証人欄と記入上の注意があり、右下にシナモロールのイラストが配置されている。
+The config column gives the [config.yaml](../../config.yaml) keys that fill each box.
 
+Conventions used below:
 
-## 届出・受理情報
+* A full-width space (`　`) inside a Japanese cell marks a blank that the filer writes into, exactly as the form prints it.
+* Wording and layout vary between municipalities. These tables follow the bundled templates, so a form picked up at another city office may label or order some boxes differently.
+* A config key written without a section prefix, such as `last_name`, exists under both `husband:` and `wife:`, which share the same key names. Keys for any other section are written in full, such as `notification.to`.
+* `-` means the generator does not fill that box. Either it is for office use, or it is a form field the config does not cover yet.
+* `*_pos` keys are `[x, y]` point coordinates measured from the bottom-left of the page. Only the fields that carry a `*_pos` key can be moved from the config; every other position is a hardcoded literal in [src/main.js](../main.js).
 
-* 令和　年　月　日届出
-* 受理　令和　年　月　日
-* 第　　　　　　　　号
-* 品川区長　殿
 
+## Source and attribution
 
-### 行政処理欄
+* Field wording follows the templates in this directory, `jp-marriage-registration-simple.pdf` and `jp-marriage-registration-cinnamoroll.pdf`, both taken from page 1 of the Shinagawa City 婚姻届 form.
+* The decorated template carries the character illustration rights notice `© 2025 SANRIO CO., LTD. APPROVAL NO. L655975`, which must remain on that PDF.
 
-* 書類調査
-* 入力
-* 戸籍記載
-* 記載調査
-* 附票
-* 住民票
-* 通知
 
+## Form title and filing information
 
-## 届出人
+| Japanese               | English                                | Context                                                                                                                                                                                                               | Config                                                        |
+| ---------------------- | -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| 婚姻届                 | Marriage registration form             | The document that creates a legal marriage in Japan. The marriage takes effect on the day the form is accepted, not on the day of a ceremony.                                                                         | `template` (top level, selects which blank form is used)      |
+| 令和　年　月　日届出   | Filed on [Reiwa] year / month / day    | The date the couple submits the form. 令和 (Reiwa) is the current Japanese era; 2026 is 令和8.                                                                                                                        | `notification.year`, `notification.month`, `notification.day` |
+| 受理　令和　年　月　日 | Accepted on [Reiwa] year / month / day | Filled in by the city office. 受理 (acceptance) is the legal act that makes the marriage effective.                                                                                                                   | `-`                                                           |
+| 第　　号               | Registration number                    | Filled in by the city office. The sequential number assigned to the filing.                                                                                                                                           | `-`                                                           |
+| ○○長　殿               | To the head of the municipality        | The form is legally addressed to the mayor of the city, ward, town, or village where it is filed. 殿 is a formal honorific used in official documents. The bundled templates print a specific municipality name here. | `notification.to`                                             |
 
 
-### 夫になる人 / 妻になる人
+### 行政処理欄 (administrative processing box)
 
+Office use only. Leave every item in this section blank.
 
-#### (1) 氏名
+| Japanese   | English                       | Context                                                                                 | Config |
+| ---------- | ----------------------------- | --------------------------------------------------------------------------------------- | ------ |
+| 行政処理欄 | Administrative processing box | Checkboxes and stamps used by clerks to track the filing. Applicants do not write here. |        |
+| 書類調査   | Document review               | Clerk check that the form is complete and correctly filled in.                          |        |
+| 入力       | Data entry                    | The filing is entered into the municipal system.                                        |        |
+| 戸籍記載   | Family register entry         | The marriage is written into the 戸籍 (family register).                                |        |
+| 記載調査   | Entry verification            | Second check that the register entry matches the form.                                  |        |
+| 附票       | Register supplementary record | The 戸籍の附票 tracks address history attached to a family register.                    |        |
+| 住民票     | Resident record               | The separate residence record, updated to reflect the marriage.                         |        |
+| 通知       | Notification                  | Notice sent to another municipality that holds the relevant family register.            |        |
 
-* フリガナ
-* 氏
-* 名
 
+## 届出人 (the people filing)
 
-#### 生年月日
+| Japanese   | English                            | Context                                                                                   | Config              |
+| ---------- | ---------------------------------- | ----------------------------------------------------------------------------------------- | ------------------- |
+| 届出人     | Filing parties                     | The two people getting married. Both must sign.                                           | `husband:`, `wife:` |
+| 夫になる人 | Person who will become the husband | Left-hand column of the form.                                                             | `husband:`          |
+| 妻になる人 | Person who will become the wife    | Right-hand column of the form. Same fields as the husband's column, shifted to the right. | `wife:`             |
 
-* 昭和 / 西暦 / 平成
-* 年　月　日
 
-> 外国人のときは西暦で書いてください。証人欄も同様です。
+### (1) 氏名 (name)
 
+| Japanese | English          | Context                                                                                 | Config                                                                              |
+| -------- | ---------------- | --------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 氏名     | Full name        | Write the name exactly as it appears in the family register, including old-style kanji. | `last_name`, `first_name`                                                           |
+| フリガナ | Phonetic reading | The reading of the name in katakana.                                                    | `last_name_kana`, `first_name_kana`. The sample config uses hiragana, not katakana. |
+| 氏       | Family name      | Surname before the marriage.                                                            | `last_name`, `last_name_pos`, `last_name_kana`, `last_name_kana_pos`                |
+| 名       | Given name       | Personal name.                                                                          | `first_name`, `first_name_pos`, `first_name_kana`, `first_name_kana_pos`            |
 
-#### (2) 住所
 
-* 住民登録をしているところ
-* 同右 / 東京都品川区
-* 丁目
-* 番地 / 番 / 号
-* 方書
+### 生年月日 (date of birth)
 
-> 方書はアパート名・部屋番号を書いてください。
+| Japanese                                               | English                                                                                               | Context                                                                         | Config                                                                                                       |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| 生年月日                                               | Date of birth                                                                                         | Written using the Japanese era in which the person was born.                    | `birth_year`, `birth_month`, `birth_day`                                                                     |
+| 昭和                                                   | Showa era                                                                                             | 1926 to 1989.                                                                   | `-`. The era is written as part of the `birth_year` string, for example `平成５`. No era checkbox is ticked. |
+| 平成                                                   | Heisei era                                                                                            | 1989 to 2019.                                                                   | `-`. Same as above.                                                                                          |
+| 西暦                                                   | Western calendar year                                                                                 | Used by foreign nationals.                                                      | `-`. Same as above.                                                                                          |
+| 年　月　日                                             | Year / month / day                                                                                    | The three date boxes.                                                           | `birth_year`, `birth_month`, `birth_day`. Positions are hardcoded, so there is no `*_pos` key.               |
+| 外国人のときは西暦で書いてください。証人欄も同様です。 | If the person is a foreign national, use the Western calendar. The same applies to the witness boxes. | Japanese era years apply only to people recorded in a Japanese family register. | `-`                                                                                                          |
 
 
-##### 住所を定めた年月日
+### (2) 住所 (address)
 
-* 夫　年　月　日
-* 妻　年　月　日
+| Japanese                                     | English                                                                      | Context                                                                                                                                                                                                         | Config                                                                                                                                     |
+| -------------------------------------------- | ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| 住所                                         | Address                                                                      | The current registered address of residence, not necessarily where the couple will live.                                                                                                                        | `address_first`, `address_first_pos`, `address_second`, `address_go`                                                                       |
+| 住民登録をしているところ                     | The place where you are registered as a resident                             | The address on the 住民票 (resident record). It can differ from the 本籍.                                                                                                                                       | `-`                                                                                                                                        |
+| 同左 / 同右                                  | Same as the box to the left / right                                          | Checked when one person's address is identical to the other's, so it does not need to be written twice. The husband's column is on the left and the wife's on the right, so the wife's box normally reads 同左. | `-`. The generator always writes both addresses out in full.                                                                               |
+| 丁目                                         | Chome (district block)                                                       | First numeric level of a Japanese address.                                                                                                                                                                      | `address_second`, which holds the whole chome and block part as one string, for example `３丁目　４`                                       |
+| 番地 / 番 / 号                               | Banchi / ban / go (lot, block, and house number)                             | Which of the three is used depends on whether the area uses the older 地番 system or the newer 住居表示 system. Circle or write the one that matches the resident record.                                       | `is_banchi_address` picks which label is marked: `true` draws an ellipse around 番地, `false` circles 番. `address_go` holds the 号 value. |
+| 世帯主の氏名                                 | Name of the head of household                                                | The person recorded as head of the household at that address on the 住民票. It is often a parent, or the person themselves if they live alone.                                                                  | `household_person`                                                                                                                         |
+| 方書                                         | Building and unit details                                                    | The supplementary part of an address.                                                                                                                                                                           | `address_apartment`. A block string; up to three lines render without overlapping.                                                         |
+| 方書はアパート名・部屋番号を書いてください。 | For the building and unit details, write the apartment name and room number. | Omitting the room number is a common cause of the form being sent back.                                                                                                                                         | `-`                                                                                                                                        |
 
 
-#### (3) 本籍
+### 住所を定めた年月日 (date the address was established)
 
-* 丁目
-* 番地 / 番
-* 筆頭者の氏名
+| Japanese           | English                          | Context                                                                                 | Config |
+| ------------------ | -------------------------------- | --------------------------------------------------------------------------------------- | ------ |
+| 住所を定めた年月日 | Date the address was established | The date each person began living at the address above, taken from the resident record. |        |
+| 夫　年　月　日     | Husband: year / month / day      | Husband's date.                                                                         |        |
+| 妻　年　月　日     | Wife: year / month / day         | Wife's date.                                                                            |        |
 
-> 外国人のときは国籍だけを書いてください。
 
+### (3) 本籍 (registered domicile)
 
-#### (4) 父母及び養父母の氏名 / 父母との続き柄
+| Japanese                                 | English                                                          | Context                                                                                                                                                                   | Config                                                                                 |
+| ---------------------------------------- | ---------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 本籍                                     | Registered domicile                                              | The address that identifies a person's 戸籍 (family register). It is a legal reference point, not a place of residence, and it often differs from where the person lives. | `legally_domiciled_first`, `legally_domiciled_first_pos`, `legally_domiciled_second`   |
+| 丁目                                     | Chome (district block)                                           | Same address units as above.                                                                                                                                              | `legally_domiciled_second`                                                             |
+| 番地 / 番                                | Banchi / ban (lot or block number)                               | A 本籍 has no 号 (house number), unlike a residential address.                                                                                                            | `is_banchi_legally_domiciled`: `true` draws an ellipse around 番地, `false` circles 番 |
+| 筆頭者の氏名                             | Name of the head of the family register                          | The person listed first in the register. This is a record-keeping label only; it carries no authority over the other members.                                             | `head_of_person_of_legally_domiciled`                                                  |
+| 外国人のときは国籍だけを書いてください。 | If the person is a foreign national, write only the nationality. | Foreign nationals have no Japanese family register, so there is no 本籍 to write.                                                                                         | `-`. Write the nationality into `legally_domiciled_first` and leave the rest empty.    |
 
-夫になる人:
 
-* 父
-* 母
-* 続き柄: 男
-* 養父
-* 養母
-* 続き柄: 養子
+### (4) 父母及び養父母の氏名 / 父母との続き柄 (parents, adoptive parents, and relationship)
 
-妻になる人:
+| Japanese                                                               | English                                                                                            | Context                                                                                                                                                               | Config                                                             |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| 父母及び養父母の氏名                                                   | Names of parents and adoptive parents                                                              | Write the parents' names even if they are deceased or divorced.                                                                                                       | `father_name`, `father_name_pos`, `mother_name`, `mother_name_pos` |
+| 父母との続き柄                                                         | Relationship to the parents                                                                        | Birth order and sex, written as 長男 (eldest son), 二女 (second daughter), and so on. The form prints the 男 or 女 character, so only the ordinal part is written in. | `relationship`, which holds only the ordinal, for example `長`     |
+| 父                                                                     | Father                                                                                             | If the mother's surname is currently the same, only the given name is written on the mother's line.                                                                   | `father_name`, `father_name_pos`                                   |
+| 母                                                                     | Mother                                                                                             | Written with the surname as it is now, which may differ from the surname at the time of birth.                                                                        | `mother_name`, `mother_name_pos`                                   |
+| 続き柄: 男                                                             | Relationship: son                                                                                  | Pre-printed in the husband's column. Write the ordinal before it, for example 長 for eldest.                                                                          | `husband.relationship`                                             |
+| 続き柄: 女                                                             | Relationship: daughter                                                                             | Pre-printed in the wife's column.                                                                                                                                     | `wife.relationship`                                                |
+| 養父                                                                   | Adoptive father                                                                                    | Filled in only if the person was legally adopted.                                                                                                                     | `-`                                                                |
+| 養母                                                                   | Adoptive mother                                                                                    | Filled in only if the person was legally adopted.                                                                                                                     | `-`                                                                |
+| 続き柄: 養子                                                           | Relationship: adopted son                                                                          | Used instead of 男 when the relationship is by adoption.                                                                                                              | `-`                                                                |
+| 続き柄: 養女                                                           | Relationship: adopted daughter                                                                     | Used instead of 女 when the relationship is by adoption.                                                                                                              | `-`                                                                |
+| 右記の養父母以外にも養父母がいる場合には、その他の欄に書いてください。 | If there are adoptive parents other than those listed at the right, write them in the "other" box. | A person can be adopted more than once, and the boxes only hold one pair.                                                                                             | `other.text`                                                       |
+
+
+### 婚姻後の夫婦の氏・新しい本籍 (married surname and new registered domicile)
+
+| Japanese                                                                                         | English                                                                                                                                             | Context                                                                                                                                             | Config                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 婚姻後の夫婦の氏                                                                                 | The couple's surname after marriage                                                                                                                 | Japanese law requires both spouses to share one surname. Exactly one box must be checked.                                                           | `new_legally_domiciled.is_husband_lastname`                                                                                                                |
+| 夫の氏                                                                                           | The husband's surname                                                                                                                               | Checked if both will use the husband's surname.                                                                                                     | `new_legally_domiciled.is_husband_lastname: true`                                                                                                          |
+| 妻の氏                                                                                           | The wife's surname                                                                                                                                  | Checked if both will use the wife's surname.                                                                                                        | `new_legally_domiciled.is_husband_lastname: false`                                                                                                         |
+| 新本籍                                                                                           | New registered domicile                                                                                                                             | The address for the couple's newly created family register. It can be almost any real address in Japan, and it does not have to be where they live. | `new_legally_domiciled.address`, `new_legally_domiciled.address_pos`                                                                                       |
+| 丁目                                                                                             | Chome (district block)                                                                                                                              | Part of the new 本籍 address.                                                                                                                       | `new_legally_domiciled.address`, which holds the whole address as one string                                                                               |
+| 番地 / 番                                                                                        | Banchi / ban (lot or block number)                                                                                                                  | Part of the new 本籍 address.                                                                                                                       | `new_legally_domiciled.is_banchi_address`: `true` draws an ellipse around 番地, `false` circles 番                                                         |
+| 新本籍は、左のチェック欄で選んだ氏の人がすでに戸籍の筆頭者となっているときは書かないでください。 | Do not write a new registered domicile if the person whose surname was chosen in the checkbox at the left is already the head of a family register. | In that case the other spouse joins the existing register instead of a new one being created.                                                       | Set `new_legally_domiciled.address` to an empty string. The generator then skips the address and the 番地 / 番 mark, but still ticks the surname checkbox. |
 
-* 父
-* 母
-* 続き柄: 女
-* 養父
-* 養母
-* 続き柄: 養女
 
-> 右記の養父母以外にも養父母がいる場合には、その他の欄に書いてください。
+### (5) 同居を始めたとき (when the couple began living together)
+
+| Japanese                  | English                                      | Context                                                                                                             | Config                                                                                                                 |
+| ------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 同居を始めたとき          | When you began living together               | Whichever came first: the wedding ceremony or the start of cohabitation. Used for statistics, not for legal status. | `to_live_together.year`, `to_live_together.month`                                                                      |
+| 昭和 / 平成 / 令和 / 西暦 | Showa / Heisei / Reiwa / Western calendar    | Era selection for the date.                                                                                         | `-`. The era is written as part of the `to_live_together.year` string, for example `令和3`. No era checkbox is ticked. |
+| 年　月                    | Year / month                                 | Only the year and month are required, not the day.                                                                  | `to_live_together.year`, `to_live_together.month`                                                                      |
+| 未同居・未挙式            | Not yet living together and no ceremony held | Checked when neither event has happened yet.                                                                        | `-`                                                                                                                    |
 
 
-#### 婚姻後の夫婦の氏・新しい本籍
+### (6) 初婚・再婚の別 (first marriage or remarriage)
 
-* 夫の氏
-* 妻の氏
-* 新本籍
-* 丁目
-* 番地 / 番
-
-> 新本籍は、左のチェック欄で選んだ氏の人がすでに戸籍の筆頭者となっているときは書かないでください。
-
-
-#### (5) 同居を始めたとき
-
-* 昭和 / 令和 / 平成 / 西暦
-* 年　月
-* 未同居・未挙式
-
-
-#### (6) 初婚・再婚の別
-
-夫:
-
-* 初婚
-* 再婚
-* 死別
-* 離別
-* 年　月　日
-
-妻:
-
-* 初婚
-* 再婚
-* 死別
-* 離別
-* 年　月　日
-
-
-#### (7) 同居を始める前の夫婦のそれぞれの世帯のおもな仕事
-
-夫:
-
-* 1
-* 2
-* 3
-* 4
-* 5
-* 6
-
-妻:
-
-* 1
-* 2
-* 3
-* 4
-* 5
-* 6
-
-> 別表に沿って該当番号のチェック欄に印を付けてください。
-
-
-#### (8) 夫婦の職業
-
-> 国勢調査の年の4月1日から翌年3月31日までに届出をするときだけ書いてください。
-
-* 夫の職業
-* 妻の職業
-
-
-#### その他
-
-* 自由記入欄
-
-
-#### 届出人署名
-
-* 夫
-* 妻
-
-> 押印は任意です。
-
-
-## 証人
-
-
-### 証人 1 / 証人 2
-
-
-#### 署名
-
-* 署名
-
-> 押印は任意です。
-
-
-#### 生年月日
-
-* 昭和 / 西暦 / 平成
-* 年　月　日
-
-
-#### 住所
-
-* 丁目
-* 番地 / 番 / 号
-* 方書
-
-
-#### 本籍
-
-* 丁目
-* 番地 / 番
-
-> 「筆頭者の氏名」には、戸籍のはじめに記載されている人の氏名を書いてください。
-
-
-## 記入の注意
-
-* この届は、日曜日や祝日でも届けることができます。閉庁時間は宿直等で届書のお預かりと本人確認のみ行います。翌開庁日以降に審査し、不備の内容によっては連絡のうえ修正のため再来庁いただくことがあります。この場合も婚姻日は婚姻届提出の日から変わることはありません。
-* 届書は、1通提出してください。
-* チェック欄には、あてはまるものにチェックを付けてください。
-* 外国人と婚姻する人が、まだ戸籍の筆頭者となっていない場合には、新しい戸籍がつくられますので、希望する本籍を書いてください。
-* 結婚式をあげたとき、または、同居を始めたときのうち早いほうを書いてください。
-* 未だ結婚式も同居もしていない場合は、「未同居・未挙式」にチェックをしてください。
-* 再婚のときは、直前の婚姻について書いてください。
-* 内縁のものはふくまれません。
-* 届け出られた事項は、人口動態調査（統計法に基づく基幹統計調査、厚生労働省所管）にも用いられます。
-* 署名は必ず本人が自署してください。
-* 鉛筆及び消えやすいインク、または消せるボールペンでは書かないでください。
-
-
-## 別表
-
-
-### 同居を始める前の夫婦のそれぞれの世帯のおもな仕事欄
-
-1. 農業だけまたは農業とその他の仕事を持っている世帯
-2. 自由業・商工業・サービス業等を個人で経営している世帯
-3. 企業・個人商店等（官公庁は除く）の常用勤労者世帯で、勤め先の従業者数が1人から99人までの世帯（日々または1年未満の契約の雇用者は5）
-4. 3にあてはまらない常用勤労者世帯及び会社団体の役員の世帯（日々または1年未満の契約の雇用者は5）
-5. 1から4にあてはまらないその他の仕事をしている者のいる世帯
-6. 仕事をしている者のいない世帯
-
-
-## 左側の行政・連絡欄
-
-
-### 受領情報
-
-* 令和　年　月　日
-* 午前 / 午後　時　分受領
-
-
-### 本人確認書類等
-
-夫・妻それぞれ:
-
-* 在留カード
-* 旅券
-* 免許証
-* マイナンバーカード
-* その他
-* 無
-* 来庁せず
-
-
-### 不受理通知
-
-* 有 / 無
-* 通知: 要 / 不要
-
-
-### 連絡先
-
-> 日中連絡のとれる電話番号を書いてください。
-
-* 電話
-* 夫
-* 妻
-
-
-### その他の処理欄
-
-* 送付
-* 新本籍
-* 使者
-* 住所を定めた年月日
-
-
-## 画像
-
-
-### 装飾イラスト
-
-右下に、花束を持ち「しながわ」と書かれた青い帯を身につけたシナモロールのイラストがあります。ハート形の装飾も周囲に描かれています。このイラストはPDF内では独立した画像として抽出できず、ページ全体画像に含まれています。
-
-
-## 権利表示
-
-* 婚姻届の書きかた・出しかた（品川区）
-* © 2025 SANRIO CO., LTD. APPROVAL NO. L655975
+| Japanese                                         | English                                                           | Context                                                              | Config                                                                                                                                |
+| ------------------------------------------------ | ----------------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| 初婚・再婚の別                                   | First marriage or remarriage                                      | Recorded separately for each spouse.                                 | `marital_history.marriage_cat`                                                                                                        |
+| 初婚                                             | First marriage                                                    | The person has never been married before.                            | `marital_history.marriage_cat: 0`                                                                                                     |
+| 再婚                                             | Remarriage                                                        | The person has been married before.                                  | No value of its own. 再婚 is implied by `marital_history.marriage_cat: 1` or `2`, which tick the 死別 or 離別 box.                    |
+| 死別                                             | Ended by death of a spouse                                        | Sub-option under remarriage.                                         | `marital_history.marriage_cat: 1`                                                                                                     |
+| 離別                                             | Ended by divorce                                                  | Sub-option under remarriage.                                         | `marital_history.marriage_cat: 2`                                                                                                     |
+| 年　月　日                                       | Year / month / day                                                | The date the most recent previous marriage ended.                    | `marital_history.year`, `marital_history.month`, `marital_history.day`. Drawn only when `marital_history.marriage_cat` is `1` or `2`. |
+| 再婚のときは、直前の婚姻について書いてください。 | For a remarriage, write about the immediately preceding marriage. | Only the most recent previous marriage is recorded, not all of them. | `-`                                                                                                                                   |
+
+
+### (7) 同居を始める前の夫婦のそれぞれの世帯のおもな仕事 (main occupation of each household before cohabitation)
+
+| Japanese                                               | English                                                                          | Context                                                                                                                    | Config                                                                                                    |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 同居を始める前の夫婦のそれぞれの世帯のおもな仕事       | The main occupation of each spouse's household before they began living together | This asks about the household each person belonged to, not about that person's own job. Collected for national statistics. | `job_type`                                                                                                |
+| 1 to 6                                                 | Category numbers 1 to 6                                                          | Check one number per spouse, using the category table below.                                                               | `job_type`, an integer from `1` to `6`. Any other value leaves the box blank instead of raising an error. |
+| 別表に沿って該当番号のチェック欄に印を付けてください。 | Following the separate table, mark the checkbox of the applicable number.        | The table is printed on the form itself.                                                                                   | `-`                                                                                                       |
+
+
+### (8) 夫婦の職業 (the couple's occupations)
+
+| Japanese                                                                    | English                                                                                                   | Context                                                                              | Config                                                                                                                              |
+| --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- |
+| 夫婦の職業                                                                  | The couple's occupations                                                                                  | Each person's own occupation, unlike field (7).                                      | `national_census.husband_job`, `national_census.wife_job`                                                                           |
+| 夫の職業                                                                    | Husband's occupation                                                                                      | Left blank outside census years.                                                     | `national_census.husband_job`. The sample uses a quoted two-digit code such as `'03'`, so quote the value to keep the leading zero. |
+| 妻の職業                                                                    | Wife's occupation                                                                                         | Left blank outside census years.                                                     | `national_census.wife_job`                                                                                                          |
+| 国勢調査の年の4月1日から翌年3月31日までに届出をするときだけ書いてください。 | Write this only when filing between April 1 of a national census year and March 31 of the following year. | The 国勢調査 (national census) is held every five years, in years ending in 0 and 5. | `national_census.year`. Set it to an empty string outside census years, and the whole section is skipped.                           |
+
+
+### その他 and 届出人署名 (other, and signatures)
+
+| Japanese                           | English                                                 | Context                                                                                                                         | Config                                                           |
+| ---------------------------------- | ------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| その他                             | Other                                                   | Free-text box for anything the standard fields cannot hold, such as extra adoptive parents or a note that a parent is deceased. | `other.text`                                                     |
+| 自由記入欄                         | Free-text box                                           | The writing space itself.                                                                                                       | `other.text`. A block string, one rendered line per newline.     |
+| 届出人署名                         | Signature of the filing party                           | One signature line for each spouse.                                                                                             | `-`. Must be signed by hand after printing.                      |
+| 署名は必ず本人が自署してください。 | The signature must be written by the person themselves. | A signature written by someone else, or printed, invalidates the filing.                                                        | `-`. This is why the generator leaves the signature lines blank. |
+| 押印は任意です。                   | Affixing a seal is optional.                            | Since the 2021 rule change, a 印鑑 (hanko) is no longer required.                                                               | `-`                                                              |
+
+
+## 証人 (witnesses)
+
+The config has no `witness` section, so the generator leaves this whole block blank. Both witnesses fill it in by hand after printing.
+
+| Japanese                                                                     | English                                                                                                                     | Context                                                                                                                           | Config                                                                                            |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 証人                                                                         | Witness                                                                                                                     | Two witnesses are legally required. Each must be 18 or older. They do not need to be Japanese nationals or related to the couple. | `-`                                                                                               |
+| 証人 1 / 証人 2                                                              | Witness 1 / Witness 2                                                                                                       | Two separate sets of the same fields.                                                                                             | `-`                                                                                               |
+| 署名                                                                         | Signature                                                                                                                   | Each witness must sign in their own hand.                                                                                         | `-`. A witness signature must be handwritten, so it could not be generated even if a key existed. |
+| 生年月日                                                                     | Date of birth                                                                                                               | Same era rules as the couple's date of birth.                                                                                     | `-`                                                                                               |
+| 住所                                                                         | Address                                                                                                                     | The witness's registered address, with 丁目, 番地 / 番 / 号, and 方書 as above.                                                   | `-`                                                                                               |
+| 本籍                                                                         | Registered domicile                                                                                                         | Nationality only, if the witness is a foreign national.                                                                           | `-`                                                                                               |
+| 「筆頭者の氏名」には、戸籍のはじめに記載されている人の氏名を書いてください。 | For "name of the head of the family register", write the name of the person listed at the beginning of the family register. | Usually a parent or a spouse, depending on the witness's own situation.                                                           | `-`                                                                                               |
+
+
+## 記入の注意 (filing instructions)
+
+These are instructions pre-printed on the form, not fields. The config column points at the keys each instruction affects, where there is one.
+
+| Japanese                                                                                                                   | English                                                                                                                                                                                    | Context                                                                                                          | Config                                                                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 記入の注意                                                                                                                 | Notes on filling in the form                                                                                                                                                               | Printed on the right-hand side of the form.                                                                      | `-`                                                                                                                                                                                                                                         |
+| この届は、日曜日や祝日でも届けることができます。                                                                           | This form can be filed on Sundays and public holidays.                                                                                                                                     | Municipal offices accept marriage filings around the clock through the night-duty desk.                          | `-`                                                                                                                                                                                                                                         |
+| 閉庁時間は宿直等で届書のお預かりと本人確認のみ行います。                                                                   | Outside office hours, the night-duty desk only receives the form and verifies identity.                                                                                                    | No legal review happens at that moment.                                                                          | `-`                                                                                                                                                                                                                                         |
+| 翌開庁日以降に審査し、不備の内容によっては連絡のうえ修正のため再来庁いただくことがあります。                               | The form is reviewed on the next business day or later, and depending on the defect you may be contacted and asked to return to correct it.                                                | The review is retroactive to the submission date.                                                                | `-`                                                                                                                                                                                                                                         |
+| この場合も婚姻日は婚姻届提出の日から変わることはありません。                                                               | Even in that case, the date of marriage does not change from the day the form was submitted.                                                                                               | This is why after-hours filing on a chosen date still works.                                                     | `-`                                                                                                                                                                                                                                         |
+| 届書は、1通提出してください。                                                                                              | Submit one copy of the form.                                                                                                                                                               | Only a single original is needed.                                                                                | `-`                                                                                                                                                                                                                                         |
+| チェック欄には、あてはまるものにチェックを付けてください。                                                                 | In the checkboxes, check the ones that apply.                                                                                                                                              | General instruction for all checkbox fields.                                                                     | The generator ticks only the boxes covered by `marital_history.marriage_cat`, `job_type`, `is_banchi_address`, `is_banchi_legally_domiciled`, and `new_legally_domiciled.is_husband_lastname`. Every other checkbox must be marked by hand. |
+| 外国人と婚姻する人が、まだ戸籍の筆頭者となっていない場合には、新しい戸籍がつくられますので、希望する本籍を書いてください。 | If a person marrying a foreign national is not yet the head of a family register, a new family register will be created, so write the registered domicile you want.                        | A marriage to a foreign national creates a single-person register for the Japanese spouse.                       | `new_legally_domiciled.address`                                                                                                                                                                                                             |
+| 結婚式をあげたとき、または、同居を始めたときのうち早いほうを書いてください。                                               | Write whichever came first: the date of the wedding ceremony or the date you began living together.                                                                                        | Applies to field (5).                                                                                            | `to_live_together.year`, `to_live_together.month`                                                                                                                                                                                           |
+| 未だ結婚式も同居もしていない場合は、「未同居・未挙式」にチェックをしてください。                                           | If you have neither held a ceremony nor begun living together, check "not yet living together and no ceremony held".                                                                       | Applies to field (5).                                                                                            | `-`. There is no key for this checkbox, so mark it by hand and leave `to_live_together` empty.                                                                                                                                              |
+| 内縁のものはふくまれません。                                                                                               | Common-law relationships are not included.                                                                                                                                                 | 内縁 is a long-term unregistered partnership. It has some legal protections but does not count as marriage here. | `-`                                                                                                                                                                                                                                         |
+| 届け出られた事項は、人口動態調査（統計法に基づく基幹統計調査、厚生労働省所管）にも用いられます。                           | The information filed is also used for the Vital Statistics Survey, a fundamental statistical survey under the Statistics Act, administered by the Ministry of Health, Labour and Welfare. | The legal basis for collecting the occupation and household fields.                                              | `-`                                                                                                                                                                                                                                         |
+| 鉛筆及び消えやすいインク、または消せるボールペンでは書かないでください。                                                   | Do not write with a pencil, easily erasable ink, or an erasable ballpoint pen.                                                                                                             | Erasable pens are common in Japan and are a frequent cause of rejection. Use permanent black ink.                | `-`. The generated text is printed, so this applies only to the boxes filled in by hand.                                                                                                                                                    |
+
+
+## 別表 (household occupation category table)
+
+Categories for field (7).
+
+| Japanese                                                                                                                             | English                                                                                                                                                                                                             | Context                                                                               | Config        |
+| ------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ------------- |
+| 別表                                                                                                                                 | Separate table                                                                                                                                                                                                      | The category list printed on the form.                                                | `job_type`    |
+| 1. 農業だけまたは農業とその他の仕事を持っている世帯                                                                                  | 1. Households engaged only in farming, or in farming plus other work                                                                                                                                                | Any household with a farming component.                                               | `job_type: 1` |
+| 2. 自由業・商工業・サービス業等を個人で経営している世帯                                                                              | 2. Households running a professional practice, commercial or industrial business, or service business as a sole proprietor                                                                                          | Self-employed and family-run businesses.                                              | `job_type: 2` |
+| 3. 企業・個人商店等（官公庁は除く）の常用勤労者世帯で、勤め先の従業者数が1人から99人までの世帯（日々または1年未満の契約の雇用者は5） | 3. Households of regular employees at companies or private shops, excluding government offices, where the employer has 1 to 99 employees. Day laborers and those on contracts shorter than one year use category 5. | Employees of small and medium-sized businesses.                                       | `job_type: 3` |
+| 4. 3にあてはまらない常用勤労者世帯及び会社団体の役員の世帯（日々または1年未満の契約の雇用者は5）                                     | 4. Households of regular employees not covered by category 3, and households of company or organization officers. Day laborers and those on contracts shorter than one year use category 5.                         | Employees of large employers with 100 or more staff, public servants, and executives. | `job_type: 4` |
+| 5. 1から4にあてはまらないその他の仕事をしている者のいる世帯                                                                          | 5. Households containing someone doing other work not covered by categories 1 to 4                                                                                                                                  | Includes part-time, short-term, and day work.                                         | `job_type: 5` |
+| 6. 仕事をしている者のいない世帯                                                                                                      | 6. Households with no one working                                                                                                                                                                                   | Includes retired, student, and unemployed households.                                 | `job_type: 6` |
+
+
+## 左側の行政・連絡欄 (left-hand administrative and contact box)
+
+Mostly office use. Only the 連絡先 (contact) box is filled in by the couple.
+
+| Japanese                                   | English                                                       | Context                                                                                                                                       | Config                                                                                                                 |
+| ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| 受領情報                                   | Receipt information                                           | Office use. Records when the form was physically handed over.                                                                                 | `-`                                                                                                                    |
+| 令和　年　月　日                           | Reiwa year / month / day                                      | Date of receipt.                                                                                                                              | `-`                                                                                                                    |
+| 午前 / 午後　時　分受領                    | Received at [AM / PM] [hour]:[minute]                         | The time stamp matters for after-hours filings.                                                                                               | `-`                                                                                                                    |
+| 本人確認書類等                             | Identity verification documents                               | Office use. The clerk records which document each person presented.                                                                           | `-`                                                                                                                    |
+| 在留カード                                 | Residence card                                                | The ID card held by mid-term and long-term foreign residents.                                                                                 | `-`                                                                                                                    |
+| 旅券                                       | Passport                                                      | Formal legal term for a passport.                                                                                                             | `-`                                                                                                                    |
+| 免許証                                     | Driver's license                                              | Short for 運転免許証.                                                                                                                         | `-`                                                                                                                    |
+| マイナンバーカード                         | My Number card                                                | The national Individual Number Card.                                                                                                          | `-`                                                                                                                    |
+| その他                                     | Other                                                         | Any other accepted identity document.                                                                                                         | `-`. Not related to the `other:` config section, which fills the その他 box in the main form.                          |
+| 無                                         | None                                                          | No identity document was presented.                                                                                                           | `-`                                                                                                                    |
+| 来庁せず                                   | Did not come to the office                                    | Used when the form was mailed or delivered by a third party.                                                                                  | `-`                                                                                                                    |
+| 不受理通知                                 | Non-acceptance notification                                   | Relates to a 不受理申出, a standing request by a person that filings in their name not be accepted. It is a safeguard against forged filings. | `-`                                                                                                                    |
+| 有 / 無                                    | Present / absent                                              | Whether such a request is on file.                                                                                                            | `-`                                                                                                                    |
+| 通知: 要 / 不要                            | Notification: required / not required                         | Whether the person must be notified.                                                                                                          | `-`                                                                                                                    |
+| 連絡先                                     | Contact information                                           | Filled in by the couple.                                                                                                                      | `-`. This is the one box in this section that the couple fills in, and the config has no key for it. Write it by hand. |
+| 日中連絡のとれる電話番号を書いてください。 | Write a phone number where you can be reached during the day. | The office calls this number if the form has a defect.                                                                                        | `-`                                                                                                                    |
+| 電話                                       | Phone                                                         | The phone number field.                                                                                                                       | `-`                                                                                                                    |
+| 夫 / 妻                                    | Husband / wife                                                | One number for each.                                                                                                                          | `-`                                                                                                                    |
+| その他の処理欄                             | Other processing box                                          | Office use.                                                                                                                                   | `-`                                                                                                                    |
+| 送付                                       | Forwarding                                                    | The form is forwarded to the municipality that holds the family register.                                                                     | `-`                                                                                                                    |
+| 新本籍                                     | New registered domicile                                       | Clerk note about the new register.                                                                                                            | `-`                                                                                                                    |
+| 使者                                       | Messenger                                                     | A third party who delivers the form. A messenger may deliver but cannot sign for the couple.                                                  | `-`                                                                                                                    |
+| 住所を定めた年月日                         | Date the address was established                              | Clerk note cross-checked against the resident record.                                                                                         | `-`                                                                                                                    |
