@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: create marriage registration
-        run: node src/main.js config-public.yaml
+        run: node src/main.js config.yaml
       - uses: actions/upload-artifact@v4
         with:
           name: marriage_registration

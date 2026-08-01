@@ -1,4 +1,4 @@
-name: pr
+name: push
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: create marriage registration
-        run: node src/main.js config-public.yaml
+        run: node src/main.js config.yaml
       - name: release version
         id: release_version
         run: |
