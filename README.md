@@ -8,7 +8,9 @@
 
 > 婚姻届も継続的インテグレーション・デリバリーしたい！幸せをYAMLで書きたい！ソフトウェアエンジニアと結婚したい！そんな悩みを解決します！
 
+
 ## 目次 <!-- omit in toc -->
+
 * [概要](#概要)
 * [初期セットアップ](#初期セットアップ)
 * [設定](#設定)
@@ -21,44 +23,44 @@
 
 このプロジェクトは、1つのYAMLファイルから記入済みの婚姻届をPDFとして生成します。
 
-夫・妻それぞれの情報（氏名・生年月日・住所・本籍・父母の氏名など）をYAMLファイルに記述すると、`src/main.py` がその内容を婚姻届のテンプレートに重ねて `result.pdf` を出力します。設定は2つのファイルに分かれています（詳しくは[設定](#設定)を参照）。ローカルでは自分の情報を書いた `config-private.yaml`（Git管理外）を使い、GitHub Actionsではサンプルの `config-public.yaml` を使います。
+夫・妻それぞれの情報（氏名・生年月日・住所・本籍・父母の氏名など）をYAMLファイルに記述すると、`src/main.js` がその内容を婚姻届のテンプレートに重ねて `result.pdf` を出力します。設定は2つのファイルに分かれています（詳しくは[設定](#設定)を参照）。ローカルでは自分の情報を書いた `config-private.yaml`（Git管理外）を使い、GitHub Actionsではサンプルの `config-public.yaml` を使います。
 
 PDFの生成方法は2通りあります。
 
 * **ローカルで生成**：ワンコマンドのスクリプト（`./run.sh`）を実行する
 * **GitHub Actionsで生成**：pushのたびにCIでPDFをビルドし、リリースとして公開する
 
+
 ## 初期セットアップ
 
-Python 3.8以上が必要です（3.13で動作確認済み）。
+Node.js 20以上が必要です（24で動作確認済み）。パッケージマネージャーは[pnpm](https://pnpm.io/)を推奨します（npmでも動作します）。
 
 ```bash
 git clone https://github.com/ahandsel/japan-marriage-registration.git
 cd japan-marriage-registration
 ```
 
-ローカル実行用スクリプト（`./run.sh`）が仮想環境の作成と依存関係のインストールを自動で行うため、ローカルで動かすだけなら追加のセットアップは不要です。手動で環境を準備したい場合は以下のとおりです。
+ローカル実行用スクリプト（`./run.sh`）が依存関係のインストールを自動で行うため、ローカルで動かすだけなら追加のセットアップは不要です。手動で環境を準備したい場合は以下のとおりです。
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+pnpm install # または: npm install
 ```
 
-依存パッケージ（`requirements.txt`）:
+依存パッケージ（`package.json`）:
 
-* `reportlab` - テキストのオーバーレイを描画
-* `pdfrw` - オーバーレイをテンプレートに合成
-* `PyYAML` - 設定ファイル（`config-private.yaml` / `config-public.yaml`）の読み込み
+* `pdf-lib` - テンプレートPDFへのテキストのオーバーレイ描画と合成
+* `@pdf-lib/fontkit` - 日本語フォント（IPAex明朝）の埋め込み
+* `yaml` - 設定ファイル（`config-private.yaml` / `config-public.yaml`）の読み込み
+
 
 ## 設定
 
 設定は2つのYAMLファイルに分かれています。どちらも同じ項目構成です。
 
-| ファイル              | 役割                                                                                     |
-| --------------------- | ---------------------------------------------------------------------------------------- |
+| ファイル              | 役割                                                                                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `config-public.yaml`  | リポジトリにcommitされるサンプル。GitHub ActionsのCIで使われ、`config-private.yaml` を作るときのコピー元になります。**プレースホルダーのみを記載し、実際の個人情報は書かないでください。** |
-| `config-private.yaml` | 自分の実際の情報を書くローカル用のファイル。`.gitignore` で除外されており、**ローカル実行時のデフォルト**です。 |
+| `config-private.yaml` | 自分の実際の情報を書くローカル用のファイル。`.gitignore` で除外されており、**ローカル実行時のデフォルト**です。                                                                            |
 
 初回はサンプルをコピーして自分用のファイルを作成します。
 
@@ -82,6 +84,7 @@ cp config-public.yaml config-private.yaml
 | `national_census`       | 国勢調査に関する情報（該当期間のみ記載）      |
 | `other`                 | 自由記入欄（旧字体⇔新字体の変更、同意欄など） |
 
+
 ### 情報
 
 `husband` と `wife` のセクションは同じ項目を持ちます。例:
@@ -89,13 +92,13 @@ cp config-public.yaml config-private.yaml
 ```yaml
 husband:
   last_name: 山田
-  last_name_pos: [220,590]
+  last_name_pos: [220, 590]
   last_name_kana: やまだ
-  last_name_kana_pos: [221,623]
+  last_name_kana_pos: [221, 623]
   first_name: 太郎
-  first_name_pos: [300,590]
+  first_name_pos: [300, 590]
   first_name_kana: たろう
-  first_name_kana_pos: [305,623]
+  first_name_kana_pos: [305, 623]
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
@@ -129,6 +132,7 @@ husband:
 
 `wife` のセクションも同様に記入します（`*_pos` の座標は用紙の右側の列に合わせてずらしてあります）。
 
+
 ## 使い方 - ローカルで実行する
 
 `config-private.yaml` に情報を記入し、以下を実行します（まだ作成していない場合は[設定](#設定)を参照してコピーを作成してください）。
@@ -137,14 +141,15 @@ husband:
 ./run.sh
 ```
 
-これだけです。スクリプトが仮想環境を作成し、依存関係をインストールし、`result.pdf` を生成して開きます。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
+これだけです。スクリプトが依存関係をインストールし、`result.pdf` を生成して開きます。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
 
-生成ステップだけを手動で実行したい場合は、[初期セットアップ](#初期セットアップ)で仮想環境を有効化したうえで、以下を実行します。
+生成ステップだけを手動で実行したい場合は、[初期セットアップ](#初期セットアップ)で依存関係をインストールしたうえで、以下を実行します。
 
 ```bash
-python src/main.py                      # config-private.yaml を使って result.pdf を出力
-python src/main.py config-public.yaml   # 設定ファイルを明示的に指定することも可能
+node src/main.js                    # config-private.yaml を使って result.pdf を出力
+node src/main.js config-public.yaml # 設定ファイルを明示的に指定することも可能
 ```
+
 
 ## 使い方 - GitHub Actionsで実行する
 
@@ -153,6 +158,6 @@ CIでPDFをビルドするワークフローが2つあります。
 * **`.github/workflows/pr.yml`** - `main` へのプルリクエストのたびに実行され、PDFをビルドし、ワークフローのアーティファクトとしてアップロードします（実行結果のサマリーページからダウンロードできます）。
 * **`.github/workflows/push.yml`** - `main` へのpushのたびに実行され、PDFをビルドし、新しい[Release](https://github.com/ahandsel/japan-marriage-registration/releases)（タイムスタンプのタグ付き）として `marriage_registration.pdf` を添付して公開します。
 
-どちらのワークフローも `python src/main.py config-public.yaml` を実行し、commit済みの `config-public.yaml`（サンプル）を使ってPDFを生成します。つまり基本の流れは、`config-public.yaml` を編集してcommitし、`main` にpushするだけです。うまくいけば、生成されたPDFが[Release](https://github.com/ahandsel/japan-marriage-registration/releases)に出来上がります。シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
+どちらのワークフローも `node src/main.js config-public.yaml` を実行し、commit済みの `config-public.yaml`（サンプル）を使ってPDFを生成します。つまり基本の流れは、`config-public.yaml` を編集してcommitし、`main` にpushするだけです。うまくいけば、生成されたPDFが[Release](https://github.com/ahandsel/japan-marriage-registration/releases)に出来上がります。シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
 
 > ⚠️ **注意**：`push.yml` は生成したPDFを**公開**のReleaseとして公開します。ここで使われるのはcommit済みの `config-public.yaml` のみです。実際の個人情報を含む婚姻届が必要な場合は、`config-private.yaml` に記入してローカルで生成してください（CIには載せないでください）。
