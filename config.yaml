@@ -6,13 +6,13 @@ notification:
 
 husband:
   last_name: 山田
-  last_name_pos: [220,590]
+  last_name_pos: [220, 590]
   last_name_kana: やまだ
-  last_name_kana_pos: [221,623]
+  last_name_kana_pos: [221, 623]
   first_name: 太郎
-  first_name_pos: [300,590]
+  first_name_pos: [300, 590]
   first_name_kana: たろう
-  first_name_kana_pos: [305,623]
+  first_name_kana_pos: [305, 623]
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
@@ -45,13 +45,13 @@ husband:
 
 wife:
   last_name: 貫井
-  last_name_pos: [420,590]
+  last_name_pos: [420, 590]
   last_name_kana: ぬくい
-  last_name_kana_pos: [421,623]
+  last_name_kana_pos: [421, 623]
   first_name: はゆ
-  first_name_pos: [502,590]
+  first_name_pos: [502, 590]
   first_name_kana: はゆ
-  first_name_kana_pos: [502,623]
+  first_name_kana_pos: [502, 623]
   birth_year: 平成7
   birth_month: 6
   birth_day: 6
@@ -92,8 +92,8 @@ to_live_together:
 
 national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記載不要。yearを空白文字""に
   year: 令和3
-  husband_job: "03"
-  wife_job: "02"
+  husband_job: '03'
+  wife_job: '02'
 
 other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
   text: |
