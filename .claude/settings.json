@@ -1,0 +1,17 @@
+{
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(git mv *)",
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)",
+      "Bash(git show *)",
+      "Read(//tmp/**)",
+      "Bash(pnpm lint *)"
+    ],
+    "ask": ["Bash(git reset *)"],
+    "deny": ["Bash(git push)", "Bash(git push:*)", "Bash(git push *)"]
+  }
+}
