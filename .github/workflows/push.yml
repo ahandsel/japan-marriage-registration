@@ -2,52 +2,47 @@ name: pr
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: create marriage registration
-      run: |
-        python src/main.py config-public.yaml
-    - name: release version
-      id: release_version
-      run: |
-        echo ::set-output name=version::$(date "+%Y%m%d_%H%M%S")
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.release_version.outputs.version }}
-        release_name: Release ${{ steps.release_version.outputs.version }}
-        body: |
-          Auto created
-          ${{ github.event.head_commit.message }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Assets
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.github_token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./result.pdf
-        asset_name: marriage_registration.pdf
-        asset_content_type: application/pdf
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: create marriage registration
+        run: node src/main.js config-public.yaml
+      - name: release version
+        id: release_version
+        run: |
+          echo "version=$(date "+%Y%m%d_%H%M%S")" >> "$GITHUB_OUTPUT"
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ steps.release_version.outputs.version }}
+          release_name: Release ${{ steps.release_version.outputs.version }}
+          body: |
+            Auto created
+            ${{ github.event.head_commit.message }}
+          draft: false
+          prerelease: false
+      - name: Upload Release Assets
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.github_token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./result.pdf
+          asset_name: marriage_registration.pdf
+          asset_content_type: application/pdf

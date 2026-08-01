@@ -2,30 +2,25 @@ name: pr
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: create marriage registration
-      run: |
-        python src/main.py config-public.yaml
-    - uses: actions/upload-artifact@v2
-      with:
-        name: mariage_registration
-        path: result.pdf
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: create marriage registration
+        run: node src/main.js config-public.yaml
+      - uses: actions/upload-artifact@v4
+        with:
+          name: marriage_registration
+          path: result.pdf

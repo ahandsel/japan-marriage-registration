@@ -1,33 +1,32 @@
 #!/usr/bin/env bash
 # One-command local runner for the marriage registration generator.
-# Creates a virtualenv (if needed), installs dependencies, generates result.pdf,
-# and opens it. Re-run this any time after editing config-private.yaml.
+# Installs Node.js dependencies (if needed), generates result.pdf, and opens
+# it. Re-run this any time after editing config-private.yaml.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-VENV_DIR="venv"
-
-# Create the virtualenv on first run.
-if [ ! -d "$VENV_DIR" ]; then
-  echo "==> Creating virtualenv in $VENV_DIR"
-  python3 -m venv "$VENV_DIR"
+# Install/refresh dependencies (pnpm preferred; falls back to npm).
+echo "==> Installing dependencies"
+if command -v pnpm > /dev/null 2>&1; then
+  pnpm install --silent
+elif command -v corepack > /dev/null 2>&1; then
+  corepack enable > /dev/null 2>&1 || true
+  corepack pnpm install --silent
+else
+  npm install --no-audit --no-fund --silent
 fi
 
-# Install/refresh dependencies.
-echo "==> Installing dependencies"
-"$VENV_DIR/bin/pip" install --quiet --upgrade pip
-"$VENV_DIR/bin/pip" install --quiet -r requirements.txt
-
-# Generate the PDF.
+# Generate the PDF. Extra arguments are forwarded to main.js, e.g.
+#   ./run.sh --template cinnamoroll
 echo "==> Generating result.pdf"
-"$VENV_DIR/bin/python" src/main.py
+node src/main.js "$@"
 
 echo "==> Done: $(pwd)/result.pdf"
 
 # Open it (macOS: open, Linux: xdg-open) - skip if neither exists.
-if command -v open >/dev/null 2>&1; then
+if command -v open > /dev/null 2>&1; then
   open result.pdf
-elif command -v xdg-open >/dev/null 2>&1; then
+elif command -v xdg-open > /dev/null 2>&1; then
   xdg-open result.pdf
 fi
