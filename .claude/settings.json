@@ -1,17 +1,17 @@
 {
-  "includeCoAuthoredBy": false,
+  "attribution": { "commit": "", "pr": "" },
   "permissions": {
     "allow": [
-      "Bash(git mv *)",
       "Skill(update-config)",
       "Skill(update-config:*)",
-      "Bash(git add *)",
-      "Bash(git commit -q -m ' *)",
-      "Bash(git show *)",
-      "Read(//tmp/**)",
-      "Bash(pnpm lint *)"
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm run:*)",
+      "Bash(node src/main.js:*)",
+      "Bash(./run.sh:*)",
+      "Bash(git show:*)",
+      "Bash(git check-ignore:*)"
     ],
-    "ask": ["Bash(git reset *)"],
-    "deny": ["Bash(git push)", "Bash(git push:*)", "Bash(git push *)"]
+    "ask": ["Bash(git reset:*)"],
+    "deny": ["Bash(git push)", "Bash(git push:*)"]
   }
 }
