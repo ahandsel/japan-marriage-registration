@@ -8,8 +8,8 @@ IPAexフォントを使用し、複製し、または頒布する行為、その
 
 
 IPAexフォント2書体パック（IPAexゴシック、IPAex明朝）   IPAexfont00301.zip
-|--はじめにお読みください   Readme_IPAexfont00301.txt
-|--IPAフォントライセンスv1.0   IPA_Font_License_Agreement_v1.0.txt
+|--はじめにお読みください   ipaexfont-readme.txt
+|--IPAフォントライセンスv1.0   ipa-font-license-v1.0.txt
 |--IPAexゴシック(Ver.003.01)   ipaexg.ttf
 |--IPAex明朝(Ver.003.01)  ipaexm.ttf
 
@@ -27,8 +27,8 @@ Any use, reproduction or distribution of the IPA Font or any exercise of rights 
 
 
 IPAex Fonts 2 fonts package （IPAex Gothic、IPAex Mincho）    IPAexfont00301.zip
-|--Readme   Readme_IPAexfont00301.txt
-|--IPA Font License Agreement v1.0   IPA_Font_License_Agreement_v1.0.txt
+|--Readme   ipaexfont-readme.txt
+|--IPA Font License Agreement v1.0   ipa-font-license-v1.0.txt
 |--IPAexGothic(Ver.003.01)   ipaexg.ttf
 |--IPAexMincho(Ver.003.01)   ipaexm.ttf
 
