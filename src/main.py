@@ -1,3 +1,4 @@
+import argparse
 import os
 import sys
 import yaml
@@ -12,7 +13,14 @@ from pdfrw.toreportlab import makerl
 
 base_dir = os.path.dirname(__file__)
 repo_root = Path(base_dir).resolve().parents[0]
-TEMPLATE_PDF = os.path.join(base_dir, "template/tmpl_marriage_registration.pdf")
+TEMPLATE_DIR = Path(base_dir) / "template"
+# Bundled templates are named "<prefix><variant>.pdf" so they can be selected by
+# the short variant name alone (e.g. "simple", "cinnamoroll").
+TEMPLATE_PREFIX = "jp-marriage-registration-"
+# Note: the drawing coordinates below are tuned for the "simple" template. Other
+# templates render, but their boxes sit on a different grid, so text needs
+# nudging per template before it lines up.
+DEFAULT_TEMPLATE = "simple"
 RESULT_PDF = "result.pdf"
 # Local runs default to the gitignored private config; GitHub Actions passes
 # config-public.yaml explicitly as the first argument.
@@ -21,17 +29,87 @@ pdfmetrics.registerFont(TTFont("ipaexm", os.path.join(base_dir, "fonts/ipaexm.tt
 pdfmetrics.registerFont(TTFont("ipaexg", os.path.join(base_dir, "fonts/ipaexg.ttf")))
 
 
-def setup():
-    cc = canvas.Canvas(RESULT_PDF, pagesize=landscape(A3))
-    page = PdfReader(TEMPLATE_PDF, decompress=False).pages
-    pp = pagexobj(page[0])
+def available_templates():
+    """Bundled templates, keyed by file stem (the canonical template name)."""
+    return {path.stem: path for path in sorted(TEMPLATE_DIR.glob("*.pdf"))}
+
+
+def template_choice_help():
+    names = []
+    for stem in available_templates():
+        short = stem[len(TEMPLATE_PREFIX):] if stem.startswith(TEMPLATE_PREFIX) else stem
+        names.append(short if short == stem else "{} ({})".format(short, stem))
+    return ", ".join(names) if names else "none found"
+
+
+def resolve_template_path(name):
+    """Accept a short variant name, a full template name, or a path to any PDF."""
+    templates = available_templates()
+    if name in templates:
+        return templates[name]
+    if TEMPLATE_PREFIX + name in templates:
+        return templates[TEMPLATE_PREFIX + name]
+    candidate = Path(name).expanduser()
+    if candidate.suffix.lower() == ".pdf":
+        if candidate.is_file():
+            return candidate
+        sys.exit("Template PDF not found: {}".format(candidate))
+    sys.exit(
+        "Unknown template: {}\nAvailable templates: {}".format(
+            name, template_choice_help()
+        )
+    )
+
+
+def setup(template_path, output_path):
+    page = PdfReader(str(template_path), decompress=False).pages[0]
+    pp = pagexobj(page)
+    # Match the canvas to the template so templates of differing sizes all line
+    # up with the coordinates below, which are measured from the bottom left.
+    if pp.BBox:
+        x0, y0, x1, y1 = (float(v) for v in pp.BBox)
+        pagesize = (x1 - x0, y1 - y0)
+    else:
+        pagesize = landscape(A3)
+    cc = canvas.Canvas(output_path, pagesize=pagesize)
     cc.doForm(makerl(cc, pp))
     return cc
 
 
-def resolve_config_path():
-    if len(sys.argv) > 1:
-        return sys.argv[1]
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Generate a filled-in Japanese marriage registration form."
+    )
+    parser.add_argument(
+        "config",
+        nargs="?",
+        help="path to the YAML config (default: config-private.yaml)",
+    )
+    parser.add_argument(
+        "-t",
+        "--template",
+        help="form template to fill in: {}, or a path to a PDF "
+        "(default: the config's `template` key, else {})".format(
+            template_choice_help(), DEFAULT_TEMPLATE
+        ),
+    )
+    parser.add_argument(
+        "-o",
+        "--output",
+        default=RESULT_PDF,
+        help="where to write the generated PDF (default: {})".format(RESULT_PDF),
+    )
+    parser.add_argument(
+        "--list-templates",
+        action="store_true",
+        help="list the bundled templates and exit",
+    )
+    return parser.parse_args()
+
+
+def resolve_config_path(config_arg):
+    if config_arg:
+        return config_arg
     if not os.path.exists(DEFAULT_CONFIG_PATH):
         sys.exit(
             "config-private.yaml not found.\n"
@@ -40,6 +118,11 @@ def resolve_config_path():
             "    cp config-public.yaml config-private.yaml"
         )
     return DEFAULT_CONFIG_PATH
+
+
+def resolve_template_name(template_arg, cfg):
+    """CLI flag wins, then the config's `template` key, then the default."""
+    return template_arg or cfg.get("template") or DEFAULT_TEMPLATE
 
 
 def load_config(config_path):
@@ -301,9 +384,16 @@ def other_info(cfg, cc):
 
 
 def main():
-    config_path = resolve_config_path()
-    cc = setup()
+    args = parse_args()
+    if args.list_templates:
+        for stem, path in available_templates().items():
+            print("{}\t{}".format(stem, path))
+        return
+    config_path = resolve_config_path(args.config)
     cfg = load_config(config_path)
+    template_path = resolve_template_path(resolve_template_name(args.template, cfg))
+    print("Template: {}".format(template_path))
+    cc = setup(template_path, args.output)
     husband_name_info(cfg["husband"], cc)
     husband_address_info(cfg["husband"], cc)
     husband_legally_domiciled_info(cfg["husband"], cc)
@@ -323,6 +413,7 @@ def main():
     other_info(cfg["other"], cc)
     cc.showPage()
     cc.save()
+    print("Wrote: {}".format(args.output))
 
 
 if __name__ == "__main__":
