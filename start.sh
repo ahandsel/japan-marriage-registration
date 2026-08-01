@@ -18,7 +18,7 @@ else
 fi
 
 # Generate the PDF. Extra arguments are forwarded to main.js, e.g.
-#   ./run.sh --template cinnamoroll
+#   ./start.sh --template cinnamoroll
 echo "==> Generating result.pdf"
 node src/main.js "$@"
 
