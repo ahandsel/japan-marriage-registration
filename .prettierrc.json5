@@ -1,0 +1,8 @@
+{
+  $schema: 'https://json.schemastore.org/prettierrc',
+  tabWidth: 2,
+  useTabs: false,
+  singleQuote: true,
+  plugins: ['prettier-plugin-packagejson', 'prettier-plugin-sh'],
+  overrides: [{ files: '**/*.sh', options: { parser: 'sh' } }],
+}

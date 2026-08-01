@@ -131,6 +131,9 @@ dmypy.json
 # idea
 .idea
 
+# Node / pnpm (lint tooling)
+node_modules/
+
 # Generated output
 result.pdf
 
