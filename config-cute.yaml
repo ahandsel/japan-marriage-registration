@@ -1,0 +1,116 @@
+# 品川区のシナモロール様式に合わせた配置です。
+# Coordinates below are tuned for the cinnamoroll template, not the simple one.
+template: cinnamoroll
+
+notification:
+  year: 3
+  month: 5
+  day: 5
+  to: 東京都小金井市
+
+husband:
+  last_name: 山田
+  # 24pt, centered in the 氏 cell (x 212.5-306.0), baseline just under the 氏 label.
+  last_name_pos: [235, 623]
+  last_name_kana: やまだ
+  # 12pt, on the （フリガナ）row (y 652.7-665.9).
+  last_name_kana_pos: [241, 655]
+  first_name: 太郎
+  # 24pt, centered in the 名 cell (x 306.0-399.4).
+  first_name_pos: [329, 623]
+  first_name_kana: たろう
+  first_name_kana_pos: [335, 655]
+  birth_year: 平成５
+  birth_month: ５
+  birth_day: ２１
+  address_first: 東京都千代田区神田
+  # x is set so that address_second (drawn at x-12) puts its 丁 on the form's
+  # printed 丁目 at x=257; y is set so address_second lands on that line (y=534.5).
+  address_first_pos: [257, 556]
+  address_second: ３丁目　４
+  is_banchi_address: false
+  address_go: １０
+  address_apartment: | # 3行までであれば崩れず表現できます
+    インチキタワー
+    マンション
+    ３６１０号室
+  household_person: 山田　太郎
+  legally_domiciled_first: 東京都千代田区飯田橋
+  # legally_domiciled_second is drawn at (x, y-21): x+12 puts its 丁 on the
+  # printed 丁目 (x=257), and y-21 lands it on that line (y=459.7).
+  legally_domiciled_first_pos: [245, 482]
+  legally_domiciled_second: ３丁目　４
+  is_banchi_legally_domiciled: true
+  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  father_name: 山田　権左衛門
+  # Clears the printed 父 / 母 labels (x 218.9-228.1) and shares their baselines.
+  father_name_pos: [233, 416]
+  mother_name: 山田　としこ
+  mother_name_pos: [233, 392]
+  relationship: 長
+  marital_history:
+    marriage_cat: 2 # 0: 初婚 1:死別 2:離別
+    year: 令和3
+    month: 6
+    day: 1
+  job_type: 6
+
+wife:
+  last_name: 貫井
+  # The wife's column sits 187pt right of the husband's on this template.
+  last_name_pos: [422, 623]
+  last_name_kana: ぬくい
+  last_name_kana_pos: [428, 655]
+  first_name: はゆ
+  first_name_pos: [516, 623]
+  first_name_kana: はゆ
+  # Two kana rather than three, so 6pt further right to stay centered.
+  first_name_kana_pos: [528, 655]
+  birth_year: 平成7
+  birth_month: 6
+  birth_day: 6
+  address_first: 東京都小金井市貫井北町
+  # Printed 丁目 for the wife sits at x=444.
+  address_first_pos: [444, 556]
+  address_second: ３丁目　４
+  is_banchi_address: false
+  address_go: １０
+  address_apartment: |
+    ""
+  household_person: 貫井　パッパ
+  legally_domiciled_first: 神奈川県横浜市
+  legally_domiciled_first_pos: [432, 482]
+  legally_domiciled_second: ３丁目　４
+  is_banchi_legally_domiciled: true
+  head_of_person_of_legally_domiciled: 貫井　パッパ
+  father_name: 貫井　パッパ
+  father_name_pos: [420, 416]
+  mother_name: 貫井　はよ
+  mother_name_pos: [420, 392]
+  relationship: 長
+  marital_history:
+    marriage_cat: 0 # 0: 初婚 1:死別 2:離別
+    year: 令和３
+    month: ６
+    day: １
+  job_type: 4
+
+new_legally_domiciled:
+  is_husband_lastname: true
+  address: 東京都小金井市貫井北町１丁目１
+  # Starts clear of the 妻の氏 checkbox and shares the 新本籍 line's baseline.
+  address_pos: [258, 294]
+  is_banchi_address: false
+
+to_live_together:
+  year: 令和3
+  month: 6
+
+national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記載不要。yearを空白文字""に
+  year: 令和3
+  husband_job: '03'
+  wife_job: '02'
+
+other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
+  text: |
+    ""

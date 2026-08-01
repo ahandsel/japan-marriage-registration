@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 // Generate a filled-in Japanese marriage registration form.
-// Node.js port of the original Python implementation (reportlab + pdfrw):
 // pdf-lib draws the text overlay directly onto the form template, and
 // @pdf-lib/fontkit embeds the bundled IPAex fonts so Japanese text renders.
 import fs from 'node:fs';
@@ -11,16 +10,15 @@ import { parseArgs } from 'node:util';
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb } from 'pdf-lib';
 import YAML from 'yaml';
+import { resolveLayout, TEMPLATE_PREFIX } from './layout.js';
 
 const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(baseDir, '..');
 const TEMPLATE_DIR = path.join(baseDir, 'template');
-// Bundled templates are named "<prefix><variant>.pdf" so they can be selected by
-// the short variant name alone (e.g. "simple", "cinnamoroll").
-const TEMPLATE_PREFIX = 'jp-marriage-registration-';
-// Note: the drawing coordinates below are tuned for the "simple" template. Other
-// templates render, but their boxes sit on a different grid, so text needs
-// nudging per template before it lines up.
+// Bundled templates are named "<TEMPLATE_PREFIX><variant>.pdf" so they can be
+// selected by the short variant name alone (e.g. "simple", "cinnamoroll").
+// Every drawing position, font size, and line step comes from the matching
+// per-template layout file, src/layout/<variant>.yaml, resolved by layout.js.
 const DEFAULT_TEMPLATE = 'simple';
 const RESULT_PDF = 'result.pdf';
 // Local runs default to the gitignored private config; GitHub Actions passes
@@ -29,6 +27,11 @@ const RESULT_PDF = 'result.pdf';
 // new user can run the generator with zero setup.
 const DEFAULT_CONFIG_PATH = path.join(repoRoot, 'config-private.yaml');
 const PUBLIC_CONFIG_PATH = path.join(repoRoot, 'config.yaml');
+// Prepended when scaffolding config-private.yaml, so the file itself says it is
+// private and local-only even when it is read outside the repo.
+const PRIVATE_CONFIG_HEADER =
+  '# ローカル実行時のみ使用される非公開の設定ファイルです。\n' +
+  '# Private configuration file that is only used for local execution.\n\n';
 const FONT_PATH = path.join(baseDir, 'fonts/ipaexm.ttf');
 
 function fail(message) {
@@ -82,21 +85,20 @@ function resolveTemplatePath(name) {
 }
 
 function usage() {
-  return `usage: main.js [-h] [-t TEMPLATE] [-o OUTPUT] [--list-templates] [config]
+  return `usage: main.js [-h] [-t TEMPLATE] [-o OUTPUT] [--list-templates] [--init-config] [config]
 
 Generate a filled-in Japanese marriage registration form.
 
 positional arguments:
-  config                path to the YAML config (default: config-private.yaml)
+  config                   path to the YAML config (default: config-private.yaml)
 
 options:
-  -h, --help            show this help message and exit
-  -t, --template TEMPLATE
-                        form template to fill in: ${templateChoiceHelp()}, or a
-                        path to a PDF (default: the config's \`template\` key,
-                        else ${DEFAULT_TEMPLATE})
-  -o, --output OUTPUT   where to write the generated PDF (default: ${RESULT_PDF})
-  --list-templates      list the bundled templates and exit`;
+  -h, --help               show this help message and exit
+  -t, --template TEMPLATE  form template to fill in: ${templateChoiceHelp()}, or path to PDF
+  -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF})
+  --list-templates         list the bundled templates and exit
+  --init-config             create config-private.yaml from the sample config.yaml
+                           (if it is missing) and exit, without generating a PDF`;
 }
 
 function parseCliArgs() {
@@ -107,6 +109,7 @@ function parseCliArgs() {
         template: { type: 'string', short: 't' },
         output: { type: 'string', short: 'o', default: RESULT_PDF },
         'list-templates': { type: 'boolean', default: false },
+        'init-config': { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
       },
       allowPositionals: true,
@@ -128,6 +131,7 @@ function parseCliArgs() {
     template: parsed.values.template,
     output: parsed.values.output,
     listTemplates: parsed.values['list-templates'],
+    initConfig: parsed.values['init-config'],
   };
 }
 
@@ -146,7 +150,8 @@ function resolveConfigPath(configArg) {
           '    node src/main.js path/to/your-config.yaml',
       );
     }
-    fs.copyFileSync(PUBLIC_CONFIG_PATH, DEFAULT_CONFIG_PATH);
+    const sample = fs.readFileSync(PUBLIC_CONFIG_PATH, 'utf-8');
+    fs.writeFileSync(DEFAULT_CONFIG_PATH, PRIVATE_CONFIG_HEADER + sample);
     console.log(
       'config-private.yaml not found - created one from the sample config.yaml.\n' +
         'It contains placeholder details; edit config-private.yaml with your own\n' +
@@ -154,6 +159,17 @@ function resolveConfigPath(configArg) {
     );
   }
   return DEFAULT_CONFIG_PATH;
+}
+
+function addPrivateConfigHeader(configPath) {
+  // Returns true if the header was added, false if it was already there.
+  const current = fs.readFileSync(configPath, 'utf-8');
+  const headerLines = PRIVATE_CONFIG_HEADER.trimEnd().split('\n');
+  if (headerLines.every((line) => current.includes(line))) {
+    return false;
+  }
+  fs.writeFileSync(configPath, PRIVATE_CONFIG_HEADER + current);
+  return true;
 }
 
 function resolveTemplateName(templateArg, cfg) {
@@ -178,7 +194,7 @@ async function setup(templatePath, font) {
   return { doc, page, ipaexm };
 }
 
-// --- drawing helpers matching the reportlab canvas API -----------------------
+// --- drawing helpers: a small canvas shim over pdf-lib -----------------------
 
 function makeCanvas(page, font) {
   let fontSize = 12;
@@ -188,12 +204,12 @@ function makeCanvas(page, font) {
       fontSize = size;
     },
     drawString(x, y, text) {
-      // reportlab draws with y at the text baseline; pdf-lib does the same.
+      // y is the text baseline.
       for (const line of String(text).split('\n')) {
         if (line) page.drawText(line, { x, y, size: fontSize, font });
       }
     },
-    // reportlab's ellipse(x1, y1, x2, y2) takes opposite bounding-box corners.
+    // ellipse(x1, y1, x2, y2) takes opposite bounding-box corners.
     ellipse(x1, y1, x2, y2) {
       page.drawEllipse({
         x: (x1 + x2) / 2,
@@ -210,244 +226,132 @@ function makeCanvas(page, font) {
 }
 
 // --- form sections ------------------------------------------------------------
+// Each section takes (cfg, lay, cc): the config section holding the text, the
+// matching resolved layout section holding every position, size, and shape,
+// and the canvas. Husband and wife share the same functions because all
+// per-column coordinates now live in the layout sections.
 
-function husbandNameInfo(cfg, cc) {
-  cc.setFont(24);
-  let [x, y] = cfg.last_name_pos;
-  cc.drawString(x, y, cfg.last_name);
-  cc.setFont(12);
-  [x, y] = cfg.last_name_kana_pos;
-  cc.drawString(x, y, cfg.last_name_kana);
-  cc.setFont(24);
-  [x, y] = cfg.first_name_pos;
-  cc.drawString(x, y, cfg.first_name);
-  cc.setFont(12);
-  [x, y] = cfg.first_name_kana_pos;
-  cc.drawString(x, y, cfg.first_name_kana);
-  cc.setFont(12);
-  cc.drawString(221, 569, cfg.birth_year);
-  cc.drawString(300, 569, cfg.birth_month);
-  cc.drawString(345, 569, cfg.birth_day);
+function drawText(cc, spec, text) {
+  cc.setFont(spec.size);
+  cc.drawString(spec.pos[0], spec.pos[1], text);
 }
 
-function husbandAddressInfo(cfg, cc) {
-  cc.setFont(12);
-  const [x, y] = cfg.address_first_pos;
-  cc.drawString(x, y, cfg.address_first);
-  cc.drawString(x - 12, y - 21, cfg.address_second);
+function drawMultiline(cc, spec, text) {
+  cc.setFont(spec.size);
+  let y = spec.pos[1];
+  for (const line of String(text).split('\n')) {
+    cc.drawString(spec.pos[0], y, line);
+    y -= spec.step;
+  }
+}
+
+function nameInfo(cfg, lay, cc) {
+  drawText(cc, lay.last_name, cfg.last_name);
+  drawText(cc, lay.last_name_kana, cfg.last_name_kana);
+  drawText(cc, lay.first_name, cfg.first_name);
+  drawText(cc, lay.first_name_kana, cfg.first_name_kana);
+  drawText(cc, lay.birth_year, cfg.birth_year);
+  drawText(cc, lay.birth_month, cfg.birth_month);
+  drawText(cc, lay.birth_day, cfg.birth_day);
+}
+
+function addressInfo(cfg, lay, cc) {
+  drawText(cc, lay.address_first, cfg.address_first);
+  drawText(cc, lay.address_second, cfg.address_second);
   if (cfg.is_banchi_address) {
-    cc.ellipse(300, 539, 270, 528);
+    cc.ellipse(...lay.address_banchi_ellipse);
   } else {
-    cc.circle(279.5, 523, 6);
+    cc.circle(...lay.address_go_circle);
   }
-  cc.drawString(x + 80, y - 21, cfg.address_go);
-  cc.drawString(x + 10, y - 44, cfg.household_person);
-  cc.setFont(5);
-  let lineY = y - 13;
-  for (const text of String(cfg.address_apartment).split('\n')) {
-    cc.drawString(x + 130, lineY, text);
-    lineY -= 5;
+  drawText(cc, lay.address_go, cfg.address_go);
+  drawText(cc, lay.household_person, cfg.household_person);
+  drawMultiline(cc, lay.address_apartment, cfg.address_apartment);
+}
+
+function legallyDomiciledInfo(cfg, lay, cc) {
+  drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
+  drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
+  // A foreign national has no 本籍 - the column holds a nationality instead, so
+  // neither 番地 nor 号 applies. `null` in the config skips the marking.
+  if (cfg.is_banchi_legally_domiciled === true) {
+    cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
+  } else if (cfg.is_banchi_legally_domiciled === false) {
+    cc.circle(...lay.legally_domiciled_go_circle);
   }
+  drawText(
+    cc,
+    lay.head_of_person_of_legally_domiciled,
+    cfg.head_of_person_of_legally_domiciled,
+  );
 }
 
-function husbandLegallyDomiciledInfo(cfg, cc) {
-  cc.setFont(12);
-  const [x, y] = cfg.legally_domiciled_first_pos;
-  cc.drawString(x, y, cfg.legally_domiciled_first);
-  cc.drawString(x, y - 21, cfg.legally_domiciled_second);
-  if (cfg.is_banchi_legally_domiciled) {
-    cc.ellipse(346, 473, 316, 462);
-  } else {
-    cc.circle(327, 457, 6);
-  }
-  cc.drawString(x + 10, y - 44, cfg.head_of_person_of_legally_domiciled);
+function familyInfo(cfg, lay, cc) {
+  drawText(cc, lay.father_name, cfg.father_name);
+  drawText(cc, lay.mother_name, cfg.mother_name);
+  drawText(cc, lay.relationship, cfg.relationship);
 }
 
-function husbandFamilyInfo(cfg, cc) {
-  cc.setFont(12);
-  let [x, y] = cfg.father_name_pos;
-  cc.drawString(x, y, cfg.father_name);
-  [x, y] = cfg.mother_name_pos;
-  cc.drawString(x, y, cfg.mother_name);
-  cc.drawString(351, 385, cfg.relationship);
-}
-
-function wifeNameInfo(cfg, cc) {
-  cc.setFont(24);
-  let [x, y] = cfg.last_name_pos;
-  cc.drawString(x, y, cfg.last_name);
-  cc.setFont(12);
-  [x, y] = cfg.last_name_kana_pos;
-  cc.drawString(x, y, cfg.last_name_kana);
-  cc.setFont(24);
-  [x, y] = cfg.first_name_pos;
-  cc.drawString(x, y, cfg.first_name);
-  cc.setFont(12);
-  [x, y] = cfg.first_name_kana_pos;
-  cc.drawString(x, y, cfg.first_name_kana);
-  cc.setFont(12);
-  cc.drawString(421, 569, cfg.birth_year);
-  cc.drawString(500, 569, cfg.birth_month);
-  cc.drawString(545, 569, cfg.birth_day);
-}
-
-function wifeAddressInfo(cfg, cc) {
-  cc.setFont(12);
-  const [x, y] = cfg.address_first_pos;
-  cc.drawString(x, y, cfg.address_first);
-  cc.drawString(x - 12, y - 21, cfg.address_second);
-  if (cfg.is_banchi_address) {
-    cc.ellipse(502, 539, 472, 528);
-  } else {
-    cc.circle(481, 523, 6);
-  }
-  cc.drawString(x + 80, y - 21, cfg.address_go);
-  cc.drawString(x + 10, y - 44, cfg.household_person);
-  cc.setFont(5);
-  let lineY = y - 13;
-  for (const text of String(cfg.address_apartment).split('\n')) {
-    cc.drawString(x + 130, lineY, text);
-    lineY -= 5;
-  }
-}
-
-function wifeLegallyDomiciledInfo(cfg, cc) {
-  cc.setFont(12);
-  const [x, y] = cfg.legally_domiciled_first_pos;
-  cc.drawString(x, y, cfg.legally_domiciled_first);
-  cc.drawString(x, y - 21, cfg.legally_domiciled_second);
-  if (cfg.is_banchi_legally_domiciled) {
-    cc.ellipse(549, 473, 519, 462);
-  } else {
-    // The wife's column sits 203pt right of the husband's (see the ellipse
-    // above); the original Python reused the husband's x here by mistake.
-    cc.circle(530, 457, 6);
-  }
-  cc.drawString(x + 10, y - 44, cfg.head_of_person_of_legally_domiciled);
-}
-
-function wifeFamilyInfo(cfg, cc) {
-  cc.setFont(12);
-  let [x, y] = cfg.father_name_pos;
-  cc.drawString(x, y, cfg.father_name);
-  [x, y] = cfg.mother_name_pos;
-  cc.drawString(x, y, cfg.mother_name);
-  cc.drawString(551, 385, cfg.relationship);
-}
-
-function newLegallyDomiciled(cfg, cc) {
-  cc.setFont(12);
+function newLegallyDomiciled(cfg, lay, cc) {
   if (cfg.is_husband_lastname) {
-    cc.drawString(194, 351, '✓');
+    drawText(cc, lay.husband_lastname_check, '✓');
   } else {
-    cc.drawString(194, 340, '✓');
+    drawText(cc, lay.wife_lastname_check, '✓');
   }
-  cc.setFont(16);
   if (cfg.address !== '') {
-    const [x, y] = cfg.address_pos;
-    cc.drawString(x, y, cfg.address);
+    drawText(cc, lay.address, cfg.address);
     if (cfg.is_banchi_address) {
-      cc.ellipse(547, 352, 520, 341);
+      cc.ellipse(...lay.banchi_ellipse);
     } else {
-      cc.circle(529, 334, 6);
+      cc.circle(...lay.go_circle);
     }
   }
 }
 
-function toLiveTogetherInfo(cfg, cc) {
-  cc.setFont(15);
-  cc.drawString(220, 310, cfg.year);
-  cc.drawString(300, 310, cfg.month);
+function toLiveTogetherInfo(cfg, lay, cc) {
+  drawText(cc, lay.year, cfg.year);
+  drawText(cc, lay.month, cfg.month);
 }
 
-function husbandMaritalHistoryInfo(cfg, cc) {
+function maritalHistoryInfo(cfg, lay, cc) {
   if (cfg.marriage_cat === 0) {
-    cc.setFont(12);
-    cc.drawString(196, 290, '✓');
-  } else if (cfg.marriage_cat === 1) {
-    cc.setFont(12);
-    cc.drawString(273, 295, '✓');
-    cc.setFont(6);
-    cc.drawString(301, 289, cfg.year);
-    cc.drawString(338, 289, cfg.month);
-    cc.drawString(365, 289, cfg.day);
+    drawText(cc, lay.first_marriage_check, '✓');
+    return;
+  }
+  if (cfg.marriage_cat === 1) {
+    drawText(cc, lay.remarriage_death_check, '✓');
   } else {
-    cc.setFont(12);
-    cc.drawString(273, 285, '✓');
-    cc.setFont(6);
-    cc.drawString(301, 289, cfg.year);
-    cc.drawString(338, 289, cfg.month);
-    cc.drawString(365, 289, cfg.day);
+    drawText(cc, lay.remarriage_divorce_check, '✓');
+  }
+  drawText(cc, lay.year, cfg.year);
+  drawText(cc, lay.month, cfg.month);
+  drawText(cc, lay.day, cfg.day);
+}
+
+function jobTypeInfo(cfg, lay, cc) {
+  const pos = lay.job_type_checks.positions[cfg.job_type];
+  if (pos !== undefined) {
+    cc.setFont(lay.job_type_checks.size);
+    cc.drawString(pos[0], pos[1], '✓');
   }
 }
 
-function wifeMaritalHistoryInfo(cfg, cc) {
-  if (cfg.marriage_cat === 0) {
-    cc.setFont(12);
-    cc.drawString(398, 290, '✓');
-  } else if (cfg.marriage_cat === 1) {
-    cc.setFont(12);
-    cc.drawString(476, 295, '✓');
-    cc.setFont(6);
-    cc.drawString(504, 289, cfg.year);
-    cc.drawString(542, 289, cfg.month);
-    cc.drawString(569, 289, cfg.day);
-  } else {
-    cc.setFont(12);
-    cc.drawString(476, 285, '✓');
-    cc.setFont(6);
-    cc.drawString(504, 289, cfg.year);
-    cc.drawString(542, 289, cfg.month);
-    cc.drawString(569, 289, cfg.day);
-  }
-}
-
-const JOB_TYPE_OFFSETS = { 1: 0, 2: 11, 3: 21, 4: 41, 5: 62, 6: 72 };
-
-function husbandJobType(cfg, cc) {
-  const [x, y] = [210, 271];
-  cc.setFont(12);
-  const offset = JOB_TYPE_OFFSETS[cfg.job_type];
-  if (offset !== undefined) {
-    cc.drawString(x, y - offset, '✓');
-  }
-}
-
-function wifeJobType(cfg, cc) {
-  const [x, y] = [249, 271];
-  cc.setFont(12);
-  const offset = JOB_TYPE_OFFSETS[cfg.job_type];
-  if (offset !== undefined) {
-    cc.drawString(x, y - offset, '✓');
-  }
-}
-
-function nationalCensusInfo(cfg, cc) {
-  cc.setFont(6);
+function nationalCensusInfo(cfg, lay, cc) {
   if (cfg.year !== '') {
-    cc.drawString(278, 186, cfg.year);
-    cc.setFont(16);
-    cc.drawString(258, 168, cfg.husband_job);
-    cc.drawString(458, 168, cfg.wife_job);
+    drawText(cc, lay.year, cfg.year);
+    drawText(cc, lay.husband_job, cfg.husband_job);
+    drawText(cc, lay.wife_job, cfg.wife_job);
   }
 }
 
-function notificationInfo(cfg, cc) {
-  cc.setFont(12);
-  cc.drawString(141, 716, cfg.year);
-  cc.drawString(181, 716, cfg.month);
-  cc.drawString(210, 716, cfg.day);
-  cc.drawString(141, 680, cfg.to);
+function notificationInfo(cfg, lay, cc) {
+  drawText(cc, lay.year, cfg.year);
+  drawText(cc, lay.month, cfg.month);
+  drawText(cc, lay.day, cfg.day);
+  drawText(cc, lay.to, cfg.to);
 }
 
-function otherInfo(cfg, cc) {
-  cc.setFont(12);
-  const x = 40;
-  let y = 145;
-  for (const text of String(cfg.text).split('\n')) {
-    cc.drawString(x + 130, y, text);
-    y -= 15;
-  }
+function otherInfo(cfg, lay, cc) {
+  drawMultiline(cc, lay.text, cfg.text);
 }
 
 async function main() {
@@ -458,31 +362,62 @@ async function main() {
     }
     return;
   }
+  if (args.initConfig) {
+    // Scaffold-only mode: reuse the same first-run copy that a normal run does,
+    // so `pnpm run init-config` never generates a PDF over an unedited config.
+    const existed = fs.existsSync(DEFAULT_CONFIG_PATH);
+    const configPath = resolveConfigPath(undefined);
+    if (!existed) {
+      console.log(`✅ Created ${configPath}.`);
+      return;
+    }
+    // The file predates this header (or was written by hand). Prepend it
+    // without touching the rest, so an existing config keeps its details.
+    if (addPrivateConfigHeader(configPath)) {
+      console.log(
+        `✅ ${configPath} already exists - added the private-file header to it.`,
+      );
+    } else {
+      console.log(`✅ ${configPath} already exists - left it untouched.`);
+    }
+    console.log(
+      '✏️  Edit it with your own information, then run `pnpm run generate`.',
+    );
+    return;
+  }
   const configPath = resolveConfigPath(args.config);
   const cfg = loadConfig(configPath);
-  const templatePath = resolveTemplatePath(
-    resolveTemplateName(args.template, cfg),
-  );
+  const templateName = resolveTemplateName(args.template, cfg);
+  const templatePath = resolveTemplatePath(templateName);
+  const layout = resolveLayout(templateName, cfg);
   console.log(`Template: ${templatePath}`);
   const { doc, page, ipaexm } = await setup(templatePath, FONT_PATH);
   const cc = makeCanvas(page, ipaexm);
-  husbandNameInfo(cfg.husband, cc);
-  husbandAddressInfo(cfg.husband, cc);
-  husbandLegallyDomiciledInfo(cfg.husband, cc);
-  husbandFamilyInfo(cfg.husband, cc);
-  wifeNameInfo(cfg.wife, cc);
-  wifeAddressInfo(cfg.wife, cc);
-  wifeLegallyDomiciledInfo(cfg.wife, cc);
-  wifeFamilyInfo(cfg.wife, cc);
-  newLegallyDomiciled(cfg.new_legally_domiciled, cc);
-  toLiveTogetherInfo(cfg.to_live_together, cc);
-  husbandMaritalHistoryInfo(cfg.husband.marital_history, cc);
-  wifeMaritalHistoryInfo(cfg.wife.marital_history, cc);
-  husbandJobType(cfg.husband, cc);
-  wifeJobType(cfg.wife, cc);
-  nationalCensusInfo(cfg.national_census, cc);
-  notificationInfo(cfg.notification, cc);
-  otherInfo(cfg.other, cc);
+  nameInfo(cfg.husband, layout.husband, cc);
+  addressInfo(cfg.husband, layout.husband, cc);
+  legallyDomiciledInfo(cfg.husband, layout.husband, cc);
+  familyInfo(cfg.husband, layout.husband, cc);
+  nameInfo(cfg.wife, layout.wife, cc);
+  addressInfo(cfg.wife, layout.wife, cc);
+  legallyDomiciledInfo(cfg.wife, layout.wife, cc);
+  familyInfo(cfg.wife, layout.wife, cc);
+  newLegallyDomiciled(
+    cfg.new_legally_domiciled,
+    layout.new_legally_domiciled,
+    cc,
+  );
+  toLiveTogetherInfo(cfg.to_live_together, layout.to_live_together, cc);
+  maritalHistoryInfo(
+    cfg.husband.marital_history,
+    layout.husband.marital_history,
+    cc,
+  );
+  maritalHistoryInfo(cfg.wife.marital_history, layout.wife.marital_history, cc);
+  jobTypeInfo(cfg.husband, layout.husband, cc);
+  jobTypeInfo(cfg.wife, layout.wife, cc);
+  nationalCensusInfo(cfg.national_census, layout.national_census, cc);
+  notificationInfo(cfg.notification, layout.notification, cc);
+  otherInfo(cfg.other, layout.other, cc);
   fs.writeFileSync(args.output, await doc.save());
   console.log(`Wrote: ${args.output}`);
 }

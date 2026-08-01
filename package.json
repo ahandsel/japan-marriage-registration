@@ -5,10 +5,16 @@
   "description": "Japan marriage registration PDF generator",
   "type": "module",
   "scripts": {
+    "clean": "zsh scripts/cleanup-temp-files.sh",
+    "cute": "node src/main.js --template cinnamoroll",
     "generate": "node src/main.js",
+    "generate-sample": "node src/main.js config.yaml",
+    "index": "zsh scripts/index.sh",
+    "init-config": "node src/main.js --init-config",
     "lint": "pnpm run lint-code && pnpm run lint-md",
     "lint-code": "prettier --write .",
-    "lint-md": "markdownlint-cli2 --fix"
+    "lint-md": "markdownlint-cli2 --fix",
+    "start": "./start.sh"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "^1.1.1",

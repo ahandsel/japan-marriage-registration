@@ -1,0 +1,125 @@
+# Layout for the "cinnamoroll" template
+# (jp-marriage-registration-cinnamoroll.pdf, 品川区のシナモロール様式).
+# Same schema as simple.yaml: absolute [x, y] baseline positions in PDF points
+# from the bottom-left corner, `size` in points, `step` between lines of a
+# multi-line field, circles as [x, y, r], ellipses as two opposite corners.
+#
+# Grid notes: form body y 32.7-686.8; husband column x 212.5-399.4; wife
+# column x 399.4-586.4 (a 187pt offset); printed 丁目 at x 257.0 (husband) and
+# 444.0 (wife); printed 年/月/日 for the birth date at x 305.3/354.9/378.8
+# (husband) with baseline 608.6.
+#
+# ⚠️ Only partially tuned. Aligned so far: names, addresses and 本籍 text,
+# parents' names, birth dates, 号 vs the printed 番 mark, 方書, the ✓ marks,
+# and the 番地/号 circles. Everything else still sits on the simple grid and
+# needs per-field tuning.
+
+husband:
+  last_name: { pos: [235, 623], size: 24 }
+  last_name_kana: { pos: [241, 655], size: 12 }
+  first_name: { pos: [329, 623], size: 24 }
+  first_name_kana: { pos: [335, 655], size: 12 }
+  birth_year: { pos: [266, 608.6], size: 12 }
+  birth_month: { pos: [316, 608.6], size: 12 }
+  birth_day: { pos: [350, 608.6], size: 12 }
+  address_first: { pos: [257, 556], size: 12 }
+  address_second: { pos: [245, 535], size: 12 }
+  address_go: { pos: [357, 535], size: 12 }
+  household_person: { pos: [300, 512], size: 12 }
+  address_apartment: { pos: [235, 523], size: 5, step: 5 }
+  address_banchi_ellipse: [350, 558.5, 313, 546.5]
+  address_go_circle: [320, 539, 6]
+  legally_domiciled_first: { pos: [245, 482], size: 12 }
+  legally_domiciled_second: { pos: [245, 461], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [255, 438], size: 12 }
+  legally_domiciled_banchi_ellipse: [350, 480, 313, 468.5]
+  legally_domiciled_go_circle: [320, 464, 6]
+  father_name: { pos: [233, 416], size: 12 }
+  mother_name: { pos: [233, 392], size: 12 }
+  relationship: { pos: [351, 385], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [218, 247], size: 10 }
+    remarriage_death_check: { pos: [279.3, 253.5], size: 8 }
+    remarriage_divorce_check: { pos: [279.3, 242.5], size: 8 }
+    year: { pos: [308, 247], size: 6 }
+    month: { pos: [349, 247], size: 6 }
+    day: { pos: [378, 247], size: 6 }
+  # Job checkboxes run horizontally (1-6); the wife's row sits under the
+  # husband's at the same x positions.
+  job_type_checks:
+    size: 10
+    positions:
+      1: [236.8, 222.5]
+      2: [265.6, 222.5]
+      3: [294.4, 222.5]
+      4: [323.2, 222.5]
+      5: [352, 222.5]
+      6: [380.8, 222.5]
+
+wife:
+  last_name: { pos: [422, 623], size: 24 }
+  last_name_kana: { pos: [428, 655], size: 12 }
+  first_name: { pos: [516, 623], size: 24 }
+  first_name_kana: { pos: [528, 655], size: 12 }
+  birth_year: { pos: [453, 608.6], size: 12 }
+  birth_month: { pos: [503, 608.6], size: 12 }
+  birth_day: { pos: [537, 608.6], size: 12 }
+  address_first: { pos: [444, 556], size: 12 }
+  address_second: { pos: [432, 535], size: 12 }
+  address_go: { pos: [544, 535], size: 12 }
+  household_person: { pos: [487, 512], size: 12 }
+  address_apartment: { pos: [422, 523], size: 5, step: 5 }
+  address_banchi_ellipse: [537, 558.5, 500, 546.5]
+  address_go_circle: [507, 539, 6]
+  legally_domiciled_first: { pos: [432, 482], size: 12 }
+  legally_domiciled_second: { pos: [432, 461], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [442, 438], size: 12 }
+  legally_domiciled_banchi_ellipse: [537, 480, 500, 468.5]
+  legally_domiciled_go_circle: [507, 464, 6]
+  father_name: { pos: [420, 416], size: 12 }
+  mother_name: { pos: [420, 392], size: 12 }
+  relationship: { pos: [551, 385], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [405.5, 247], size: 10 }
+    remarriage_death_check: { pos: [466.5, 253.5], size: 8 }
+    remarriage_divorce_check: { pos: [466.5, 242.5], size: 8 }
+    year: { pos: [495, 247], size: 6 }
+    month: { pos: [536, 247], size: 6 }
+    day: { pos: [565, 247], size: 6 }
+  job_type_checks:
+    size: 10
+    positions:
+      1: [236.8, 213.5]
+      2: [265.6, 213.5]
+      3: [294.4, 213.5]
+      4: [323.2, 213.5]
+      5: [352, 213.5]
+      6: [380.8, 213.5]
+
+new_legally_domiciled:
+  husband_lastname_check: { pos: [217.8, 318.5], size: 10 }
+  wife_lastname_check: { pos: [217.8, 300.5], size: 10 }
+  # Clears the 夫の氏/妻の氏 checkbox column; whether the value's own 丁目
+  # lands on the printed 丁目 (x 436) depends on the address length, so nudge
+  # x per config if needed.
+  address: { pos: [262, 294], size: 16 }
+  banchi_ellipse: [537, 315, 501, 303.5]
+  go_circle: [507.7, 295, 6]
+
+to_live_together:
+  year: { pos: [268, 273.5], size: 12 }
+  month: { pos: [348, 273.5], size: 12 }
+
+national_census:
+  year: { pos: [278, 186], size: 6 }
+  husband_job: { pos: [258, 168], size: 16 }
+  wife_job: { pos: [458, 168], size: 16 }
+
+notification:
+  year: { pos: [141, 716], size: 12 }
+  month: { pos: [181, 716], size: 12 }
+  day: { pos: [210, 716], size: 12 }
+  to: { pos: [141, 680], size: 12 }
+
+other:
+  text: { pos: [170, 145], size: 12, step: 15 }

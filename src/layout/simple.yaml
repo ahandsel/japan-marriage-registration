@@ -1,0 +1,115 @@
+# Layout for the "simple" template (jp-marriage-registration-simple.pdf).
+# Every drawn item has an absolute position; nothing is derived from another
+# field. Coordinates are PDF points measured from the bottom-left corner, and
+# `pos` is the [x, y] of the text baseline. `size` is the font size in points,
+# and `step` is the distance between lines of a multi-line field.
+# Circles are [x, y, r]; ellipses are two opposite bounding-box corners
+# [x1, y1, x2, y2].
+
+husband:
+  last_name: { pos: [220, 590], size: 24 }
+  last_name_kana: { pos: [221, 623], size: 12 }
+  first_name: { pos: [300, 590], size: 24 }
+  first_name_kana: { pos: [305, 623], size: 12 }
+  birth_year: { pos: [221, 569], size: 12 }
+  birth_month: { pos: [300, 569], size: 12 }
+  birth_day: { pos: [345, 569], size: 12 }
+  address_first: { pos: [221, 545], size: 12 }
+  address_second: { pos: [209, 524], size: 12 }
+  address_go: { pos: [301, 524], size: 12 }
+  household_person: { pos: [231, 501], size: 12 }
+  address_apartment: { pos: [351, 532], size: 5, step: 5 }
+  # Drawn when is_banchi_address is true (ellipse around 番地) or false (circle
+  # around 番).
+  address_banchi_ellipse: [300, 539, 270, 528]
+  address_go_circle: [279.5, 523, 6]
+  legally_domiciled_first: { pos: [221, 480], size: 12 }
+  legally_domiciled_second: { pos: [221, 459], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [231, 436], size: 12 }
+  legally_domiciled_banchi_ellipse: [346, 473, 316, 462]
+  legally_domiciled_go_circle: [327, 457, 6]
+  father_name: { pos: [221, 410], size: 12 }
+  mother_name: { pos: [221, 380], size: 12 }
+  relationship: { pos: [351, 385], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [196, 290], size: 12 }
+    remarriage_death_check: { pos: [273, 295], size: 12 }
+    remarriage_divorce_check: { pos: [273, 285], size: 12 }
+    year: { pos: [301, 289], size: 6 }
+    month: { pos: [338, 289], size: 6 }
+    day: { pos: [365, 289], size: 6 }
+  # One ✓ position per job_type value (1-6).
+  job_type_checks:
+    size: 12
+    positions:
+      1: [210, 271]
+      2: [210, 260]
+      3: [210, 250]
+      4: [210, 230]
+      5: [210, 209]
+      6: [210, 199]
+
+wife:
+  last_name: { pos: [420, 590], size: 24 }
+  last_name_kana: { pos: [421, 623], size: 12 }
+  first_name: { pos: [502, 590], size: 24 }
+  first_name_kana: { pos: [502, 623], size: 12 }
+  birth_year: { pos: [421, 569], size: 12 }
+  birth_month: { pos: [500, 569], size: 12 }
+  birth_day: { pos: [545, 569], size: 12 }
+  address_first: { pos: [422, 545], size: 12 }
+  address_second: { pos: [410, 524], size: 12 }
+  address_go: { pos: [502, 524], size: 12 }
+  household_person: { pos: [432, 501], size: 12 }
+  address_apartment: { pos: [552, 532], size: 5, step: 5 }
+  address_banchi_ellipse: [502, 539, 472, 528]
+  address_go_circle: [481, 523, 6]
+  legally_domiciled_first: { pos: [421, 480], size: 12 }
+  legally_domiciled_second: { pos: [421, 459], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [431, 436], size: 12 }
+  legally_domiciled_banchi_ellipse: [549, 473, 519, 462]
+  legally_domiciled_go_circle: [530, 457, 6]
+  father_name: { pos: [421, 410], size: 12 }
+  mother_name: { pos: [421, 380], size: 12 }
+  relationship: { pos: [551, 385], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [398, 290], size: 12 }
+    remarriage_death_check: { pos: [476, 295], size: 12 }
+    remarriage_divorce_check: { pos: [476, 285], size: 12 }
+    year: { pos: [504, 289], size: 6 }
+    month: { pos: [542, 289], size: 6 }
+    day: { pos: [569, 289], size: 6 }
+  job_type_checks:
+    size: 12
+    positions:
+      1: [249, 271]
+      2: [249, 260]
+      3: [249, 250]
+      4: [249, 230]
+      5: [249, 209]
+      6: [249, 199]
+
+new_legally_domiciled:
+  husband_lastname_check: { pos: [194, 351], size: 12 }
+  wife_lastname_check: { pos: [194, 340], size: 12 }
+  address: { pos: [251, 335], size: 16 }
+  banchi_ellipse: [547, 352, 520, 341]
+  go_circle: [529, 334, 6]
+
+to_live_together:
+  year: { pos: [220, 310], size: 15 }
+  month: { pos: [300, 310], size: 15 }
+
+national_census:
+  year: { pos: [278, 186], size: 6 }
+  husband_job: { pos: [258, 168], size: 16 }
+  wife_job: { pos: [458, 168], size: 16 }
+
+notification:
+  year: { pos: [141, 716], size: 12 }
+  month: { pos: [181, 716], size: 12 }
+  day: { pos: [210, 716], size: 12 }
+  to: { pos: [141, 680], size: 12 }
+
+other:
+  text: { pos: [170, 145], size: 12, step: 15 }
