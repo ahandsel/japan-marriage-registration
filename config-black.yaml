@@ -1,0 +1,136 @@
+# 黒刷り様式（jp-marriage-registration-black.pdf）向けのサンプル設定です。
+# Sample configuration for the black template. Every drawing position lives in
+# src/layout/black.yaml, so this file only holds the information itself - there
+# are no `*_pos` keys, unlike config.yaml, whose values are tuned for the red
+# template and would move the fields off this form's grid.
+template: black
+
+notification:
+  year: 3
+  month: 5
+  day: 5
+  to: 東京都小金井市
+
+husband:
+  last_name: 山田
+  last_name_kana: やまだ
+  first_name: 太郎
+  first_name_kana: たろう
+  # この様式は□昭和□平成の元号チェックボックスを印字しますが、設定から
+  # チェックは付けられないため、元号は birth_year の文字として書き込みます。
+  # The era checkboxes cannot be ticked from the config, so birth_year writes
+  # the era as text in the space left beside them.
+  birth_year: 平成５
+  birth_month: ５
+  birth_day: ２１
+  address_first: 東京都千代田区神田
+  address_second: ３丁目　４
+  is_banchi_address: false
+  address_go: １０
+  address_apartment: | # 3行までであれば崩れず表現できます
+    インチキタワー
+    マンション
+    ３６１０号室
+  household_person: 山田　太郎
+  legally_domiciled_first: 東京都千代田区飯田橋
+  legally_domiciled_second: ３丁目　４
+  is_banchi_legally_domiciled: true
+  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  # この様式には養父・養母の行もありますが、対応する設定項目がないため空欄の
+  # まま印刷され、手書きで記入します。The 養父/養母 rows have no config keys
+  # and print blank for handwriting.
+  father_name: 山田　権左衛門
+  mother_name: 山田　としこ
+  relationship: 長
+  marital_history:
+    marriage_cat: 2 # 0: 初婚 1:死別 2:離別
+    year: 令和3
+    month: 6
+    day: 1
+  job_type: 6
+
+wife:
+  last_name: 貫井
+  last_name_kana: ぬくい
+  first_name: はゆ
+  first_name_kana: はゆ
+  birth_year: 平成7
+  birth_month: 6
+  birth_day: 6
+  address_first: 東京都小金井市貫井北町
+  address_second: ３丁目　４
+  is_banchi_address: false
+  address_go: １０
+  address_apartment: |
+    ""
+  household_person: 貫井　パッパ
+  legally_domiciled_first: 神奈川県横浜市
+  legally_domiciled_second: ３丁目　４
+  is_banchi_legally_domiciled: true
+  head_of_person_of_legally_domiciled: 貫井　パッパ
+  father_name: 貫井　パッパ
+  mother_name: 貫井　はよ
+  relationship: 長
+  marital_history:
+    marriage_cat: 0 # 0: 初婚 1:死別 2:離別
+    year: 令和３
+    month: ６
+    day: １
+  job_type: 4
+
+new_legally_domiciled:
+  lastname_of: husband # husband / wife。外国人との婚姻の場合はnullで空欄に
+
+  address: 東京都小金井市貫井北町１丁目１
+  is_banchi_address: false
+
+to_live_together:
+  year: 令和3
+  month: 6
+
+national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記載不要。yearを空白文字""に
+  year: 令和3
+  husband_job: '03'
+  wife_job: '02'
+
+other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
+  text: |
+    ""
+
+# 証人欄。witness1 が左、witness2 が右の列です。証人に手書きしてもらう場合は
+# セクションごと削除（またはコメントアウト）すると欄全体が空白になります。
+# Witness box. witness1 is the left column and witness2 the right one. Remove
+# (or comment out) a whole section to leave that column blank for handwriting.
+witness1:
+  # 署名は必ず証人本人の自署が必要です。通常は '' のままにして、印刷後に
+  # 署名してもらってください。The signature must be handwritten by the
+  # witness, so leave name as '' and have them sign the printout.
+  name: ''
+  birth_year: 昭和６０
+  birth_month: １
+  birth_day: ２３
+  address_first: 東京都新宿区西新宿
+  # この様式の証人・住所欄には番地/番/号が印字されていないため、番地と号まで
+  # address_second にまとめ、address_go は空、is_banchi_address は null にして
+  # 印を付けません。The witness 住所 row prints no 番地/番/号 on this form, so
+  # fold them into address_second and leave the mark off.
+  address_second: ２丁目　８番１号
+  is_banchi_address: null
+  address_go: ''
+  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null に
+  legally_domiciled_first: 東京都新宿区西新宿
+  legally_domiciled_second: ２丁目　８
+  is_banchi_legally_domiciled: true
+
+witness2:
+  name: ''
+  birth_year: 平成２
+  birth_month: １１
+  birth_day: ３
+  address_first: 神奈川県横浜市中区日本大通
+  address_second: １丁目　１番２号
+  is_banchi_address: null
+  address_go: ''
+  legally_domiciled_first: 神奈川県横浜市中区日本大通
+  legally_domiciled_second: １丁目　１
+  is_banchi_legally_domiciled: true

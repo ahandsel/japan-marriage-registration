@@ -1,0 +1,213 @@
+# Layout for the "black" template (jp-marriage-registration-black.pdf).
+# Every drawn item has an absolute position; nothing is derived from another
+# field. Coordinates are PDF points measured from the bottom-left corner, and
+# `pos` is the [x, y] of the text baseline. `size` is the font size in points,
+# and `step` is the distance between lines of a multi-line field.
+# Circles are [x, y, r]; ellipses are two opposite bounding-box corners
+# [x1, y1, x2, y2].
+#
+# Grid of this form, measured from the template itself. The husband and wife
+# columns are 185.5pt wide, so every wife position is its husband counterpart
+# plus 185.7. The witness columns are 184.5pt wide, so witness2 is witness1
+# plus 184.3.
+#   label column     x 127.3-209.5    husband  x 209.5-395.0
+#   wife column      x 395.0-580.8    witness1 x 694.0-878.5
+#   witness2 column  x 878.5-1062.5
+# Row lines (husband column, top to bottom): 682.0 682/662 header,
+# 662.0-651.0 よみかた, 651.0-618.5 氏名, 618.5-602.0 生年月日,
+# 602.0-522.5 住所 (dashed at 578.5 and 545.0), 522.5-452.5 本籍 (dashed at
+# 498.5 and 475.0), 452.5-381.5 父母及び養父母 (434.5, 417.0, 399.5),
+# 381.5-336.0 新本籍, 336.0-310.5 同居を始めたとき, 310.5-285.0 初婚・再婚,
+# 285.0-203.0 世帯のおもな仕事, 203.0-174.5 夫妻の職業, 174.5-123.0 その他.
+#
+# ⚠️ This form is tighter than the "red" one and prints boxes that the config
+# has no keys for, so a few things differ from the other layouts:
+#   * The 氏名 cell is only ~22pt tall (red's is ~52pt), so names are drawn at
+#     size 18 rather than 24, and the よみかた strip is 11pt tall, so kana are
+#     size 9 rather than 12.
+#   * 生年月日 prints □昭和□平成 era checkboxes ahead of the year, which eats
+#     most of the year cell. Those boxes are not tickable from the config, so
+#     `birth_year` still writes the era as text in the space that is left
+#     (size 11 here, size 7.5 in the narrower witness columns).
+#   * The witness 住所 row prints no 番地/番/号 marks, unlike the witness 本籍
+#     row and unlike the red form. `address_go` and the two 住所 shapes below
+#     are placed where a handwritten 番地/番 would go, so set a witness's
+#     `is_banchi_address` to `null` on this template to skip the mark and fold
+#     the 番地/号 into `address_second`.
+#   * These printed boxes have no config keys and stay blank: the □同右/□同左
+#     address shortcuts, 世帯主 □同右/□同左, the 養父/養母 rows, □平成/□令和
+#     and □未同居・未挙式 in 同居を始めたとき, □新本籍は街区符号,
+#     □新戸籍の表示確認済, 届出人署名, and the bottom 事件簿番号 /
+#     住所を定めた年月日 / 連絡先 block.
+
+husband:
+  last_name: { pos: [213, 622], size: 18 }
+  last_name_kana: { pos: [213, 653.5], size: 9 }
+  # The 氏/名 cells are split by a dashed line at x 302.
+  first_name: { pos: [305, 622], size: 18 }
+  first_name_kana: { pos: [305, 653.5], size: 9 }
+  # Printed 年/月/日 sit at x 289.0/330.4/371.9 on baseline 605, after the
+  # □昭和□平成 boxes that end at x 237.2.
+  birth_year: { pos: [241, 605], size: 11 }
+  birth_month: { pos: [305, 605], size: 11 }
+  birth_day: { pos: [347, 605], size: 11 }
+  # Line 1 of 住所 starts right of the printed □同右 box (ends x 237.1).
+  address_first: { pos: [243, 583.5], size: 11 }
+  address_second: { pos: [215, 567], size: 11 }
+  address_go: { pos: [332, 557], size: 11 }
+  # Right of 世帯主 □同右 (ends x 272.3), on the の氏名 line.
+  household_person: { pos: [277, 525], size: 11 }
+  # Right of the printed （方書） label, which ends at x 250.1. Three 5pt lines
+  # fit between the 番/号 line and the dashed row bottom at y 545.
+  address_apartment: { pos: [253, 556], size: 5, step: 4.5 }
+  # Drawn when is_banchi_address is true (ellipse around the printed 番地 at
+  # x 314.1-332.5) or false (circle around 番 at x 314.1-323.3).
+  address_banchi_ellipse: [338, 581, 308, 564]
+  address_go_circle: [318.7, 561.7, 8]
+  legally_domiciled_first: { pos: [213, 503], size: 11 }
+  legally_domiciled_second: { pos: [215, 488], size: 11 }
+  head_of_person_of_legally_domiciled: { pos: [247, 456], size: 11 }
+  legally_domiciled_banchi_ellipse: [359.6, 501.3, 329.6, 484.3]
+  legally_domiciled_go_circle: [340, 482.2, 8]
+  # 父 and 母 are the first two of four rows; the 養父/養母 rows below them
+  # (y 417.0-381.5) have no config keys and stay blank.
+  father_name: { pos: [233, 439], size: 11 }
+  mother_name: { pos: [233, 421.5], size: 11 }
+  # 続き柄 cell, x 344.5-395.0, left of the printed 男.
+  relationship: { pos: [356, 424], size: 11 }
+  marital_history:
+    first_marriage_check: { pos: [216.5, 290.5], size: 9 }
+    remarriage_death_check: { pos: [279.5, 299], size: 9 }
+    remarriage_divorce_check: { pos: [279.5, 289], size: 9 }
+    year: { pos: [306, 292], size: 6 }
+    month: { pos: [337, 292], size: 6 }
+    day: { pos: [365, 292], size: 6 }
+  # One ✓ position per job_type value (1-6), in the right half of the printed
+  # 夫 box (x 215.0-239.0) so the ✓ clears the 夫 character.
+  job_type_checks:
+    size: 9
+    positions:
+      1: [229, 272.5]
+      2: [229, 263]
+      3: [229, 254]
+      4: [229, 235.5]
+      5: [229, 217]
+      6: [229, 208]
+
+wife:
+  last_name: { pos: [398.7, 622], size: 18 }
+  last_name_kana: { pos: [398.7, 653.5], size: 9 }
+  first_name: { pos: [490.7, 622], size: 18 }
+  first_name_kana: { pos: [490.7, 653.5], size: 9 }
+  birth_year: { pos: [426.7, 605], size: 11 }
+  birth_month: { pos: [490.7, 605], size: 11 }
+  birth_day: { pos: [532.7, 605], size: 11 }
+  address_first: { pos: [428.7, 583.5], size: 11 }
+  address_second: { pos: [400.7, 567], size: 11 }
+  address_go: { pos: [517.7, 557], size: 11 }
+  household_person: { pos: [462.7, 525], size: 11 }
+  address_apartment: { pos: [438.7, 556], size: 5, step: 4.5 }
+  address_banchi_ellipse: [523.7, 581, 493.7, 564]
+  address_go_circle: [504.4, 561.7, 8]
+  legally_domiciled_first: { pos: [398.7, 503], size: 11 }
+  legally_domiciled_second: { pos: [400.7, 488], size: 11 }
+  head_of_person_of_legally_domiciled: { pos: [432.7, 456], size: 11 }
+  legally_domiciled_banchi_ellipse: [545.3, 501.3, 515.3, 484.3]
+  legally_domiciled_go_circle: [525.7, 482.2, 8]
+  father_name: { pos: [418.7, 439], size: 11 }
+  mother_name: { pos: [418.7, 421.5], size: 11 }
+  # 続き柄 cell, x 530.0-580.8, left of the printed 女.
+  relationship: { pos: [541.7, 424], size: 11 }
+  marital_history:
+    first_marriage_check: { pos: [402.2, 290.5], size: 9 }
+    remarriage_death_check: { pos: [465.2, 299], size: 9 }
+    remarriage_divorce_check: { pos: [465.2, 289], size: 9 }
+    year: { pos: [491.7, 292], size: 6 }
+    month: { pos: [522.7, 292], size: 6 }
+    day: { pos: [550.7, 292], size: 6 }
+  # Right half of the printed 妻 box, x 247.5-271.5.
+  job_type_checks:
+    size: 9
+    positions:
+      1: [261.5, 272.5]
+      2: [261.5, 263]
+      3: [261.5, 254]
+      4: [261.5, 235.5]
+      5: [261.5, 217]
+      6: [261.5, 208]
+
+# 証人 (witnesses) box, top right of the form: x 694-878.5 for witness 1 and
+# x 878.5-1062.5 for witness 2 (a 184.3pt offset), rows y 483-661.5. Row lines:
+# 661.5-622.5 署名, 622.5-598.5 生年月日, 598.5-543.0 住所 (dashed at 571.5),
+# 543.0-483.0 本籍 (dashed at 516.0). The 署名 row is left for a handwritten
+# signature unless `name` is set in the config.
+witness1:
+  # Left of the printed 印, which sits at x 861.0-870.2.
+  name: { pos: [700, 638.5], size: 13 }
+  # Printed 年/月/日 sit at x 760.2/815.0/861.9 on baseline 605.5. The
+  # □昭和□平成 boxes end at x 728.5, leaving ~30pt for the era and year.
+  birth_year: { pos: [730, 605.5], size: 7.5 }
+  birth_month: { pos: [776, 605.5], size: 11 }
+  birth_day: { pos: [830, 605.5], size: 11 }
+  address_first: { pos: [698, 576.5], size: 11 }
+  address_second: { pos: [698, 549], size: 11 }
+  # This row prints no 番地/番/号: the three items below mark where a
+  # handwritten one would go. See the header note.
+  address_go: { pos: [840, 549], size: 11 }
+  address_banchi_ellipse: [839.8, 561, 811.8, 545]
+  address_go_circle: [821.2, 549, 8]
+  legally_domiciled_first: { pos: [698, 521.5], size: 11 }
+  legally_domiciled_second: { pos: [698, 503], size: 11 }
+  # Printed 番地 at x 816.6-835.0, 番 at x 816.6-825.8.
+  legally_domiciled_banchi_ellipse: [839.8, 515.9, 811.8, 499.9]
+  legally_domiciled_go_circle: [821.2, 496.6, 8]
+
+witness2:
+  name: { pos: [884.3, 638.5], size: 13 }
+  birth_year: { pos: [914.3, 605.5], size: 7.5 }
+  birth_month: { pos: [960.3, 605.5], size: 11 }
+  birth_day: { pos: [1014.3, 605.5], size: 11 }
+  address_first: { pos: [882.3, 576.5], size: 11 }
+  address_second: { pos: [882.3, 549], size: 11 }
+  address_go: { pos: [1024.3, 549], size: 11 }
+  address_banchi_ellipse: [1024.1, 561, 996.1, 545]
+  address_go_circle: [1005.5, 549, 8]
+  legally_domiciled_first: { pos: [882.3, 521.5], size: 11 }
+  legally_domiciled_second: { pos: [882.3, 503], size: 11 }
+  legally_domiciled_banchi_ellipse: [1024.1, 515.9, 996.1, 499.9]
+  legally_domiciled_go_circle: [1005.5, 496.6, 8]
+
+# 婚姻後の夫婦の氏・新しい本籍, y 381.5-336.0. The 夫の氏/妻の氏 checkbox
+# column is x 209.5-255.0 and the 新本籍 cell is x 255.0-580.8. The address
+# goes below the printed （左の□の氏の人が…） note, which fills y 366-377.
+new_legally_domiciled:
+  husband_lastname_check: { pos: [215, 363], size: 9 }
+  wife_lastname_check: { pos: [215, 347.5], size: 9 }
+  address: { pos: [262, 352], size: 13 }
+  banchi_ellipse: [535.8, 365.6, 505.8, 348.6]
+  go_circle: [516.2, 346.5, 8]
+
+# Printed 年/月 sit at x 288.7/334.7 on baseline 318.5. The □平成/□令和 boxes
+# to the left and the □未同居・未挙式 box to the right have no config keys.
+to_live_together:
+  year: { pos: [250, 318.5], size: 11 }
+  month: { pos: [305, 318.5], size: 11 }
+
+# The 国勢調査 year drops into the gap in the printed note, between
+# 「（国勢調査の年…」 (ends x 259.6) and 「年…の」 (starts x 276.6).
+national_census:
+  year: { pos: [261, 195.5], size: 5.5 }
+  husband_job: { pos: [258, 180], size: 13 }
+  wife_job: { pos: [443.7, 180], size: 13 }
+
+notification:
+  year: { pos: [173, 735], size: 12 }
+  month: { pos: [202, 735], size: 12 }
+  day: { pos: [232, 735], size: 12 }
+  # Left of the printed 長 殿, which starts at x 238.3.
+  to: { pos: [152, 702.5], size: 11 }
+
+# その他 box, y 174.5-123.0. Three lines fit before the printed
+# □新本籍は街区符号 / □新戸籍の表示確認済 row at y 124.9-137.9.
+other:
+  text: { pos: [152, 165], size: 11, step: 13 }
