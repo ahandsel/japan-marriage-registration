@@ -292,9 +292,21 @@ function familyInfo(cfg, lay, cc) {
 }
 
 function newLegallyDomiciled(cfg, lay, cc) {
-  if (cfg.is_husband_lastname) {
+  // `lastname_of` names the spouse whose surname the couple takes ('husband'
+  // or 'wife'). In a marriage with a foreign national the couple keeps
+  // separate surnames, so neither box applies; `null` skips the ✓.
+  // The legacy boolean `is_husband_lastname` is still honoured.
+  let lastnameOf = cfg.lastname_of;
+  if (lastnameOf === undefined) {
+    if (cfg.is_husband_lastname === true) {
+      lastnameOf = 'husband';
+    } else if (cfg.is_husband_lastname === false) {
+      lastnameOf = 'wife';
+    }
+  }
+  if (lastnameOf === 'husband') {
     drawText(cc, lay.husband_lastname_check, '✓');
-  } else {
+  } else if (lastnameOf === 'wife') {
     drawText(cc, lay.wife_lastname_check, '✓');
   }
   if (cfg.address !== '') {

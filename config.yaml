@@ -81,7 +81,8 @@ wife:
   job_type: 4
 
 new_legally_domiciled:
-  is_husband_lastname: true
+  lastname_of: husband # husband / wife。外国人との婚姻の場合はnullで空欄に
+
   address: 東京都小金井市貫井北町１丁目１
   address_pos: [251, 335]
   is_banchi_address: false
