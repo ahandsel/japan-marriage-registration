@@ -139,7 +139,7 @@ const LEGACY_PERSON_POS_KEYS = {
 
 // --- loading -------------------------------------------------------------------
 
-function layoutNameForTemplate(templateName) {
+export function layoutNameForTemplate(templateName) {
   // Reduce whatever the -t flag or the `template:` key resolved to (short
   // variant, full stem, or a path to a PDF) to the short variant name.
   let name = templateName;

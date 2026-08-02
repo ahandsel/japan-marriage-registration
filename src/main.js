@@ -10,7 +10,11 @@ import { parseArgs } from 'node:util';
 import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb } from 'pdf-lib';
 import YAML from 'yaml';
-import { resolveLayout, TEMPLATE_PREFIX } from './layout.js';
+import {
+  layoutNameForTemplate,
+  resolveLayout,
+  TEMPLATE_PREFIX,
+} from './layout.js';
 
 const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(baseDir, '..');
@@ -20,7 +24,10 @@ const TEMPLATE_DIR = path.join(baseDir, 'template');
 // Every drawing position, font size, and line step comes from the matching
 // per-template layout file, src/layout/<variant>.yaml, resolved by layout.js.
 const DEFAULT_TEMPLATE = 'red';
-const RESULT_PDF = 'result.pdf';
+// Default output name: result-<template>-<HH-MM-SS>.pdf (24-hour local time),
+// so repeated runs never silently overwrite an earlier PDF. CI passes
+// `-o result.pdf` explicitly to keep its artifact and release names stable.
+const RESULT_PDF_PATTERN = 'result-<template>-<HH-MM-SS>.pdf';
 // Local runs default to the gitignored private config; GitHub Actions passes
 // config.yaml explicitly as the first argument. The private config is not
 // committed - if it is missing we scaffold it from the public sample below so a
@@ -95,7 +102,7 @@ positional arguments:
 options:
   -h, --help               show this help message and exit
   -t, --template TEMPLATE  form template to fill in: ${templateChoiceHelp()}, or path to PDF
-  -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF})
+  -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF_PATTERN})
   --list-templates         list the bundled templates and exit
   --init-config             create config-private.yaml from the sample config.yaml
                            (if it is missing) and exit, without generating a PDF`;
@@ -107,7 +114,9 @@ function parseCliArgs() {
     parsed = parseArgs({
       options: {
         template: { type: 'string', short: 't' },
-        output: { type: 'string', short: 'o', default: RESULT_PDF },
+        // No default here: the default name needs the resolved template, which
+        // is only known after the config is read. See defaultOutputName().
+        output: { type: 'string', short: 'o' },
         'list-templates': { type: 'boolean', default: false },
         'init-config': { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
@@ -175,6 +184,18 @@ function addPrivateConfigHeader(configPath) {
 function resolveTemplateName(templateArg, cfg) {
   // CLI flag wins, then the config's `template` key, then the default.
   return templateArg || cfg.template || DEFAULT_TEMPLATE;
+}
+
+function defaultOutputName(templateName) {
+  // result-<template>-<HH-MM-SS>.pdf, 24-hour local time, zero-padded, so
+  // repeated runs never silently overwrite an earlier PDF.
+  const variant = layoutNameForTemplate(templateName);
+  const pad = (n) => String(n).padStart(2, '0');
+  const now = new Date();
+  const time = [now.getHours(), now.getMinutes(), now.getSeconds()]
+    .map(pad)
+    .join('-');
+  return `result-${variant}-${time}.pdf`;
 }
 
 function loadConfig(configPath) {
@@ -468,8 +489,9 @@ async function main() {
   otherInfo(cfg.other, layout.other, cc);
   witnessInfo(cfg.witness1, layout.witness1, cc);
   witnessInfo(cfg.witness2, layout.witness2, cc);
-  fs.writeFileSync(args.output, await doc.save());
-  console.log(`Wrote: ${args.output}`);
+  const output = args.output ?? defaultOutputName(templateName);
+  fs.writeFileSync(output, await doc.save());
+  console.log(`Wrote: ${output}`);
 }
 
 main().catch((err) => {

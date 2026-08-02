@@ -19,7 +19,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: create marriage registration
-        run: node src/main.js config.yaml
+        # -o pins the output name: the local default is timestamped
+        # (result-<template>-<HH-MM-SS>.pdf), but the artifact path is fixed.
+        run: node src/main.js config.yaml -o result.pdf
       - uses: actions/upload-artifact@v4
         with:
           name: marriage_registration

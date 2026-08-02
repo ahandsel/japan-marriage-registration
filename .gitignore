@@ -11,8 +11,8 @@ node_modules/
 # macOS
 .DS_Store
 
-# Generated output
-result.pdf
+# Generated output (result.pdf plus the per-template result-<variant>.pdf)
+result*.pdf
 
 # Local private config (holds your real PII - never commit)
 config-private.yaml
