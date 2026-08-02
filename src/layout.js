@@ -60,9 +60,30 @@ const PERSON_SCHEMA = {
   job_type_checks: 'checks',
 };
 
+// The two witness columns share one schema, like husband and wife do. A
+// witness has no 世帯主/筆頭者 line and no 方書 row on the bundled templates,
+// so the schema is a subset of PERSON_SCHEMA.
+const WITNESS_SCHEMA = {
+  name: 'text',
+  birth_year: 'text',
+  birth_month: 'text',
+  birth_day: 'text',
+  address_first: 'text',
+  address_second: 'text',
+  address_go: 'text',
+  address_banchi_ellipse: 'ellipse',
+  address_go_circle: 'circle',
+  legally_domiciled_first: 'text',
+  legally_domiciled_second: 'text',
+  legally_domiciled_banchi_ellipse: 'ellipse',
+  legally_domiciled_go_circle: 'circle',
+};
+
 const LAYOUT_SCHEMA = {
   husband: PERSON_SCHEMA,
   wife: PERSON_SCHEMA,
+  witness1: WITNESS_SCHEMA,
+  witness2: WITNESS_SCHEMA,
   new_legally_domiciled: {
     husband_lastname_check: 'text',
     wife_lastname_check: 'text',

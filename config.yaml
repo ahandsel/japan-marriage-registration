@@ -98,3 +98,37 @@ national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記�
 other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
   text: |
     ""
+
+# 証人欄。witness1 が左、witness2 が右の列です。証人に手書きしてもらう場合は
+# セクションごと削除（またはコメントアウト）すると欄全体が空白になります。
+# Witness box. witness1 is the left column and witness2 the right one. Remove
+# (or comment out) a whole section to leave that column blank for handwriting.
+witness1:
+  # 署名は必ず証人本人の自署が必要です。通常は '' のままにして、印刷後に
+  # 署名してもらってください。The signature must be handwritten by the
+  # witness, so leave name as '' and have them sign the printout.
+  name: ''
+  birth_year: 昭和６０
+  birth_month: １
+  birth_day: ２３
+  address_first: 東京都新宿区西新宿
+  address_second: ２丁目　８
+  is_banchi_address: false
+  address_go: １
+  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null に
+  legally_domiciled_first: 東京都新宿区西新宿
+  legally_domiciled_second: ２丁目　８
+  is_banchi_legally_domiciled: true
+
+witness2:
+  name: ''
+  birth_year: 平成２
+  birth_month: １１
+  birth_day: ３
+  address_first: 神奈川県横浜市中区日本大通
+  address_second: １丁目　１
+  is_banchi_address: false
+  address_go: ２
+  legally_domiciled_first: 神奈川県横浜市中区日本大通
+  legally_domiciled_second: １丁目　１
+  is_banchi_legally_domiciled: true

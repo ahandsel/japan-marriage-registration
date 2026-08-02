@@ -89,6 +89,40 @@ wife:
       5: [249, 209]
       6: [249, 199]
 
+# 証人 (witnesses) box, top right of the form: x 724-936 for witness 1 and
+# x 936-1148 for witness 2 (a 212pt offset), rows y 451-635. The 署名 row is
+# left for a handwritten signature unless `name` is set in the config.
+witness1:
+  name: { pos: [734, 610], size: 14 }
+  # Printed 年/月/日 labels sit at x 812/867/922 on baseline 579.4.
+  birth_year: { pos: [744, 581], size: 12 }
+  birth_month: { pos: [830, 581], size: 12 }
+  birth_day: { pos: [886, 581], size: 12 }
+  address_first: { pos: [730, 546], size: 12 }
+  address_second: { pos: [730, 516], size: 12 }
+  address_go: { pos: [854, 516], size: 12 }
+  address_banchi_ellipse: [850, 536.5, 825, 523.5]
+  address_go_circle: [832.5, 519, 6]
+  legally_domiciled_first: { pos: [730, 487], size: 12 }
+  legally_domiciled_second: { pos: [730, 457], size: 12 }
+  legally_domiciled_banchi_ellipse: [887, 478, 862, 464]
+  legally_domiciled_go_circle: [869.5, 460, 6]
+
+witness2:
+  name: { pos: [946, 610], size: 14 }
+  birth_year: { pos: [956, 581], size: 12 }
+  birth_month: { pos: [1042, 581], size: 12 }
+  birth_day: { pos: [1098, 581], size: 12 }
+  address_first: { pos: [942, 546], size: 12 }
+  address_second: { pos: [942, 516], size: 12 }
+  address_go: { pos: [1066, 516], size: 12 }
+  address_banchi_ellipse: [1062, 536.5, 1037, 523.5]
+  address_go_circle: [1044.5, 519, 6]
+  legally_domiciled_first: { pos: [942, 487], size: 12 }
+  legally_domiciled_second: { pos: [942, 457], size: 12 }
+  legally_domiciled_banchi_ellipse: [1099, 478, 1074, 464]
+  legally_domiciled_go_circle: [1081.5, 460, 6]
+
 new_legally_domiciled:
   husband_lastname_check: { pos: [194, 351], size: 12 }
   wife_lastname_check: { pos: [194, 340], size: 12 }

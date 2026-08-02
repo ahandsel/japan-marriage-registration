@@ -354,6 +354,42 @@ function otherInfo(cfg, lay, cc) {
   drawMultiline(cc, lay.text, cfg.text);
 }
 
+function witnessInfo(cfg, lay, cc) {
+  // The whole witness section is optional: configs written before it existed
+  // do not have it, and many couples have the witnesses fill the box in by
+  // hand. Missing per-field keys are treated as empty for the same reason.
+  if (cfg === undefined || cfg === null) {
+    return;
+  }
+  const text = (value) => value ?? '';
+  // 署名 must be handwritten by the witness for the filing to be valid, so
+  // leave `name` empty ('') unless the printout is a draft or a sample.
+  drawText(cc, lay.name, text(cfg.name));
+  drawText(cc, lay.birth_year, text(cfg.birth_year));
+  drawText(cc, lay.birth_month, text(cfg.birth_month));
+  drawText(cc, lay.birth_day, text(cfg.birth_day));
+  drawText(cc, lay.address_first, text(cfg.address_first));
+  drawText(cc, lay.address_second, text(cfg.address_second));
+  drawText(cc, lay.address_go, text(cfg.address_go));
+  // `null` skips the 番地/番 marking, as in legallyDomiciledInfo.
+  if (cfg.is_banchi_address === true) {
+    cc.ellipse(...lay.address_banchi_ellipse);
+  } else if (cfg.is_banchi_address === false) {
+    cc.circle(...lay.address_go_circle);
+  }
+  drawText(cc, lay.legally_domiciled_first, text(cfg.legally_domiciled_first));
+  drawText(
+    cc,
+    lay.legally_domiciled_second,
+    text(cfg.legally_domiciled_second),
+  );
+  if (cfg.is_banchi_legally_domiciled === true) {
+    cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
+  } else if (cfg.is_banchi_legally_domiciled === false) {
+    cc.circle(...lay.legally_domiciled_go_circle);
+  }
+}
+
 async function main() {
   const args = parseCliArgs();
   if (args.listTemplates) {
@@ -418,6 +454,8 @@ async function main() {
   nationalCensusInfo(cfg.national_census, layout.national_census, cc);
   notificationInfo(cfg.notification, layout.notification, cc);
   otherInfo(cfg.other, layout.other, cc);
+  witnessInfo(cfg.witness1, layout.witness1, cc);
+  witnessInfo(cfg.witness2, layout.witness2, cc);
   fs.writeFileSync(args.output, await doc.save());
   console.log(`Wrote: ${args.output}`);
 }

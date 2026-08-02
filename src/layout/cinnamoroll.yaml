@@ -11,8 +11,8 @@
 #
 # ⚠️ Only partially tuned. Aligned so far: names, addresses and 本籍 text,
 # parents' names, birth dates, 号 vs the printed 番 mark, 方書, the ✓ marks,
-# and the 番地/号 circles. Everything else still sits on the red grid and
-# needs per-field tuning.
+# the 番地/号 circles, and the 証人 (witness) columns. Everything else still
+# sits on the red grid and needs per-field tuning.
 
 husband:
   last_name: { pos: [235, 623], size: 24 }
@@ -95,6 +95,51 @@ wife:
       4: [323.2, 213.5]
       5: [352, 213.5]
       6: [380.8, 213.5]
+
+# 証人 (witnesses) box, top right of the form: x 720-909 for witness 1 and
+# x 909-1107 for witness 2 (a 189pt offset), rows y 470-662. The 署名 row is
+# left for a handwritten signature unless `name` is set in the config. The
+# era (昭和/平成/西暦) checkboxes are not ticked; write the era as part of
+# `birth_year`, like the husband and wife columns. The 方書 line has no
+# config key and stays handwritten.
+witness1:
+  name: { pos: [726, 635], size: 14 }
+  # Printed 年/月/日 labels sit at x 831/867/902 on baseline 605. The era
+  # checkboxes leave only 41pt before 年, so a 4-character year like 昭和６０
+  # needs the smaller 10pt size to fit.
+  birth_year: { pos: [787, 605.5], size: 10 }
+  birth_month: { pos: [841, 605.5], size: 10 }
+  birth_day: { pos: [877, 605.5], size: 10 }
+  address_first: { pos: [726, 576], size: 12 }
+  # Written on the ☐番地 line; the printed 丁目 on the ☐番 line below stays
+  # unused because the value holds its own 丁目, like the husband/wife columns.
+  address_second: { pos: [726, 557], size: 12 }
+  address_go: { pos: [858, 546], size: 12 }
+  # The ellipse rings the printed ☐番地 checkbox row; the circle rings the
+  # ☐ of 番, matching the husband/wife columns on this template.
+  address_banchi_ellipse: [863, 566.5, 826, 553.5]
+  address_go_circle: [833, 550, 6]
+  legally_domiciled_first: { pos: [726, 505], size: 12 }
+  # On the ☐番地 line, above the printed 丁目, for the same reason as
+  # address_second.
+  legally_domiciled_second: { pos: [726, 486], size: 12 }
+  legally_domiciled_banchi_ellipse: [863, 496, 826, 482.5]
+  legally_domiciled_go_circle: [833, 478.5, 6]
+
+witness2:
+  name: { pos: [915, 635], size: 14 }
+  birth_year: { pos: [976, 605.5], size: 10 }
+  birth_month: { pos: [1030, 605.5], size: 10 }
+  birth_day: { pos: [1066, 605.5], size: 10 }
+  address_first: { pos: [915, 576], size: 12 }
+  address_second: { pos: [915, 557], size: 12 }
+  address_go: { pos: [1047, 546], size: 12 }
+  address_banchi_ellipse: [1052, 566.5, 1015, 553.5]
+  address_go_circle: [1022, 550, 6]
+  legally_domiciled_first: { pos: [915, 505], size: 12 }
+  legally_domiciled_second: { pos: [915, 486], size: 12 }
+  legally_domiciled_banchi_ellipse: [1052, 496, 1015, 482.5]
+  legally_domiciled_go_circle: [1022, 478.5, 6]
 
 new_legally_domiciled:
   husband_lastname_check: { pos: [217.8, 318.5], size: 10 }
