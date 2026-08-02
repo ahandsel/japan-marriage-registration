@@ -1,6 +1,6 @@
 # Layout for the "cinnamoroll" template
 # (jp-marriage-registration-cinnamoroll.pdf, 品川区のシナモロール様式).
-# Same schema as simple.yaml: absolute [x, y] baseline positions in PDF points
+# Same schema as red.yaml: absolute [x, y] baseline positions in PDF points
 # from the bottom-left corner, `size` in points, `step` between lines of a
 # multi-line field, circles as [x, y, r], ellipses as two opposite corners.
 #
@@ -11,7 +11,7 @@
 #
 # ⚠️ Only partially tuned. Aligned so far: names, addresses and 本籍 text,
 # parents' names, birth dates, 号 vs the printed 番 mark, 方書, the ✓ marks,
-# and the 番地/号 circles. Everything else still sits on the simple grid and
+# and the 番地/号 circles. Everything else still sits on the red grid and
 # needs per-field tuning.
 
 husband:

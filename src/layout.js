@@ -13,7 +13,7 @@ const LAYOUT_DIR = path.join(baseDir, 'layout');
 // Bundled templates are named "<prefix><variant>.pdf"; the matching layout is
 // "layout/<variant>.yaml". Exported so main.js shares the naming convention.
 export const TEMPLATE_PREFIX = 'jp-marriage-registration-';
-const DEFAULT_LAYOUT = 'simple';
+const DEFAULT_LAYOUT = 'red';
 
 function fail(message) {
   console.error(message);

@@ -16,10 +16,10 @@ const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(baseDir, '..');
 const TEMPLATE_DIR = path.join(baseDir, 'template');
 // Bundled templates are named "<TEMPLATE_PREFIX><variant>.pdf" so they can be
-// selected by the short variant name alone (e.g. "simple", "cinnamoroll").
+// selected by the short variant name alone (e.g. "red", "cinnamoroll").
 // Every drawing position, font size, and line step comes from the matching
 // per-template layout file, src/layout/<variant>.yaml, resolved by layout.js.
-const DEFAULT_TEMPLATE = 'simple';
+const DEFAULT_TEMPLATE = 'red';
 const RESULT_PDF = 'result.pdf';
 // Local runs default to the gitignored private config; GitHub Actions passes
 // config.yaml explicitly as the first argument. The private config is not

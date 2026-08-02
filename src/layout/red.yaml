@@ -1,4 +1,4 @@
-# Layout for the "simple" template (jp-marriage-registration-simple.pdf).
+# Layout for the "red" template (jp-marriage-registration-red.pdf).
 # Every drawn item has an absolute position; nothing is derived from another
 # field. Coordinates are PDF points measured from the bottom-left corner, and
 # `pos` is the [x, y] of the text baseline. `size` is the font size in points,
