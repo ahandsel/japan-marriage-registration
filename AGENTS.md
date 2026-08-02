@@ -6,7 +6,8 @@ Keep it accurate as the code changes.
 
 ## What this is
 
-A generator that overlays text onto a blank Japanese marriage registration form (婚姻届) PDF template and writes a filled-in `result.pdf`.
+A generator that overlays text onto a blank Japanese marriage registration form (婚姻届) PDF template and writes a filled-in PDF.
+The default output name is timestamped, `result-<template>-<HH-MM-SS>.pdf` (24-hour local time), so repeated runs never overwrite each other; `-o` overrides it, and CI pins `-o result.pdf`.
 All input comes from a single YAML config.
 There is no UI and no server.
 
@@ -43,7 +44,7 @@ This project handles real personal information (PII: names, birthdates, addresse
 ## Common commands
 
 ```bash
-./start.sh                        # install deps, generate result.pdf, open it (uses config-private.yaml)
+./start.sh                        # install deps, generate result-<template>-<HH-MM-SS>.pdf, open it (uses config-private.yaml)
 ./start.sh --template cinnamoroll # extra args are forwarded to main.js
 node src/main.js                  # generate from config-private.yaml (local default)
 node src/main.js config.yaml      # generate from an explicit config (what CI does)
@@ -57,7 +58,17 @@ pnpm lint                         # prettier --write + markdownlint-cli2 --fix (
 
 There is **no test suite** and no build step. To verify a change, regenerate the
 PDF and inspect it visually - coordinates cannot be checked any other way. Write
-throwaway output to the scratchpad with `-o`, not over `result.pdf`.
+throwaway output to the scratchpad with `-o`, not into the repo root: the
+timestamped default name never overwrites anything, but the files pile up.
+
+To _derive_ a coordinate rather than eyeball it, note that some templates carry a
+real text layer: `pdftotext -bbox-layout <template>.pdf out.xhtml` then lists
+every printed label (年, 月, 日, 番地, 番, 号, the □ boxes) with exact
+coordinates, so a field can be placed against the label it belongs next to. The
+`black` template has such a layer; `red` is a flattened Photoshop image and does
+not, so its grid has to be measured from a raster instead. Remember that
+`pdftotext` measures y from the _top_ of the page, while the layout files measure
+it from the bottom: `y_layout = page_height - y_pdftotext`.
 
 
 ## How the code works (the important part)
@@ -72,7 +83,7 @@ drawing API (`setFont`, `drawString`, `ellipse`, `circle`).
 * **All positioning numbers are data, not code.** They live in per-template
   layout YAML files, `src/layout/<variant>.yaml`, selected by the same name
   that the `-t/--template` flag and the `template:` config key resolve (a
-  template without a layout file falls back to the `simple` layout).
+  template without a layout file falls back to the `red` layout).
   `src/layout.js` loads that file, deep-merges an optional `layout:` block
   from the user config over it, applies the legacy `*_pos` overrides,
   validates the result, and returns the resolved layout object. Layout tuning
@@ -86,19 +97,31 @@ drawing API (`setFont`, `drawString`, `ellipse`, `circle`).
   the config section (the text), the matching resolved layout section (the
   positions), and the canvas. Husband and wife share the same functions; their
   columns differ only in the layout data.
-* `src/layout/simple.yaml` is fully tuned. `src/layout/cinnamoroll.yaml` is
-  only **partially** tuned: names, kana, birth dates, addresses, 本籍,
-  parents' names, the ✓ checkmarks, and the 番地/号 marks line up, but the
-  届出 (notification), 続き柄, 世帯主, 国勢調査, and その他 fields still sit
-  on the simple grid and need per-field tuning (see the header comment in that
-  file).
+* `src/layout/red.yaml` and `src/layout/black.yaml` are fully tuned.
+  `src/layout/cinnamoroll.yaml` is only **partially** tuned: names, kana, birth
+  dates, addresses, 本籍, parents' names, the ✓ checkmarks, the 番地/号 marks,
+  and the 証人 (witness) columns line up, but the 届出 (notification), 続き柄,
+  世帯主, 国勢調査, and その他 fields still sit on the red grid and need
+  per-field tuning (see the header comment in that file).
+* The black form is a denser grid than the red one, so `black.yaml` uses
+  smaller sizes (names at 18pt rather than 24, kana at 9pt rather than 12) and
+  it prints boxes the config has no keys for: the □昭和□平成 era checkboxes,
+  □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the bottom
+  事件簿番号 block all stay blank for handwriting. Its witness 住所 row prints
+  no 番地/番/号, so a witness's `is_banchi_address` should be `null` on this
+  template. The header comment in `black.yaml` records the measured grid and
+  every one of these quirks.
 
 
 ## Config shape
 
 Top-level sections: `notification`, `husband`, `wife`, `new_legally_domiciled`,
-`to_live_together`, `national_census`, `other`. `husband` and `wife` share the
-same keys. See `config.yaml` and the README for the full field reference. An
+`to_live_together`, `national_census`, `other`, `witness1`, `witness2`.
+`husband` and `wife` share the same keys, and so do `witness1` and `witness2`
+(the left and right columns of the 証人 box). The witness sections are
+optional: a config without them (for example one written before they existed)
+leaves the whole witness box blank for handwriting, and the witness `name`
+should stay `''` because a witness signature must be handwritten. See `config.yaml` and the README for the full field reference. An
 optional top-level `template:` key selects the template; the `-t/--template`
 flag overrides it. An optional top-level `layout:` block deep-merges over the
 template's layout file, so a config can nudge one coordinate without copying
@@ -111,8 +134,8 @@ drawn relative to them, so old configs render unchanged.
 ## Templates & fonts
 
 * Templates: `src/template/*.pdf`, named `jp-marriage-registration-<variant>.pdf`.
-  Select by short variant name (`simple`, `cinnamoroll`), full stem, or a path
-  to any PDF. Default variant is `simple`.
+  Select by short variant name (`red`, `black`, `cinnamoroll`), full stem, or a
+  path to any PDF. Default variant is `red`.
 * Japanese fonts: `src/fonts/ipaexm.ttf` (IPAex Mincho, used by JS) and
   `ipaexg.ttf`. `main.js` subsets and embeds the font so Japanese renders.
   Fonts ship under the IPA Font License (see the license files in `src/fonts/`).

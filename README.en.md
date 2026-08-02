@@ -21,6 +21,7 @@
   * [Dependencies](#dependencies)
 * [Configuration](#configuration)
   * [Details](#details)
+  * [Templates](#templates)
   * [Layout](#layout)
 * [Usage - run it locally](#usage---run-it-locally)
 * [Usage - run via GitHub Actions](#usage---run-via-github-actions)
@@ -31,7 +32,7 @@
 
 This project generates a filled-in Japanese marriage registration form (`婚姻届`) as a PDF from a single YAML file.
 
-You describe both partners' details - names, birthdays, addresses, etc. - in the [YAML][] file, and `src/main.js` overlays that text onto the official form template and writes `result.pdf`.
+You describe both partners' details - names, birthdays, addresses, etc. - in the [YAML][] file, and `src/main.js` overlays that text onto the official form template and writes a timestamped PDF, `result-<template>-<HH-MM-SS>.pdf` (override the name with `-o`).
 The configuration is split across two files (see [Configuration](#configuration)):
 
 * locally you use `config-private.yaml` (your details, gitignored)
@@ -104,7 +105,7 @@ pnpm --version # 10.0.0 or newer
    ./start.sh
    ```
 
-   `start.sh` handles the rest for you. It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result.pdf`, and opens it. At this point `result.pdf` still shows the sample placeholder details.
+   `start.sh` handles the rest for you. It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it. At this point the PDF still shows the sample placeholder details.
 
 4. Edit `config-private.yaml` with your own details, then run `./start.sh` again. See [Configuration](#configuration) for the field reference.
 
@@ -170,6 +171,8 @@ Each file has the following top-level sections:
 | `to_live_together`      | When the couple started (or will start) living together       |
 | `national_census`       | National census info (only required during the census period) |
 | `other`                 | Free-text notes (e.g. old/new kanji changes, consent)         |
+| `witness1`              | Left witness column (omit to leave it blank for handwriting)  |
+| `witness2`              | Right witness column (omit to leave it blank for handwriting) |
 
 
 ### Details
@@ -220,12 +223,69 @@ husband:
 
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
 
+`witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields. Remove (or comment out) a whole section to leave that column blank for handwriting.
+
+```yaml
+witness1:
+  # The signature must be handwritten by the witness, so leave name as ''
+  # and have them sign the printout.
+  name: ''
+  birth_year: 昭和６０
+  birth_month: １
+  birth_day: ２３
+  address_first: 東京都新宿区西新宿
+  address_second: ２丁目　８
+  is_banchi_address: false
+  address_go: １
+  # A foreign witness writes only their nationality; set
+  # is_banchi_legally_domiciled to null to skip the 番地/番 mark.
+  legally_domiciled_first: 東京都新宿区西新宿
+  legally_domiciled_second: ２丁目　８
+  is_banchi_legally_domiciled: true
+```
+
 [Release]: https://github.com/ahandsel/japan-marriage-registration/releases
+
+
+### Templates
+
+Three form templates ship in `src/template/`. Select one with the `-t/--template` flag or the top-level `template:` key in your config; the default is `red`.
+
+| Template      | File                                       | Notes                                                                                     |
+| ------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `red`         | `jp-marriage-registration-red.pdf`         | The red-printed standard form. The default, and fully tuned.                              |
+| `black`       | `jp-marriage-registration-black.pdf`       | A black-printed form with a denser grid, era checkboxes, and 養父/養母 rows. Fully tuned. |
+| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | Shinagawa City's Cinnamoroll form. Only partially tuned.                                  |
+
+```bash
+node src/main.js --list-templates           # list the bundled templates
+node src/main.js -t black config-black.yaml # generate the black form from its sample config
+```
+
+Each template also has its own pnpm scripts. The first column is the one you use day to day.
+
+| Template      | Generate the PDF           | Create a template-specific config | Create or check the layout file |
+| ------------- | -------------------------- | --------------------------------- | ------------------------------- |
+| `red`         | `pnpm run red:pdf`         | `pnpm run red:config`             | `pnpm run red:layout`           |
+| `black`       | `pnpm run black:pdf`       | `pnpm run black:config`           | `pnpm run black:layout`         |
+| `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config`     | `pnpm run cinnamoroll:layout`   |
+
+* **`<template>:pdf`** - generates `result-<template>.pdf` from that form. The name is fixed, so each run overwrites the previous file. It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
+* **`<template>:config`** - creates `config-private-<template>.yaml`, and does nothing if it already exists. You only need it to keep different details per template; one shared `config-private.yaml` works without it.
+* **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing. All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
+
+`pnpm run cute` is an alias for the same form as `pnpm run cinnamoroll:pdf`, except that it writes the timestamped `result-cinnamoroll-<HH-MM-SS>.pdf` instead of a fixed name.
+
+> ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing) and only rewrites the `template:` key, so it carries over whatever `*_pos` values the copied file has. Those values are red-template coordinates, so delete the `*_pos` lines after creating the file for `black` or `cinnamoroll`; every position then comes from the layout file.
+
+The `*_pos` values in `config.yaml` are red-template coordinates, so reusing that file with another template puts the text in the wrong place. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cute.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+
+The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom. Those stay blank for handwriting. Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
 
 
 ### Layout
 
-All drawing positions live in per-template layout files, `src/layout/simple.yaml` and `src/layout/cinnamoroll.yaml`, selected by the same name as the `-t/--template` flag or the `template:` config key.
+All drawing positions live in per-template layout files, `src/layout/red.yaml`, `src/layout/black.yaml`, and `src/layout/cinnamoroll.yaml`, selected by the same name as the `-t/--template` flag or the `template:` config key.
 Every entry is absolute: `pos: [x, y]` is the text baseline in PDF points measured from the bottom-left corner, `size` is the font size in points, and the multi-line fields (`address_apartment` and `other.text`) also have a `step`, the distance between lines.
 Circles are `[x, y, r]`, and ellipses are two opposite bounding-box corners `[x1, y1, x2, y2]`.
 The `job_type_checks` entry maps each `job_type` value (1-6) to the absolute position of its ✓ mark.
@@ -254,12 +314,12 @@ Edit `config-private.yaml` with your details, then run (if the file does not exi
 ./start.sh
 ```
 
-That's it. The script installs dependencies, generates `result.pdf`, and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
+That's it. The script installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
 
 To run the generator step manually instead (after installing dependencies from [Initial setup](#initial-setup)):
 
 ```bash
-node src/main.js             # uses config-private.yaml, writes result.pdf
+node src/main.js             # uses config-private.yaml, writes result-<template>-<HH-MM-SS>.pdf
 node src/main.js config.yaml # or pass a config path explicitly
 ```
 
@@ -267,8 +327,8 @@ The same steps are also available as pnpm scripts:
 
 ```bash
 pnpm run init-config     # create config-private.yaml from the sample, without generating a PDF
-pnpm run generate        # generate result.pdf from config-private.yaml
-pnpm run generate-sample # generate result.pdf from the sample config.yaml (what CI runs)
+pnpm run generate        # generate the timestamped PDF from config-private.yaml
+pnpm run generate-sample # generate the timestamped PDF from the sample config.yaml
 ```
 
 `pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run. It only adds the header comments that mark the file as private and local-only, if they are missing:
@@ -296,12 +356,12 @@ Both workflows run `node src/main.js config.yaml`, building the PDF from the com
 
 The `.github/` directory holds the repository's GitHub automation configuration.
 
-| File                                    | Trigger                                   | Role                                                                                                                                                                    |
-| --------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/dependabot.yml`                | Daily (scheduled)                         | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) daily and opens pull requests when dependency updates exist.                                      |
-| `.github/workflows/pr.yml`              | Pull requests against `main`              | Builds the PDF with `node src/main.js config.yaml` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the run's summary page.  |
-| `.github/workflows/push.yml`            | Pushes to `main`                          | Builds the PDF and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.                                                 |
-| `.github/workflows/pr-lint-autofix.yml` | Pull requests (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository. |
+| File                                    | Trigger                                   | Role                                                                                                                                                                                 |
+| --------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `.github/dependabot.yml`                | Daily (scheduled)                         | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) daily and opens pull requests when dependency updates exist.                                                   |
+| `.github/workflows/pr.yml`              | Pull requests against `main`              | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the run's summary page. |
+| `.github/workflows/push.yml`            | Pushes to `main`                          | Builds the PDF and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.                                                              |
+| `.github/workflows/pr-lint-autofix.yml` | Pull requests (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository.              |
 
 All workflows run on Node.js 24 with pnpm and authenticate with the built-in `GITHUB_TOKEN`, so no extra secrets are required.
 

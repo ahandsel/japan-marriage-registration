@@ -18,6 +18,7 @@
 * [初期セットアップ](#初期セットアップ)
 * [設定](#設定)
   * [情報](#情報)
+  * [テンプレート](#テンプレート)
   * [レイアウト](#レイアウト)
 * [使い方 - ローカルで実行する](#使い方---ローカルで実行する)
 * [使い方 - GitHub Actionsで実行する](#使い方---github-actionsで実行する)
@@ -28,7 +29,7 @@
 
 このプロジェクトは、1つのYAMLファイルから記入済みの婚姻届をPDFとして生成します。
 
-夫・妻それぞれの情報（氏名・生年月日・住所・本籍・父母の氏名など）をYAMLファイルに記述すると、`src/main.js` がその内容を婚姻届のテンプレートに重ねて `result.pdf` を出力します。設定は2つのファイルに分かれています（詳しくは[設定](#設定)を参照）。ローカルでは自分の情報を書いた `config-private.yaml`（Git管理外）を使い、GitHub Actionsではサンプルの `config.yaml` を使います。
+夫・妻それぞれの情報（氏名・生年月日・住所・本籍・父母の氏名など）をYAMLファイルに記述すると、`src/main.js` がその内容を婚姻届のテンプレートに重ねて、時刻付きの `result-<template>-<HH-MM-SS>.pdf` を出力します（ファイル名は `-o` で変更できます）。設定は2つのファイルに分かれています（詳しくは[設定](#設定)を参照）。ローカルでは自分の情報を書いた `config-private.yaml`（Git管理外）を使い、GitHub Actionsではサンプルの `config.yaml` を使います。
 
 PDFの生成方法は2通りあります。
 
@@ -90,6 +91,8 @@ cp config.yaml config-private.yaml
 | `to_live_together`      | 同居を始めた（始める）時期                    |
 | `national_census`       | 国勢調査に関する情報（該当期間のみ記載）      |
 | `other`                 | 自由記入欄（旧字体⇔新字体の変更、同意欄など） |
+| `witness1`              | 証人欄の左の列（省略すると手書き用に空欄）    |
+| `witness2`              | 証人欄の右の列（省略すると手書き用に空欄）    |
 
 
 ### 情報
@@ -139,12 +142,67 @@ husband:
 
 `wife` のセクションも同様に記入します（項目は同じで、用紙の右側の列の座標はレイアウトファイルが持っています）。
 
+`witness1` と `witness2` は証人欄の左右の列で、同じ項目を持ちます。セクションごと削除（またはコメントアウト）すると、その列は手書き用に空欄のままになります。
+
+```yaml
+witness1:
+  # 署名は必ず証人本人の自署が必要です。通常は '' のままにして、印刷後に署名してもらってください。
+  name: ''
+  birth_year: 昭和６０
+  birth_month: １
+  birth_day: ２３
+  address_first: 東京都新宿区西新宿
+  address_second: ２丁目　８
+  is_banchi_address: false
+  address_go: １
+  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします
+  legally_domiciled_first: 東京都新宿区西新宿
+  legally_domiciled_second: ２丁目　８
+  is_banchi_legally_domiciled: true
+```
+
 [Release]: https://github.com/ahandsel/japan-marriage-registration/releases
+
+
+### テンプレート
+
+`src/template/` に3種類の様式が同梱されています。`-t/--template` フラグ、または設定ファイルのトップレベルの `template:` キーで選択します（既定は `red`）。
+
+| テンプレート  | ファイル                                   | 内容                                                                                             |
+| ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
+| `red`         | `jp-marriage-registration-red.pdf`         | 赤刷りの標準様式。既定で、全項目を調整済みです。                                                 |
+| `black`       | `jp-marriage-registration-black.pdf`       | 黒刷りの様式。罫線が細かく、元号のチェックボックスや養父母の行があります。全項目を調整済みです。 |
+| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | 品川区のシナモロール様式。一部の項目のみ調整済みです。                                           |
+
+```bash
+node src/main.js --list-templates           # 同梱テンプレートの一覧を表示
+node src/main.js -t black config-black.yaml # 黒刷り様式でサンプルから生成
+```
+
+様式ごとにpnpmスクリプトが用意されています。ふだん使うのは1列目の `<様式>:pdf` です。
+
+| 様式          | PDFを生成                  | 専用の設定ファイルを作成      | レイアウトファイルを作成・検証 |
+| ------------- | -------------------------- | ----------------------------- | ------------------------------ |
+| `red`         | `pnpm run red:pdf`         | `pnpm run red:config`         | `pnpm run red:layout`          |
+| `black`       | `pnpm run black:pdf`       | `pnpm run black:config`       | `pnpm run black:layout`        |
+| `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config` | `pnpm run cinnamoroll:layout`  |
+
+* **`<様式>:pdf`** - その様式で `result-<様式>.pdf` を生成します。ファイル名は固定なので、実行するたびに上書きされます。設定ファイルは `config-private-<様式>.yaml` があればそれを使い、無ければ共通の `config-private.yaml` を使います。
+* **`<様式>:config`** - その様式専用の `config-private-<様式>.yaml` を作成します。すでにある場合は何もしません。様式ごとに別の内容を書きたいときだけ使ってください。1つの `config-private.yaml` を使い回す場合は不要です。
+* **`<様式>:layout`** - `src/layout/<様式>.yaml` が無ければ作成します。同梱の3種類はすべて調整済みのファイルがあるため、実行しても上書きされず、内容の検証だけを行います。
+
+`pnpm run cute` は `pnpm run cinnamoroll:pdf` と同じ様式を使う別名ですが、出力は時刻付きの `result-cinnamoroll-<HH-MM-SS>.pdf` になります。
+
+> ⚠️ `<様式>:config` は `config-private.yaml`（無い場合はサンプルの `config.yaml`）をコピーし、`template:` キーだけを書き換えて作られます。そのため、コピー元にある `*_pos` 項目はそのまま引き継がれます。これは `red` 用の座標なので、`black` と `cinnamoroll` で使うときはコピー後に `*_pos` の行を削除してください。削除すれば配置はレイアウトファイルに任されます。
+
+`config.yaml` の `*_pos` 項目は `red` 用の座標なので、他の様式にそのまま使うと文字がずれます。`black` と `cinnamoroll` には様式ごとのサンプル設定（`config-black.yaml` と `config-cute.yaml`）があり、`template:` キーで様式を指定し、配置はレイアウトファイルに任せています。
+
+黒刷り様式には対応する設定項目がない印字欄（□昭和□平成の元号チェック、□同右・□同左、養父・養母の行、□未同居・未挙式、届出人署名、事件簿番号の欄）があり、これらは手書き用に空欄のまま出力されます。証人の住所欄には番地・番・号の印字がないため、証人の `is_banchi_address` は `null` にして、番地と号は `address_second` にまとめてください。
 
 
 ### レイアウト
 
-すべての描画位置は、テンプレートごとのレイアウトファイル `src/layout/simple.yaml` と `src/layout/cinnamoroll.yaml` が持ちます。`-t/--template` フラグや `template:` キーと同じ名前で選択されます。
+すべての描画位置は、テンプレートごとのレイアウトファイル `src/layout/red.yaml`、`src/layout/black.yaml`、`src/layout/cinnamoroll.yaml` が持ちます。`-t/--template` フラグや `template:` キーと同じ名前で選択されます。
 各項目は絶対座標です。`pos: [x, y]` は左下を原点とするテキストのベースライン位置（ポイント単位）、`size` はフォントサイズで、複数行の項目（`address_apartment` と `other.text`）には行間を表す `step` があります。円は `[x, y, r]`、楕円は対角の2つの角 `[x1, y1, x2, y2]` で表します。`job_type_checks` は `job_type` の値（1-6）ごとに✓マークの絶対位置を持ちます。
 
 レイアウトファイルを編集せずに位置を調整したいときは、設定ファイルに `layout:` ブロックを追加します。テンプレートのレイアウトに深いマージ（deep merge）で重なるため、変更したいキーだけを書けば済みます。
@@ -166,12 +224,12 @@ layout:
 ./start.sh
 ```
 
-これだけです。スクリプトが依存関係をインストールし、`result.pdf` を生成して開きます。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
+これだけです。スクリプトが依存関係をインストールし、`result-<template>-<HH-MM-SS>.pdf` を生成して開きます（時刻付きの名前なので、以前の出力は上書きされません）。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
 
 生成ステップだけを手動で実行したい場合は、[初期セットアップ](#初期セットアップ)で依存関係をインストールしたうえで、以下を実行します。
 
 ```bash
-node src/main.js             # config-private.yaml を使って result.pdf を出力
+node src/main.js             # config-private.yaml を使って result-<template>-<HH-MM-SS>.pdf を出力
 node src/main.js config.yaml # 設定ファイルを明示的に指定することも可能
 ```
 
@@ -179,8 +237,8 @@ node src/main.js config.yaml # 設定ファイルを明示的に指定するこ�
 
 ```bash
 pnpm run init-config     # PDFを生成せずに、サンプルから config-private.yaml を作成する
-pnpm run generate        # config-private.yaml から result.pdf を生成する
-pnpm run generate-sample # サンプルの config.yaml から result.pdf を生成する（CIと同じ動作）
+pnpm run generate        # config-private.yaml から時刻付きのPDFを生成する
+pnpm run generate-sample # サンプルの config.yaml から時刻付きのPDFを生成する
 ```
 
 `pnpm run init-config` は既存の `config-private.yaml` を上書きしないため、何度実行しても安全です。非公開・ローカル専用であることを示す以下のヘッダーコメントが無い場合に、それだけを追加します。
@@ -207,12 +265,12 @@ CIでPDFをビルドするワークフローが2つあります。
 
 `.github/` には、GitHubの自動化に関する設定ファイルがまとまっています。各ファイルの役割は以下のとおりです。
 
-| ファイル                                | トリガー                           | 役割                                                                                                                                                                                                  |
-| --------------------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/dependabot.yml`                | 毎日（スケジュール実行）           | [Dependabot][] の設定。`npm`（pnpmを含む）の依存パッケージを毎日チェックし、更新があればプルリクエストを自動で作成します。                                                                            |
-| `.github/workflows/pr.yml`              | `main` へのプルリクエスト          | `node src/main.js config.yaml` でPDFをビルドし、ワークフローのアーティファクト（`marriage_registration`）としてアップロードします。実行結果のサマリーページから `result.pdf` をダウンロードできます。 |
-| `.github/workflows/push.yml`            | `main` へのpush                    | PDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                                                   |
-| `.github/workflows/pr-lint-autofix.yml` | プルリクエスト（作成・更新・再開） | `pnpm lint`（Prettierとmarkdownlint）を実行し、自動修正した内容をPRブランチへcommit・pushして返します。同一リポジトリ内のPRでのみ動作します。                                                         |
+| ファイル                                | トリガー                           | 役割                                                                                                                                                                                                                |
+| --------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/dependabot.yml`                | 毎日（スケジュール実行）           | [Dependabot][] の設定。`npm`（pnpmを含む）の依存パッケージを毎日チェックし、更新があればプルリクエストを自動で作成します。                                                                                          |
+| `.github/workflows/pr.yml`              | `main` へのプルリクエスト          | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、ワークフローのアーティファクト（`marriage_registration`）としてアップロードします。実行結果のサマリーページから `result.pdf` をダウンロードできます。 |
+| `.github/workflows/push.yml`            | `main` へのpush                    | PDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                                                                 |
+| `.github/workflows/pr-lint-autofix.yml` | プルリクエスト（作成・更新・再開） | `pnpm lint`（Prettierとmarkdownlint）を実行し、自動修正した内容をPRブランチへcommit・pushして返します。同一リポジトリ内のPRでのみ動作します。                                                                       |
 
 いずれのワークフローもNode.js 24とpnpmで動作し、認証には組み込みの `GITHUB_TOKEN` を使用します。追加のシークレット設定は不要です。
 
