@@ -11,6 +11,7 @@ import fontkit from '@pdf-lib/fontkit';
 import { PDFDocument, rgb } from 'pdf-lib';
 import YAML from 'yaml';
 import {
+  initLayout,
   layoutNameForTemplate,
   resolveLayout,
   TEMPLATE_PREFIX,
@@ -92,19 +93,23 @@ function resolveTemplatePath(name) {
 }
 
 function usage() {
-  return `usage: main.js [-h] [-t TEMPLATE] [-o OUTPUT] [--list-templates] [--init-config] [config]
+  return `usage: main.js [-h] [-t TEMPLATE] [-o OUTPUT] [--list-templates] [--init-config] [--init-layout] [config]
 
 Generate a filled-in Japanese marriage registration form.
 
 positional arguments:
-  config                   path to the YAML config (default: config-private.yaml)
+  config                   path to the YAML config (default: config-private-<template>.yaml
+                           when it exists, otherwise config-private.yaml)
 
 options:
   -h, --help               show this help message and exit
   -t, --template TEMPLATE  form template to fill in: ${templateChoiceHelp()}, or path to PDF
   -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF_PATTERN})
   --list-templates         list the bundled templates and exit
-  --init-config             create config-private.yaml from the sample config.yaml
+  --init-config             create the private config from the sample config.yaml
+                           (if it is missing) and exit, without generating a PDF.
+                           With -t, the target is config-private-<template>.yaml
+  --init-layout            create src/layout/<template>.yaml from the default grid
                            (if it is missing) and exit, without generating a PDF`;
 }
 
@@ -119,6 +124,7 @@ function parseCliArgs() {
         output: { type: 'string', short: 'o' },
         'list-templates': { type: 'boolean', default: false },
         'init-config': { type: 'boolean', default: false },
+        'init-layout': { type: 'boolean', default: false },
         help: { type: 'boolean', short: 'h', default: false },
       },
       allowPositionals: true,
@@ -141,12 +147,69 @@ function parseCliArgs() {
     output: parsed.values.output,
     listTemplates: parsed.values['list-templates'],
     initConfig: parsed.values['init-config'],
+    initLayout: parsed.values['init-layout'],
   };
 }
 
-function resolveConfigPath(configArg) {
+function variantConfigPath(templateArg) {
+  // Per-template private config, e.g. config-private-cinnamoroll.yaml. Written
+  // by `--init-config -t <variant>`; a template only uses one if it exists, so
+  // a single config-private.yaml keeps working for every template.
+  const variant = layoutNameForTemplate(templateArg);
+  return path.join(repoRoot, `config-private-${variant}.yaml`);
+}
+
+function scaffoldVariantConfig(templateArg) {
+  // Seed from the details the user has already typed into config-private.yaml
+  // when there are any, so switching templates does not mean re-entering
+  // everything; otherwise fall back to the public placeholder sample.
+  const target = variantConfigPath(templateArg);
+  const variant = layoutNameForTemplate(templateArg);
+  if (fs.existsSync(target)) {
+    return { path: target, created: false, seed: null };
+  }
+  const seed = fs.existsSync(DEFAULT_CONFIG_PATH)
+    ? DEFAULT_CONFIG_PATH
+    : PUBLIC_CONFIG_PATH;
+  if (!fs.existsSync(seed)) {
+    fail(
+      `❌ Cannot create ${path.basename(target)}: neither config-private.yaml ` +
+        'nor the sample config.yaml exists to copy from.',
+    );
+  }
+  // parseDocument keeps the sample's comments and field order intact; only the
+  // `template:` key is set, pinning the file to the form it is named after.
+  const doc = YAML.parseDocument(fs.readFileSync(seed, 'utf-8'));
+  if (doc.has('template')) {
+    doc.set('template', variant);
+  } else {
+    doc.contents.items.unshift(doc.createPair('template', variant));
+  }
+  fs.writeFileSync(
+    target,
+    PRIVATE_CONFIG_HEADER + doc.toString({ lineWidth: 0 }),
+  );
+  return { path: target, created: true, seed };
+}
+
+function resolveConfigPath(configArg, templateArg) {
   if (configArg) {
+    if (!fs.existsSync(configArg)) {
+      fail(
+        `❌ Config file not found: ${configArg}\n` +
+          '   Create it with `node src/main.js --init-config -t <template>`, ' +
+          'or pass a different path.',
+      );
+    }
     return configArg;
+  }
+  // A template with its own private config uses it; everything else falls back
+  // to the shared config-private.yaml.
+  if (templateArg) {
+    const variantPath = variantConfigPath(templateArg);
+    if (fs.existsSync(variantPath)) {
+      return variantPath;
+    }
   }
   if (!fs.existsSync(DEFAULT_CONFIG_PATH)) {
     // First run: scaffold the local config from the public sample so the user
@@ -431,7 +494,49 @@ async function main() {
     }
     return;
   }
+  if (args.initLayout) {
+    // Scaffold-only mode for the coordinates, the counterpart of --init-config:
+    // give a template its own layout file instead of borrowing another one.
+    const templateName = args.template || DEFAULT_TEMPLATE;
+    resolveTemplatePath(templateName);
+    const { path: layoutPath, variant, created } = initLayout(templateName);
+    if (created) {
+      console.log(
+        `✅ Created ${path.relative(repoRoot, layoutPath)} from the default grid.\n` +
+          `✏️  Every number in it still belongs to another form. Tune it against\n` +
+          `   the printed ${variant} template: run \`pnpm run ${variant}:pdf\`, look at\n` +
+          '   where each field landed, adjust the [x, y] values, repeat.',
+      );
+    } else {
+      console.log(
+        `✅ ${path.relative(repoRoot, layoutPath)} already exists and is valid - left it untouched.\n` +
+          '   Layout files are hand-tuned, so this never overwrites one. Edit it\n' +
+          '   directly to adjust a coordinate.',
+      );
+    }
+    return;
+  }
   if (args.initConfig) {
+    // With -t, scaffold the per-template config instead of the shared one, so
+    // each template can carry its own details and its own `template:` key.
+    if (args.template) {
+      const {
+        path: target,
+        created,
+        seed,
+      } = scaffoldVariantConfig(args.template);
+      const name = path.relative(repoRoot, target);
+      if (created) {
+        console.log(
+          `✅ Created ${name} from ${path.basename(seed)}.\n` +
+            '✏️  Edit it with your own information, then run ' +
+            `\`pnpm run ${layoutNameForTemplate(args.template)}:pdf\`.`,
+        );
+      } else {
+        console.log(`⚠️  ${name} already exists - left it untouched.`);
+      }
+      return;
+    }
     // Scaffold-only mode: reuse the same first-run copy that a normal run does,
     // so `pnpm run init-config` never generates a PDF over an unedited config.
     const existed = fs.existsSync(DEFAULT_CONFIG_PATH);
@@ -444,21 +549,31 @@ async function main() {
     // without touching the rest, so an existing config keeps its details.
     if (addPrivateConfigHeader(configPath)) {
       console.log(
-        `✅ ${configPath} already exists - added the private-file header to it.`,
+        `⚠️  ${configPath} already exists - added the private-file header to it, but kept its contents.`,
       );
     } else {
-      console.log(`✅ ${configPath} already exists - left it untouched.`);
+      console.log(`⚠️  ${configPath} already exists - left it untouched.`);
     }
+    console.log(
+      '⚠️  A fresh copy was NOT generated, so the file may be missing fields\n' +
+        'that were added to the sample config.yaml later (for example the\n' +
+        'witness1/witness2 sections).\n' +
+        '   To regenerate from the sample, first move the existing file away:\n' +
+        '       mv config-private.yaml config-private.yaml.bak\n' +
+        '   then run `pnpm run init-config` again and copy your details back.\n' +
+        '   Deleting it instead discards the personal details it contains.',
+    );
     console.log(
       '✏️  Edit it with your own information, then run `pnpm run generate`.',
     );
     return;
   }
-  const configPath = resolveConfigPath(args.config);
+  const configPath = resolveConfigPath(args.config, args.template);
   const cfg = loadConfig(configPath);
   const templateName = resolveTemplateName(args.template, cfg);
   const templatePath = resolveTemplatePath(templateName);
   const layout = resolveLayout(templateName, cfg);
+  console.log(`Config:   ${path.relative(repoRoot, configPath)}`);
   console.log(`Template: ${templatePath}`);
   const { doc, page, ipaexm } = await setup(templatePath, FONT_PATH);
   const cc = makeCanvas(page, ipaexm);

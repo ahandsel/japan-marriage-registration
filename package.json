@@ -5,6 +5,12 @@
   "description": "Japan marriage registration PDF generator",
   "type": "module",
   "scripts": {
+    "black:config": "node src/main.js --init-config --template black",
+    "black:layout": "node src/main.js --init-layout --template black",
+    "black:pdf": "node src/main.js --template black --output result-black.pdf",
+    "cinnamoroll:config": "node src/main.js --init-config --template cinnamoroll",
+    "cinnamoroll:layout": "node src/main.js --init-layout --template cinnamoroll",
+    "cinnamoroll:pdf": "node src/main.js --template cinnamoroll --output result-cinnamoroll.pdf",
     "clean": "zsh scripts/cleanup-temp-files.sh",
     "cute": "node src/main.js --template cinnamoroll",
     "generate": "node src/main.js",
@@ -14,6 +20,9 @@
     "lint": "pnpm run lint-code && pnpm run lint-md",
     "lint-code": "prettier --write .",
     "lint-md": "markdownlint-cli2 --fix",
+    "red:config": "node src/main.js --init-config --template red",
+    "red:layout": "node src/main.js --init-layout --template red",
+    "red:pdf": "node src/main.js --template red --output result-red.pdf",
     "start": "./start.sh"
   },
   "dependencies": {

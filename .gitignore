@@ -14,6 +14,7 @@ node_modules/
 # Generated output (result.pdf plus the per-template result-<variant>.pdf)
 result*.pdf
 
-# Local private config (holds your real PII - never commit)
-config-private.yaml
+# Local private configs (hold your real PII - never commit).
+# Covers config-private.yaml and every per-template config-private-<variant>.yaml.
+config-private*.yaml
 temp.md

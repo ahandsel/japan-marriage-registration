@@ -367,3 +367,70 @@ export function resolveLayout(templateName, cfg) {
   }
   return merged;
 }
+
+// The keys that make up one positional entry. A mapping holding only these is
+// written inline (`{ pos: [235, 623], size: 24 }`) to match the hand-tuned
+// files; anything wider (job_type_checks.positions) stays in block style.
+const LEAF_KEYS = new Set(['pos', 'size', 'step']);
+
+function scaffoldHeader(variant) {
+  return (
+    `# Layout for the "${variant}" template\n` +
+    `# (${TEMPLATE_PREFIX}${variant}.pdf).\n` +
+    '# Absolute [x, y] baseline positions in PDF points measured from the\n' +
+    '# bottom-left corner, `size` in points, `step` between the lines of a\n' +
+    '# multi-line field, circles as [x, y, r], ellipses as two opposite\n' +
+    '# bounding-box corners.\n' +
+    '#\n' +
+    `# ⚠️ Generated from the "${DEFAULT_LAYOUT}" grid by \`pnpm run ${variant}:layout\`,\n` +
+    `# so every number below still belongs to "${DEFAULT_LAYOUT}" and needs tuning\n` +
+    `# against the printed ${variant} form: generate a PDF, look at where each\n` +
+    '# field landed, nudge the value, repeat.\n\n'
+  );
+}
+
+function toYaml(layout) {
+  const doc = new YAML.Document(layout);
+  YAML.visit(doc, {
+    Seq(_key, node) {
+      // [x, y], [x, y, r], and [x1, y1, x2, y2] all read better on one line.
+      node.flow = true;
+    },
+    Map(_key, node) {
+      const keys = node.items.map((item) => String(item.key.value ?? item.key));
+      if (keys.length > 0 && keys.every((key) => LEAF_KEYS.has(key))) {
+        node.flow = true;
+      }
+      // job_type values are numbers on the form; write them as bare 1-6 rather
+      // than quoted "1"-"6", matching the hand-tuned files.
+      for (const item of node.items) {
+        if (/^\d+$/.test(String(item.key?.value))) {
+          item.key.type = 'PLAIN';
+        }
+      }
+    },
+  });
+  // A blank line between top-level sections, as in the hand-tuned files.
+  for (const item of doc.contents.items.slice(1)) {
+    item.key.spaceBefore = true;
+  }
+  return doc.toString({ lineWidth: 0, flowCollectionPadding: false });
+}
+
+// Create src/layout/<variant>.yaml for a template that does not have one yet,
+// seeded with the default grid so every schema key is present and the file
+// validates. Never rewrites an existing layout - those are hand-tuned, and the
+// comments explaining each coordinate would not survive a round trip.
+export function initLayout(templateName) {
+  const variant = layoutNameForTemplate(templateName);
+  const target = path.join(LAYOUT_DIR, `${variant}.yaml`);
+  const existed = fs.existsSync(target);
+  // Resolves the existing file when there is one (which also validates it, so
+  // this doubles as a layout check) and the default grid when there is not.
+  const layout = resolveLayout(templateName, {});
+  if (existed) {
+    return { path: target, variant, created: false };
+  }
+  fs.writeFileSync(target, scaffoldHeader(variant) + toYaml(layout));
+  return { path: target, variant, created: true };
+}
