@@ -204,7 +204,10 @@ function resolveConfigPath(configArg, templateArg) {
     return configArg;
   }
   // A template with its own private config uses it; everything else falls back
-  // to the shared config-private.yaml.
+  // to the shared config-private.yaml. Only the -t flag reaches this lookup:
+  // it runs before the config is parsed, so a `template:` key inside the
+  // shared config cannot switch to a per-template config. That ordering is
+  // unavoidable - name the template on the command line to use one.
   if (templateArg) {
     const variantPath = variantConfigPath(templateArg);
     if (fs.existsSync(variantPath)) {
@@ -504,7 +507,8 @@ async function main() {
       console.log(
         `✅ Created ${path.relative(repoRoot, layoutPath)} from the default grid.\n` +
           `✏️  Every number in it still belongs to another form. Tune it against\n` +
-          `   the printed ${variant} template: run \`pnpm run ${variant}:pdf\`, look at\n` +
+          `   the printed ${variant} template: run \`node src/main.js -t ${variant}\`\n` +
+          '   (or its `pnpm run <variant>:pdf` script, if one exists), look at\n' +
           '   where each field landed, adjust the [x, y] values, repeat.',
       );
     } else {
@@ -530,7 +534,8 @@ async function main() {
         console.log(
           `✅ Created ${name} from ${path.basename(seed)}.\n` +
             '✏️  Edit it with your own information, then run ' +
-            `\`pnpm run ${layoutNameForTemplate(args.template)}:pdf\`.`,
+            `\`node src/main.js -t ${layoutNameForTemplate(args.template)}\`\n` +
+            '   (or its `pnpm run <variant>:pdf` script, if one exists).',
         );
       } else {
         console.log(`⚠️  ${name} already exists - left it untouched.`);
