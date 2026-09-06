@@ -255,7 +255,7 @@ Three form templates ship in `src/template/`. Select one with the `-t/--template
 | ------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
 | `red`         | `jp-marriage-registration-red.pdf`         | The red-printed standard form. The default, and fully tuned.                              |
 | `black`       | `jp-marriage-registration-black.pdf`       | A black-printed form with a denser grid, era checkboxes, and 養父/養母 rows. Fully tuned. |
-| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | Shinagawa City's Cinnamoroll form. Only partially tuned.                                  |
+| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | Shinagawa City's Cinnamoroll form. Fully tuned.                                           |
 
 ```bash
 node src/main.js --list-templates           # list the bundled templates
@@ -270,15 +270,15 @@ Each template also has its own pnpm scripts. The first column is the one you use
 | `black`       | `pnpm run black:pdf`       | `pnpm run black:config`           | `pnpm run black:layout`         |
 | `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config`     | `pnpm run cinnamoroll:layout`   |
 
-* **`<template>:pdf`** - generates `result-<template>.pdf` from that form. The name is fixed, so each run overwrites the previous file. It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
+* **`<template>:pdf`** - generates the timestamped `result-<template>-<HH-MM-SS>.pdf` from that form, so a run never overwrites an earlier output. It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
 * **`<template>:config`** - creates `config-private-<template>.yaml`, and does nothing if it already exists. You only need it to keep different details per template; one shared `config-private.yaml` works without it.
 * **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing. All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
 
-`pnpm run cute` is an alias for the same form as `pnpm run cinnamoroll:pdf`, except that it writes the timestamped `result-cinnamoroll-<HH-MM-SS>.pdf` instead of a fixed name.
-
 > ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing) and only rewrites the `template:` key, so it carries over whatever `*_pos` values the copied file has. Those values are red-template coordinates, so delete the `*_pos` lines after creating the file for `black` or `cinnamoroll`; every position then comes from the layout file.
 
-The `*_pos` values in `config.yaml` are red-template coordinates, so reusing that file with another template puts the text in the wrong place. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cute.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+The `*_pos` values in `config.yaml` are red-template coordinates, so reusing that file with another template puts the text in the wrong place. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+
+The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `notification.to` and `household_person` as empty strings `''` on that template.
 
 The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom. Those stay blank for handwriting. Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
 

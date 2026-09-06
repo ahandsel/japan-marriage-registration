@@ -172,7 +172,7 @@ witness1:
 | ------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
 | `red`         | `jp-marriage-registration-red.pdf`         | 赤刷りの標準様式。既定で、全項目を調整済みです。                                                 |
 | `black`       | `jp-marriage-registration-black.pdf`       | 黒刷りの様式。罫線が細かく、元号のチェックボックスや養父母の行があります。全項目を調整済みです。 |
-| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | 品川区のシナモロール様式。一部の項目のみ調整済みです。                                           |
+| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | 品川区のシナモロール様式。全項目を調整済みです。                                                 |
 
 ```bash
 node src/main.js --list-templates           # 同梱テンプレートの一覧を表示
@@ -187,15 +187,15 @@ node src/main.js -t black config-black.yaml # 黒刷り様式でサンプルか�
 | `black`       | `pnpm run black:pdf`       | `pnpm run black:config`       | `pnpm run black:layout`        |
 | `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config` | `pnpm run cinnamoroll:layout`  |
 
-* **`<様式>:pdf`** - その様式で `result-<様式>.pdf` を生成します。ファイル名は固定なので、実行するたびに上書きされます。設定ファイルは `config-private-<様式>.yaml` があればそれを使い、無ければ共通の `config-private.yaml` を使います。
+* **`<様式>:pdf`** - その様式で時刻付きの `result-<様式>-<HH-MM-SS>.pdf` を生成します。実行するたびに新しいファイルができるため、以前の出力が上書きされることはありません。設定ファイルは `config-private-<様式>.yaml` があればそれを使い、無ければ共通の `config-private.yaml` を使います。
 * **`<様式>:config`** - その様式専用の `config-private-<様式>.yaml` を作成します。すでにある場合は何もしません。様式ごとに別の内容を書きたいときだけ使ってください。1つの `config-private.yaml` を使い回す場合は不要です。
 * **`<様式>:layout`** - `src/layout/<様式>.yaml` が無ければ作成します。同梱の3種類はすべて調整済みのファイルがあるため、実行しても上書きされず、内容の検証だけを行います。
 
-`pnpm run cute` は `pnpm run cinnamoroll:pdf` と同じ様式を使う別名ですが、出力は時刻付きの `result-cinnamoroll-<HH-MM-SS>.pdf` になります。
-
 > ⚠️ `<様式>:config` は `config-private.yaml`（無い場合はサンプルの `config.yaml`）をコピーし、`template:` キーだけを書き換えて作られます。そのため、コピー元にある `*_pos` 項目はそのまま引き継がれます。これは `red` 用の座標なので、`black` と `cinnamoroll` で使うときはコピー後に `*_pos` の行を削除してください。削除すれば配置はレイアウトファイルに任されます。
 
-`config.yaml` の `*_pos` 項目は `red` 用の座標なので、他の様式にそのまま使うと文字がずれます。`black` と `cinnamoroll` には様式ごとのサンプル設定（`config-black.yaml` と `config-cute.yaml`）があり、`template:` キーで様式を指定し、配置はレイアウトファイルに任せています。
+`config.yaml` の `*_pos` 項目は `red` 用の座標なので、他の様式にそのまま使うと文字がずれます。`black` と `cinnamoroll` には様式ごとのサンプル設定（`config-black.yaml` と `config-cinnamoroll.yaml`）があり、`template:` キーで様式を指定し、配置はレイアウトファイルに任せています。
+
+シナモロール様式は宛先が「品川区長殿」と印刷済みで、住所欄に世帯主の氏名の行がありません。この様式では `notification.to` と `household_person` を空文字 `''` のままにしてください。
 
 黒刷り様式には対応する設定項目がない印字欄（□昭和□平成の元号チェック、□同右・□同左、養父・養母の行、□未同居・未挙式、届出人署名、事件簿番号の欄）があり、これらは手書き用に空欄のまま出力されます。証人の住所欄には番地・番・号の印字がないため、証人の `is_banchi_address` は `null` にして、番地と号は `address_second` にまとめてください。
 

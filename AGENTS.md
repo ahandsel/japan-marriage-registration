@@ -50,11 +50,26 @@ node src/main.js                  # generate from config-private.yaml (local def
 node src/main.js config.yaml      # generate from an explicit config (what CI does)
 node src/main.js --list-templates # list bundled templates
 node src/main.js --init-config    # create config-private.yaml only, no PDF
+node src/main.js --init-layout -t <variant> # scaffold src/layout/<variant>.yaml if missing; validates it otherwise
 pnpm run init-config              # same as --init-config
 pnpm run generate                 # same as `node src/main.js`
 pnpm run generate-sample          # same as `node src/main.js config.yaml`
+pnpm run <variant>:config         # --init-config -t <variant>: create config-private-<variant>.yaml
+pnpm run <variant>:layout         # --init-layout -t <variant>: scaffold or validate the layout file
+pnpm run <variant>:pdf            # generate result-<variant>-<HH-MM-SS>.pdf from that template
 pnpm lint                         # prettier --write + markdownlint-cli2 --fix (autofixing)
 ```
+
+The three `<variant>:*` scripts exist for every bundled template (`red`,
+`black`, `cinnamoroll`), in the order you work in: config, layout, PDF. The
+`:config` and `:layout` steps are write-once and never overwrite an existing
+file. A run with no explicit config path uses `config-private-<variant>.yaml`
+when `-t` named a variant and that file exists, and `config-private.yaml`
+otherwise. Only the `-t` flag reaches that lookup: it runs before the config
+is parsed, so a `template:` key inside the shared config never switches to a
+per-template config. `--init-layout` validates only the layout YAML file
+itself; a broken `layout:` override block in a private config is caught by a
+generate run, not by `:layout`.
 
 There is **no test suite** and no build step. To verify a change, regenerate the
 PDF and inspect it visually - coordinates cannot be checked any other way. Write
@@ -97,12 +112,14 @@ drawing API (`setFont`, `drawString`, `ellipse`, `circle`).
   the config section (the text), the matching resolved layout section (the
   positions), and the canvas. Husband and wife share the same functions; their
   columns differ only in the layout data.
-* `src/layout/red.yaml` and `src/layout/black.yaml` are fully tuned.
-  `src/layout/cinnamoroll.yaml` is only **partially** tuned: names, kana, birth
-  dates, addresses, 本籍, parents' names, the ✓ checkmarks, the 番地/号 marks,
-  and the 証人 (witness) columns line up, but the 届出 (notification), 続き柄,
-  世帯主, 国勢調査, and その他 fields still sit on the red grid and need
-  per-field tuning (see the header comment in that file).
+* All three bundled layouts (`red.yaml`, `black.yaml`, `cinnamoroll.yaml`)
+  are fully tuned: every entry was placed against its own template's printed
+  grid, and no entry is shared verbatim with another template's file.
+* The cinnamoroll form is a 品川区 layout with two fields the other forms
+  have but it does not: the recipient 品川区長殿 is pre-printed and so
+  `notification.to` should stay `''`, and its 住所 box has no 世帯主の氏名
+  row and so `household_person` should stay `''` too. The header comment in
+  `cinnamoroll.yaml` records both quirks.
 * The black form is a denser grid than the red one, so `black.yaml` uses
   smaller sizes (names at 18pt rather than 24, kana at 9pt rather than 12) and
   it prints boxes the config has no keys for: the □昭和□平成 era checkboxes,
@@ -136,6 +153,12 @@ drawn relative to them, so old configs render unchanged.
 * Templates: `src/template/*.pdf`, named `jp-marriage-registration-<variant>.pdf`.
   Select by short variant name (`red`, `black`, `cinnamoroll`), full stem, or a
   path to any PDF. Default variant is `red`.
+* **Adding a bundled template requires, in the same change:** the conventional
+  `jp-marriage-registration-<variant>.pdf` filename, a fully tuned
+  `src/layout/<variant>.yaml` (scaffold with `--init-layout`, then tune every
+  entry against the printed form), and the three `<variant>:*` scripts in
+  `package.json`. A bundled template must never rely on the `red` layout
+  fallback; that fallback exists for user-supplied custom PDFs only.
 * Japanese fonts: `src/fonts/ipaexm.ttf` (IPAex Mincho, used by JS) and
   `ipaexg.ttf`. `main.js` subsets and embeds the font so Japanese renders.
   Fonts ship under the IPA Font License (see the license files in `src/fonts/`).
