@@ -402,10 +402,12 @@ function toYaml(layout) {
         node.flow = true;
       }
       // job_type values are numbers on the form; write them as bare 1-6 rather
-      // than quoted "1"-"6", matching the hand-tuned files.
+      // than quoted "1"-"6", matching the hand-tuned files. The stringifier
+      // quotes any string that would re-parse as a number, so the key has to
+      // become an actual number, not just a plain-style string.
       for (const item of node.items) {
         if (/^\d+$/.test(String(item.key?.value))) {
-          item.key.type = 'PLAIN';
+          item.key.value = Number(item.key.value);
         }
       }
     },
@@ -414,7 +416,15 @@ function toYaml(layout) {
   for (const item of doc.contents.items.slice(1)) {
     item.key.spaceBefore = true;
   }
-  return doc.toString({ lineWidth: 0, flowCollectionPadding: false });
+  // Prettier's flow style is padded braces with unpadded brackets
+  // ({ pos: [220, 590], size: 24 }), but flowCollectionPadding pads both, so
+  // strip the bracket padding afterwards - every flow seq here holds only
+  // numbers, so the replace cannot touch string content. A freshly scaffolded
+  // file then already passes `prettier --check`.
+  return doc
+    .toString({ lineWidth: 0, flowCollectionPadding: true })
+    .replaceAll('[ ', '[')
+    .replaceAll(' ]', ']');
 }
 
 // Create src/layout/<variant>.yaml for a template that does not have one yet,
@@ -426,7 +436,10 @@ export function initLayout(templateName) {
   const target = path.join(LAYOUT_DIR, `${variant}.yaml`);
   const existed = fs.existsSync(target);
   // Resolves the existing file when there is one (which also validates it, so
-  // this doubles as a layout check) and the default grid when there is not.
+  // this doubles as a check of the layout file itself - the empty config here
+  // means a `layout:` override block in a private config is NOT validated;
+  // only a generate run with that config catches those) and the default grid
+  // when there is not.
   const layout = resolveLayout(templateName, {});
   if (existed) {
     return { path: target, variant, created: false };
