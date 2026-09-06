@@ -11,10 +11,18 @@ node_modules/
 # macOS
 .DS_Store
 
-# Generated output (result.pdf plus the per-template result-<variant>.pdf)
+# Generated output (result.pdf plus the timestamped result-<template>-<HH-MM-SS>.pdf).
+# Every generated PDF is a rendering of local config data, so it may hold real PII.
 result*.pdf
+failed-*.pdf
 
 # Local private configs (hold your real PII - never commit).
-# Covers config-private.yaml and every per-template config-private-<variant>.yaml.
+# Covers config-private.yaml and every per-template config-private-<variant>.yaml,
+# plus the ad-hoc working names that have shown up in practice.
 config-private*.yaml
+save.yaml
+p.yaml
+
+# Local scratch files - anything in local/ stays untracked.
+local/
 temp.md
