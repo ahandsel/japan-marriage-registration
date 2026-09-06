@@ -9,10 +9,14 @@
 # 444.0 (wife); printed 年/月/日 for the birth date at x 305.3/354.9/378.8
 # (husband) with baseline 608.6.
 #
-# ⚠️ Only partially tuned. Aligned so far: names, addresses and 本籍 text,
-# parents' names, birth dates, 号 vs the printed 番 mark, 方書, the ✓ marks,
-# the 番地/号 circles, and the 証人 (witness) columns. Everything else still
-# sits on the red grid and needs per-field tuning.
+# ⚠️ This 品川区 form differs from the generic red one in two places, so two
+# config keys have no printed slot and should stay '' here:
+#   * The recipient is pre-printed as 品川区長殿, so `notification.to` has no
+#     blank to land in (see the note on the entry below).
+#   * The 住所 box has no 世帯主の氏名 row (its rows are the address lines,
+#     丁目/□番地/□番/号, and 方書), so `household_person` has nowhere to go;
+#     its position below only parks a value on the empty right part of the
+#     方書 line.
 
 husband:
   last_name: { pos: [235, 623], size: 24 }
@@ -25,6 +29,8 @@ husband:
   address_first: { pos: [257, 556], size: 12 }
   address_second: { pos: [245, 535], size: 12 }
   address_go: { pos: [357, 535], size: 12 }
+  # No 世帯主の氏名 row on this form - see the header note. Keep '' in the
+  # config; the position sits on the empty part of the 方書 line.
   household_person: { pos: [300, 512], size: 12 }
   address_apartment: { pos: [235, 523], size: 5, step: 5 }
   address_banchi_ellipse: [350, 558.5, 313, 546.5]
@@ -36,7 +42,8 @@ husband:
   legally_domiciled_go_circle: [320, 464, 6]
   father_name: { pos: [233, 416], size: 12 }
   mother_name: { pos: [233, 392], size: 12 }
-  relationship: { pos: [351, 385], size: 12 }
+  # 続き柄 cell, x 356.0-399.1, left of the printed 男 (x 384.8-397.2).
+  relationship: { pos: [366, 395.5], size: 12 }
   marital_history:
     first_marriage_check: { pos: [218, 247], size: 10 }
     remarriage_death_check: { pos: [279.3, 253.5], size: 8 }
@@ -78,7 +85,8 @@ wife:
   legally_domiciled_go_circle: [507, 464, 6]
   father_name: { pos: [420, 416], size: 12 }
   mother_name: { pos: [420, 392], size: 12 }
-  relationship: { pos: [551, 385], size: 12 }
+  # 続き柄 cell, x 542.0-586.4, left of the printed 女 (x 575.5-584.6).
+  relationship: { pos: [553, 395.5], size: 12 }
   marital_history:
     first_marriage_check: { pos: [405.5, 247], size: 10 }
     remarriage_death_check: { pos: [466.5, 253.5], size: 8 }
@@ -155,16 +163,26 @@ to_live_together:
   year: { pos: [268, 273.5], size: 12 }
   month: { pos: [348, 273.5], size: 12 }
 
+# The 国勢調査 year drops into the gap in the printed note, between
+# 「（国勢調査の年…」 (ends x 288.5) and 「年…の」 (starts x 306.5). The job
+# values go right of the printed 夫の職業/妻の職業 labels on the same line;
+# the row is only ~25pt tall, so they are size 12 here, not red's 16.
 national_census:
-  year: { pos: [278, 186], size: 6 }
-  husband_job: { pos: [258, 168], size: 16 }
-  wife_job: { pos: [458, 168], size: 16 }
+  year: { pos: [292, 193.5], size: 6 }
+  husband_job: { pos: [262, 179], size: 12 }
+  wife_job: { pos: [449, 179], size: 12 }
 
+# 「令和　年　月　日届出」 line: printed 令和 ends at x 172.1 and 年/月/日 sit
+# at x 197.3/224.4/248.9 on baseline 738.5.
 notification:
-  year: { pos: [141, 716], size: 12 }
-  month: { pos: [181, 716], size: 12 }
-  day: { pos: [210, 716], size: 12 }
-  to: { pos: [141, 680], size: 12 }
+  year: { pos: [180, 738.5], size: 12 }
+  month: { pos: [209.5, 738.5], size: 12 }
+  day: { pos: [234.5, 738.5], size: 12 }
+  # The recipient is pre-printed as 品川区長殿 (x 172.0-260.9), so there is no
+  # 届出先 blank on this form: keep `to: ''` in the config. The position below
+  # only marks the same baseline, left of the printed text.
+  to: { pos: [130, 706], size: 12 }
 
+# その他 box interior: x 145.0-583.0, y 65.0-174.3. Seven 12pt lines fit.
 other:
-  text: { pos: [170, 145], size: 12, step: 15 }
+  text: { pos: [152, 160], size: 12, step: 15 }
