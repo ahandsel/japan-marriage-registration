@@ -7,12 +7,11 @@
   "scripts": {
     "black:config": "node src/main.js --init-config --template black",
     "black:layout": "node src/main.js --init-layout --template black",
-    "black:pdf": "node src/main.js --template black --output result-black.pdf",
+    "black:pdf": "node src/main.js --template black",
     "cinnamoroll:config": "node src/main.js --init-config --template cinnamoroll",
     "cinnamoroll:layout": "node src/main.js --init-layout --template cinnamoroll",
-    "cinnamoroll:pdf": "node src/main.js --template cinnamoroll --output result-cinnamoroll.pdf",
+    "cinnamoroll:pdf": "node src/main.js --template cinnamoroll",
     "clean": "zsh scripts/cleanup-temp-files.sh",
-    "cute": "node src/main.js --template cinnamoroll",
     "generate": "node src/main.js",
     "generate-sample": "node src/main.js config.yaml",
     "index": "zsh scripts/index.sh",
@@ -22,7 +21,7 @@
     "lint-md": "markdownlint-cli2 --fix",
     "red:config": "node src/main.js --init-config --template red",
     "red:layout": "node src/main.js --init-layout --template red",
-    "red:pdf": "node src/main.js --template red --output result-red.pdf",
+    "red:pdf": "node src/main.js --template red",
     "start": "./start.sh"
   },
   "dependencies": {
