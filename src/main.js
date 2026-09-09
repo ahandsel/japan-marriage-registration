@@ -197,7 +197,7 @@ function resolveConfigPath(configArg, templateArg) {
     if (!fs.existsSync(configArg)) {
       fail(
         `❌ Config file not found: ${configArg}\n` +
-          '   Create it with `node src/main.js --init-config -t <template>`, ' +
+          '   Create it with `pnpm run init-config -t <template>`, ' +
           'or pass a different path.',
       );
     }
@@ -222,7 +222,7 @@ function resolveConfigPath(configArg, templateArg) {
         'config-private.yaml not found, and the public sample config.yaml is ' +
           'missing too, so it cannot be created automatically.\n' +
           'Restore config.yaml, or pass a config path explicitly:\n' +
-          '    node src/main.js path/to/your-config.yaml',
+          '    pnpm run generate path/to/your-config.yaml',
       );
     }
     const sample = fs.readFileSync(PUBLIC_CONFIG_PATH, 'utf-8');
@@ -507,8 +507,8 @@ async function main() {
       console.log(
         `✅ Created ${path.relative(repoRoot, layoutPath)} from the default grid.\n` +
           `✏️  Every number in it still belongs to another form. Tune it against\n` +
-          `   the printed ${variant} template: run \`node src/main.js -t ${variant}\`\n` +
-          '   (or its `pnpm run <variant>:pdf` script, if one exists), look at\n' +
+          `   the printed ${variant} template: run \`pnpm run generate -t ${variant}\`\n` +
+          `   (or its \`pnpm run ${variant}:pdf\` script, if one exists), look at\n` +
           '   where each field landed, adjust the [x, y] values, repeat.',
       );
     } else {
@@ -531,11 +531,12 @@ async function main() {
       } = scaffoldVariantConfig(args.template);
       const name = path.relative(repoRoot, target);
       if (created) {
+        const variant = layoutNameForTemplate(args.template);
         console.log(
           `✅ Created ${name} from ${path.basename(seed)}.\n` +
             '✏️  Edit it with your own information, then run ' +
-            `\`node src/main.js -t ${layoutNameForTemplate(args.template)}\`\n` +
-            '   (or its `pnpm run <variant>:pdf` script, if one exists).',
+            `\`pnpm run generate -t ${variant}\`\n` +
+            `   (or its \`pnpm run ${variant}:pdf\` script, if one exists).`,
         );
       } else {
         console.log(`⚠️  ${name} already exists - left it untouched.`);
