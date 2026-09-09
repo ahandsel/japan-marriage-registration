@@ -15,10 +15,12 @@
 ## Table of contents <!-- omit in toc -->
 
 * [Overview](#overview)
+* [Quick start](#quick-start)
 * [Initial setup](#initial-setup)
   * [Requirements](#requirements)
   * [Steps](#steps)
   * [Dependencies](#dependencies)
+* [Command-line reference](#command-line-reference)
 * [Configuration](#configuration)
   * [Details](#details)
   * [Templates](#templates)
@@ -40,10 +42,39 @@ The configuration is split across two files (see [Configuration](#configuration)
 
 You can generate the PDF two ways:
 
-* **Locally** with a one-command script (`./start.sh`), or
+* **Locally** with a one-command pnpm script (`pnpm start`), or
 * **Via GitHub Actions**, which builds the PDF on every push and publishes it as a release.
 
 [YAML]: config.yaml
+
+
+## Quick start
+
+With [Node.js][] 24 or newer installed (see [Requirements](#requirements)):
+
+```bash
+git clone https://github.com/ahandsel/japan-marriage-registration.git
+cd japan-marriage-registration
+pnpm start
+```
+
+`pnpm start` installs the dependencies, creates `config-private.yaml` from the sample on the first run, generates `result-red-<HH-MM-SS>.pdf`, and opens it.
+That first PDF shows the sample placeholder details, so the next two steps make it yours:
+
+1. Edit `config-private.yaml` with your own details (see [Details](#details) for the field reference).
+2. Run `pnpm start` again. Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one.
+
+Everything after the setup is a pnpm script, and two of them cover almost everything else:
+
+```bash
+pnpm run generate --help    # show every option and exit
+pnpm start --template black # fill in a different form: red (default), black, or cinnamoroll
+```
+
+pnpm passes every argument after the script name straight to the generator, so any option below works with any of these scripts.
+See [Command-line reference](#command-line-reference) for the full list and [Templates](#templates) for the forms.
+
+> ⚠️ **Privacy:** put your real details only in `config-private.yaml` (gitignored) and generate the PDF locally. The committed `config.yaml` is built by CI and published as a **public** release.
 
 
 ## Initial setup
@@ -92,29 +123,31 @@ pnpm --version # 10.0.0 or newer
 2. Create your private config file:
 
    ```bash
-   cp config.yaml config-private.yaml
+   pnpm run init-config
    ```
 
    This step is optional. If `config-private.yaml` does not exist, the first run creates it from the sample `config.yaml` for you and prints a reminder to edit it. Either way you end up with the same file, filled with the sample placeholder details.
+
+   Prefer `pnpm run init-config` over a plain `cp`: it also prepends the two header comments that mark the file as private and local-only, and it never overwrites an existing config.
 
    `config-private.yaml` is listed in `.gitignore`, so it is the one file where your real personal information belongs. See [Configuration](#configuration) for why the config is split in two.
 
 3. Generate your first PDF:
 
    ```bash
-   ./start.sh
+   pnpm start
    ```
 
-   `start.sh` handles the rest for you. It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it. At this point the PDF still shows the sample placeholder details.
+   `pnpm start` runs `start.sh`, which handles the rest for you. It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it. At this point the PDF still shows the sample placeholder details.
 
-4. Edit `config-private.yaml` with your own details, then run `./start.sh` again. See [Configuration](#configuration) for the field reference.
+4. Edit `config-private.yaml` with your own details, then run `pnpm start` again. See [Configuration](#configuration) for the field reference.
 
-If you prefer to prepare the environment yourself instead of letting `start.sh` do it:
+If you prefer to prepare the environment yourself instead of letting `pnpm start` do it:
 
 ```bash
 corepack enable # optional: provisions the pinned pnpm version
-pnpm install    # or: npm install
-node src/main.js
+pnpm install    # install the dependencies once
+pnpm run generate
 ```
 
 > [!NOTE]
@@ -137,6 +170,52 @@ Development dependencies cover formatting only (`prettier` and `markdownlint-cli
 [pnpm]: https://pnpm.io/
 
 
+## Command-line reference
+
+After the [Initial setup](#initial-setup), every command is a pnpm script:
+
+| Script                     | What it does                                                                                        |
+| -------------------------- | --------------------------------------------------------------------------------------------------- |
+| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.     |
+| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result. |
+| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                           |
+| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, then exit without generating a PDF.                  |
+| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.   |
+| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                  |
+| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                         |
+| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                            |
+
+`pnpm run` may be shortened to `pnpm` for any of these, as in `pnpm start` or `pnpm generate`.
+
+pnpm passes everything you type after the script name to the generator, so the options below work with `pnpm start`, `pnpm run generate`, and the per-template scripts alike.
+The generator documents itself: run it with `-h` or `--help` to print the usage message and exit.
+
+```bash
+pnpm run generate --help # or: pnpm start --help
+```
+
+| Option                    | What it does                                                                                                                                           |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `-h`, `--help`            | Print the usage message with every option, then exit.                                                                                                  |
+| `-t`, `--template <name>` | Fill in a different form: `red` (the default), `black`, `cinnamoroll`, the full template file stem, or a path to any PDF. See [Templates](#templates). |
+| `-o`, `--output <path>`   | Where to write the PDF. Defaults to `result-<template>-<HH-MM-SS>.pdf` in the current directory.                                                       |
+| `--list-templates`        | Print the bundled templates and their file paths, then exit.                                                                                           |
+| `--init-config`           | Create the private config if it is missing, then exit without generating a PDF. With `-t`, the target is `config-private-<template>.yaml`.             |
+| `--init-layout`           | Create `src/layout/<template>.yaml` from the default grid if it is missing, then exit. If the file already exists, it is validated, not overwritten.   |
+| `[config]`                | Positional argument: the YAML config to read. Defaults to `config-private-<template>.yaml` when that file exists, and `config-private.yaml` otherwise. |
+
+```bash
+pnpm run generate --list-templates           # which forms are bundled
+pnpm run generate -t black                   # fill in the black form with your local details
+pnpm run generate -t black config-black.yaml # ... or with that form's sample config
+pnpm run generate -o /tmp/draft.pdf          # write somewhere else, e.g. while tuning a layout
+pnpm run index                               # list every pnpm script in package.json
+```
+
+The scripts are thin wrappers, so `./start.sh` and `node src/main.js` still work if you prefer to call them directly.
+If you use npm instead of pnpm, add `--` before the options: `npm run generate -- -t black`.
+
+
 ## Configuration
 
 The configuration is split across two YAML files with identical field structures:
@@ -149,7 +228,7 @@ The configuration is split across two YAML files with identical field structures
 The first local run creates `config-private.yaml` for you by copying the sample, so there is nothing to set up by hand. To create it yourself before the first run:
 
 ```bash
-cp config.yaml config-private.yaml
+pnpm run init-config
 ```
 
 Then fill in your details in `config-private.yaml`.
@@ -158,7 +237,7 @@ To nudge a field, add a top-level `layout:` block that merges over the template 
 The legacy `*_pos` fields (`[x, y]` point coordinates) still work as overrides, so existing configs keep rendering unchanged.
 
 > ⚠️ **Privacy warning:** Pushing to `main` publishes the CI-generated PDF as a **public** [Release][].
-> Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `./start.sh`). Never commit or push a config that contains real PII.
+> Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `pnpm start`). Never commit or push a config that contains real PII.
 
 Each file has the following top-level sections:
 
@@ -249,7 +328,7 @@ witness1:
 
 ### Templates
 
-Three form templates ship in `src/template/`. Select one with the `-t/--template` flag or the top-level `template:` key in your config; the default is `red`.
+Three form templates ship in `src/template/`. The default is `red`.
 
 | Template      | File                                       | Notes                                                                                     |
 | ------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -257,10 +336,25 @@ Three form templates ship in `src/template/`. Select one with the `-t/--template
 | `black`       | `jp-marriage-registration-black.pdf`       | A black-printed form with a denser grid, era checkboxes, and 養父/養母 rows. Fully tuned. |
 | `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | Shinagawa City's Cinnamoroll form. Fully tuned.                                           |
 
-```bash
-node src/main.js --list-templates           # list the bundled templates
-node src/main.js -t black config-black.yaml # generate the black form from its sample config
-```
+There are three ways to switch forms, and they win in this order:
+
+1. **The `-t/--template` flag** - the quickest, and the only one that also looks for a per-template config:
+
+   ```bash
+   pnpm start --template black        # generate and open the black form
+   pnpm run generate -t cinnamoroll   # same, without installing or opening
+   pnpm run generate --list-templates # see what is bundled
+   ```
+
+2. **The top-level `template:` key** in your config, for a form you always use:
+
+   ```yaml
+   template: black
+   ```
+
+3. **The default**, `red`, when neither is set.
+
+You can also pass a path to any other PDF (`-t ~/Downloads/my-form.pdf`), but a custom PDF falls back to the `red` layout, so expect to tune the positions yourself (see [Layout](#layout)).
 
 Each template also has its own pnpm scripts. The first column is the one you use day to day.
 
@@ -311,24 +405,28 @@ Moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fiel
 Edit `config-private.yaml` with your details, then run (if the file does not exist yet, the first run creates it from the sample):
 
 ```bash
-./start.sh
+pnpm start
 ```
 
-That's it. The script installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
+That is it. `pnpm start` runs `start.sh`, which installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
 
-To run the generator step manually instead (after installing dependencies from [Initial setup](#initial-setup)):
+pnpm passes every argument after the script name to the generator, so the options from the [Command-line reference](#command-line-reference) work here too:
 
 ```bash
-node src/main.js             # uses config-private.yaml, writes result-<template>-<HH-MM-SS>.pdf
-node src/main.js config.yaml # or pass a config path explicitly
+pnpm start --help            # show every option
+pnpm start -t cinnamoroll    # fill in a different form
+pnpm start -o /tmp/draft.pdf # write the PDF somewhere else
+pnpm start config.yaml       # read a specific config
 ```
 
-The same steps are also available as pnpm scripts:
+The other scripts each do one step, and none of them installs the dependencies or opens the PDF for you:
 
 ```bash
 pnpm run init-config     # create config-private.yaml from the sample, without generating a PDF
 pnpm run generate        # generate the timestamped PDF from config-private.yaml
 pnpm run generate-sample # generate the timestamped PDF from the sample config.yaml
+pnpm run index           # list every pnpm script, including the per-template ones
+pnpm run clean           # list scratch files (temp-*, .DS_Store, .pnpm-store) and delete them after confirming
 ```
 
 `pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run. It only adds the header comments that mark the file as private and local-only, if they are missing:
@@ -346,7 +444,7 @@ Two workflows build the PDF in CI:
 * **`.github/workflows/pr.yml`** - runs on every pull request against `main`, builds the PDF, and uploads it as a workflow artifact you can download from the run's summary page.
 * **`.github/workflows/push.yml`** - runs on every push to `main`, builds the PDF, and publishes it as a new [Release][] (tagged with a timestamp) with `marriage_registration.pdf` attached.
 
-Both workflows run `node src/main.js config.yaml`, building the PDF from the committed sample `config.yaml`. So the typical flow is: edit `config.yaml`, commit, and push to `main`. If all goes well, the generated PDF appears in the [Release][] section. No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
+Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PDF from the committed sample `config.yaml` under a fixed output name (locally the name is timestamped instead). So the typical flow is: edit `config.yaml`, commit, and push to `main`. If all goes well, the generated PDF appears in the [Release][] section. No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
 
 > [!CAUTION]
 > `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
@@ -360,7 +458,7 @@ The `.github/` directory holds the repository's GitHub automation configuration.
 | --------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `.github/dependabot.yml`                | Daily (scheduled)                         | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) daily and opens pull requests when dependency updates exist.                                                   |
 | `.github/workflows/pr.yml`              | Pull requests against `main`              | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the run's summary page. |
-| `.github/workflows/push.yml`            | Pushes to `main`                          | Builds the PDF and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.                                                              |
+| `.github/workflows/push.yml`            | Pushes to `main`                          | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.            |
 | `.github/workflows/pr-lint-autofix.yml` | Pull requests (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository.              |
 
 All workflows run on Node.js 24 with pnpm and authenticate with the built-in `GITHUB_TOKEN`, so no extra secrets are required.

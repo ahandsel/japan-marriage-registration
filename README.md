@@ -33,7 +33,7 @@
 
 PDFの生成方法は2通りあります。
 
-* **ローカルで生成**：ワンコマンドのスクリプト（`./start.sh`）を実行する
+* **ローカルで生成**：ワンコマンドのpnpmスクリプト（`pnpm start`）を実行する
 * **GitHub Actionsで生成**：pushのたびにCIでPDFをビルドし、リリースとして公開する
 
 
@@ -46,7 +46,7 @@ git clone https://github.com/ahandsel/japan-marriage-registration.git
 cd japan-marriage-registration
 ```
 
-ローカル実行用スクリプト（`./start.sh`）が依存関係のインストールを自動で行うため、ローカルで動かすだけなら追加のセットアップは不要です。手動で環境を準備したい場合は以下のとおりです。
+セットアップ後の操作はすべてpnpmスクリプトで実行します。`pnpm start`（`start.sh` を実行します）が依存関係のインストールも行うため、ローカルで動かすだけなら追加のセットアップは不要です。手動で環境を準備したい場合は以下のとおりです。
 
 ```bash
 pnpm install # または: npm install
@@ -70,15 +70,17 @@ pnpm install # または: npm install
 | `config.yaml`         | リポジトリにcommitされるサンプル。GitHub ActionsのCIで使われ、`config-private.yaml` を作るときのコピー元になります。**プレースホルダーのみを記載し、実際の個人情報は書かないでください。** |
 | `config-private.yaml` | 自分の実際の情報を書くローカル用のファイル。`.gitignore` で除外されており、**ローカル実行時のデフォルト**です。                                                                            |
 
-初回はサンプルをコピーして自分用のファイルを作成します。
+初回の実行時にサンプルから自動で作成されるため、手作業の準備は不要です。先に自分で作成しておきたい場合は以下を実行します。
 
 ```bash
-cp config.yaml config-private.yaml
+pnpm run init-config
 ```
+
+`pnpm run init-config` は既存のファイルを上書きせず、非公開・ローカル専用であることを示すヘッダーコメントも付けてくれるため、`cp` よりこちらを使ってください。
 
 そのうえで `config-private.yaml` に自分の情報を記入します。文字の配置（座標・フォントサイズ・行間）はテンプレートごとのレイアウトファイル `src/layout/<テンプレート名>.yaml` が持つため、設定ファイルには基本的に自分の情報だけを書きます。位置を微調整したいときは、トップレベルの `layout:` ブロックを追加します（[レイアウト](#レイアウト)を参照）。従来の `*_pos` 項目（`[x, y]` のポイント座標）も上書きとして引き続き使えるため、既存の設定はそのまま動きます。
 
-> ⚠️ **プライバシーに関する注意**：`main` にpushすると、GitHub Actionsが生成したPDFを**公開**の[Release][]として公開します。実際の個人情報は `config-private.yaml` にのみ記入し、ローカルで（`./start.sh` で）PDFを生成してください。個人情報を含む設定をcommit・pushしないでください。
+> ⚠️ **プライバシーに関する注意**：`main` にpushすると、GitHub Actionsが生成したPDFを**公開**の[Release][]として公開します。実際の個人情報は `config-private.yaml` にのみ記入し、ローカルで（`pnpm start` で）PDFを生成してください。個人情報を含む設定をcommit・pushしないでください。
 
 各ファイルは以下のトップレベルのセクションで構成されています。
 
@@ -175,8 +177,8 @@ witness1:
 | `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | 品川区のシナモロール様式。全項目を調整済みです。                                                 |
 
 ```bash
-node src/main.js --list-templates           # 同梱テンプレートの一覧を表示
-node src/main.js -t black config-black.yaml # 黒刷り様式でサンプルから生成
+pnpm run generate --list-templates           # 同梱テンプレートの一覧を表示
+pnpm run generate -t black config-black.yaml # 黒刷り様式でサンプルから生成
 ```
 
 様式ごとにpnpmスクリプトが用意されています。ふだん使うのは1列目の `<様式>:pdf` です。
@@ -221,25 +223,31 @@ layout:
 `config-private.yaml` に情報を記入し、以下を実行します（まだ作成していない場合は[設定](#設定)を参照してコピーを作成してください）。
 
 ```bash
-./start.sh
+pnpm start
 ```
 
-これだけです。スクリプトが依存関係をインストールし、`result-<template>-<HH-MM-SS>.pdf` を生成して開きます（時刻付きの名前なので、以前の出力は上書きされません）。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
+これだけです。`pnpm start` が `start.sh` を実行し、依存関係をインストールして `result-<template>-<HH-MM-SS>.pdf` を生成し、開きます（時刻付きの名前なので、以前の出力は上書きされません）。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
 
-生成ステップだけを手動で実行したい場合は、[初期セットアップ](#初期セットアップ)で依存関係をインストールしたうえで、以下を実行します。
+pnpmはスクリプト名の後ろに書いた引数をそのまま `main.js` に渡すため、以下のように書けます。
 
 ```bash
-node src/main.js             # config-private.yaml を使って result-<template>-<HH-MM-SS>.pdf を出力
-node src/main.js config.yaml # 設定ファイルを明示的に指定することも可能
+pnpm start --help            # 使えるオプションの一覧を表示する
+pnpm start -t cinnamoroll    # 別の様式で生成する
+pnpm start -o /tmp/draft.pdf # 出力先を変更する
+pnpm start config.yaml       # 設定ファイルを明示的に指定する
 ```
 
-同じ操作はpnpmスクリプトでも実行できます。
+生成ステップだけを実行したい場合は、[初期セットアップ](#初期セットアップ)で依存関係をインストールしたうえで、以下のスクリプトを使います。どれも依存関係のインストールとPDFを開く操作は行いません。
 
 ```bash
 pnpm run init-config     # PDFを生成せずに、サンプルから config-private.yaml を作成する
 pnpm run generate        # config-private.yaml から時刻付きのPDFを生成する
 pnpm run generate-sample # サンプルの config.yaml から時刻付きのPDFを生成する
+pnpm run index           # 様式ごとのものも含め、すべてのpnpmスクリプトを一覧表示する
+pnpm run clean           # 一時ファイル（temp-*、.DS_Store、.pnpm-store）を確認のうえ削除する
 ```
+
+pnpmスクリプトは薄いラッパーなので、`./start.sh` や `node src/main.js` を直接実行することもできます。
 
 `pnpm run init-config` は既存の `config-private.yaml` を上書きしないため、何度実行しても安全です。非公開・ローカル専用であることを示す以下のヘッダーコメントが無い場合に、それだけを追加します。
 
@@ -256,7 +264,7 @@ CIでPDFをビルドするワークフローが2つあります。
 * **`.github/workflows/pr.yml`** - `main` へのプルリクエストのたびに実行され、PDFをビルドし、ワークフローのアーティファクトとしてアップロードします（実行結果のサマリーページからダウンロードできます）。
 * **`.github/workflows/push.yml`** - `main` へのpushのたびに実行され、PDFをビルドし、新しい[Release][]（タイムスタンプのタグ付き）として `marriage_registration.pdf` を添付して公開します。
 
-どちらのワークフローも `node src/main.js config.yaml` を実行し、commit済みの `config.yaml`（サンプル）を使ってPDFを生成します。つまり基本の流れは、`config.yaml` を編集してcommitし、`main` にpushするだけです。うまくいけば、生成されたPDFが[Release][]に出来上がります。シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
+どちらのワークフローも `node src/main.js config.yaml -o result.pdf` を実行し、commit済みの `config.yaml`（サンプル）を使って固定のファイル名でPDFを生成します（ローカル実行では時刻付きの名前になります）。つまり基本の流れは、`config.yaml` を編集してcommitし、`main` にpushするだけです。うまくいけば、生成されたPDFが[Release][]に出来上がります。シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
 
 > ⚠️ **注意**：`push.yml` は生成したPDFを**公開**のReleaseとして公開します。ここで使われるのはcommit済みの `config.yaml` のみです。実際の個人情報を含む婚姻届が必要な場合は、`config-private.yaml` に記入してローカルで生成してください（CIには載せないでください）。
 
@@ -269,7 +277,7 @@ CIでPDFをビルドするワークフローが2つあります。
 | --------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `.github/dependabot.yml`                | 毎日（スケジュール実行）           | [Dependabot][] の設定。`npm`（pnpmを含む）の依存パッケージを毎日チェックし、更新があればプルリクエストを自動で作成します。                                                                                          |
 | `.github/workflows/pr.yml`              | `main` へのプルリクエスト          | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、ワークフローのアーティファクト（`marriage_registration`）としてアップロードします。実行結果のサマリーページから `result.pdf` をダウンロードできます。 |
-| `.github/workflows/push.yml`            | `main` へのpush                    | PDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                                                                 |
+| `.github/workflows/push.yml`            | `main` へのpush                    | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                  |
 | `.github/workflows/pr-lint-autofix.yml` | プルリクエスト（作成・更新・再開） | `pnpm lint`（Prettierとmarkdownlint）を実行し、自動修正した内容をPRブランチへcommit・pushして返します。同一リポジトリ内のPRでのみ動作します。                                                                       |
 
 いずれのワークフローもNode.js 24とpnpmで動作し、認証には組み込みの `GITHUB_TOKEN` を使用します。追加のシークレット設定は不要です。
