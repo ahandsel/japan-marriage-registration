@@ -7,6 +7,7 @@ Usage:    index.sh [-h|--help] [-V|--version]
 Purpose:  List all pnpm scripts defined in package.json.
 
 Version history:
+- v1.4, 2026-09-15; Document the output in the notes and prefix errors with a status emoji.
 - v1.3, 2026-03-24; Robust JSON parsing; add --version flag; dynamic column width.
 - v1.2, 2026-03-24; Fix find_package_json to check root directory.
 - v1.1, 2026-03-24; Remove jq dependency; parse JSON with pure zsh.
@@ -15,6 +16,10 @@ Version history:
 Notes:
 * Reads nearest package.json and prints each script name & its command.
 * Parses JSON with pure zsh pattern matching.
+
+Output:
+* A "pnpm <name> -> <command>" line per script on stdout, aligned by name.
+* Errors on stderr with a ❌ prefix; exit codes: 0 success, 1 failure, 2 usage error.
 DOC
 #===============================================================================
 
@@ -33,7 +38,7 @@ err() { printf '%s\n' "$*" >&2; }
 
 _exit_status=0
 on_error() {
-  ((_exit_status)) && err "A failure occurred. Exiting."
+  ((_exit_status)) && err "❌ A failure occurred. Exiting."
 }
 trap '_exit_status=$?; on_error' EXIT
 
@@ -69,7 +74,7 @@ find_package_json() {
     [[ "$dir" == "/" ]] && break
     dir="${dir:h}"
   done
-  err "No package.json found."
+  err "❌ No package.json found."
   return 1
 }
 
@@ -153,7 +158,7 @@ main() {
         exit 0
         ;;
       *)
-        err "Unknown option: $1"
+        err "❌ Unknown option: $1"
         usage
         exit 2
         ;;
