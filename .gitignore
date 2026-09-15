@@ -26,3 +26,5 @@ p.yaml
 # Local scratch files - anything in local/ stays untracked.
 local/
 temp.md
+.env
+.env.*
