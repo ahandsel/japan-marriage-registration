@@ -50,7 +50,10 @@ Beyond `src/`, these files exist and are easy to miss:
 * `src/template/marriage-registration-fields.md` is the term-by-term field reference: every Japanese label on the form, a plain-language English rendering, what the box means, and the config keys that fill it.
   Read it before guessing what a field is for.
 * `docs/` holds working tickets, currently `docs/ticket-per-template-layout.md` (the per-template layout work).
-* `.claude/skills/` holds repo-local skills: `pr-auditor` (merge audit of a branch or pull request) and `readme-maintainer` (folder README upkeep).
+* `.claude/skills/` holds repo-local skills: `ai-commit` (commit message drafting), `code-review` (pull request review), `pr-auditor` (merge audit of a branch or pull request), `readme-maintainer` (folder README upkeep), `script-auditor` (helper script guidelines), and `skills-ref` (skill folder validation).
+* `.github/` holds the GitHub configuration: the workflows, `dependabot.yml`, `PULL_REQUEST_TEMPLATE.md`, and the Copilot instruction set.
+  `.github/copilot-instructions.md` restates this document for Copilot, which does not read `AGENTS.md`, and `.github/instructions/*.instructions.md` adds path-scoped rules for the configs, the layout files, the helper scripts, and the workflows.
+  A rule belongs here in `AGENTS.md` first, and those files mirror it.
 * `.claude/CLAUDE.md` is a pointer file; it delegates all guidance to this document, so guidance belongs here and not there.
 
 
@@ -197,7 +200,9 @@ Keep scripts in `package.json` sorted alphabetically.
 * `push.yml` - on push to `main`: build the PDF and publish it as a **public** timestamped GitHub Release (`marriage_registration.pdf`).
 * `pr-lint-autofix.yml` - runs `pnpm lint` on PRs and commits the fixes back.
 
-All workflows run `node src/main.js config.yaml` on Node 24 with pnpm.
+`pr.yml` and `push.yml` run `node src/main.js config.yaml -o result.pdf` on Node 24 with pnpm, and `pr-lint-autofix.yml` runs `pnpm lint` only.
+Every workflow pins each action to a full commit SHA with a trailing comment naming the version, and declares an explicit `permissions` block.
+`push.yml` creates the release with `gh release create`.
 
 
 ## Writing style guide
