@@ -18,14 +18,13 @@ Run the bundled script from the repository root:
 
 ```bash
 # Validate one skill folder (or a path to SKILL.md).
-node skills/skills-ref/scripts/skills-ref.mjs validate skills/skills-ref
-pnpm skills-ref validate skills/ai-commit
+node .claude/skills/skills-ref/scripts/skills-ref.mjs validate .claude/skills/skills-ref
 
 # Print parsed frontmatter as JSON.
-node skills/skills-ref/scripts/skills-ref.mjs read-properties skills/ai-commit
+node .claude/skills/skills-ref/scripts/skills-ref.mjs read-properties .claude/skills/ai-commit
 
 # Emit <available_skills> XML for one or more skills.
-node skills/skills-ref/scripts/skills-ref.mjs to-prompt skills/ai-commit skills/en-review
+node .claude/skills/skills-ref/scripts/skills-ref.mjs to-prompt .claude/skills/ai-commit .claude/skills/pr-auditor
 ```
 
 

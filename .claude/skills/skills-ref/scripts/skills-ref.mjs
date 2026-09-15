@@ -8,11 +8,10 @@
 //   (Apache 2.0). Python is banned in this repo, so this script reimplements
 //   the CLI in Node rather than vendoring the original package.
 // Usage:
-//   node skills/skills-ref/scripts/skills-ref.mjs validate <skill>
-//   node skills/skills-ref/scripts/skills-ref.mjs read-properties <skill>
-//   node skills/skills-ref/scripts/skills-ref.mjs to-prompt <skill> [skill...]
-//   pnpm skills-ref validate <skill>
-//   node skills/skills-ref/scripts/skills-ref.mjs --help
+//   node .claude/skills/skills-ref/scripts/skills-ref.mjs validate <skill>
+//   node .claude/skills/skills-ref/scripts/skills-ref.mjs read-properties <skill>
+//   node .claude/skills/skills-ref/scripts/skills-ref.mjs to-prompt <skill> [skill...]
+//   node .claude/skills/skills-ref/scripts/skills-ref.mjs --help
 // Output:
 // * validate: "✅ Valid skill: <path>" on stdout, or "❌ Validation failed..." plus
 //   one "  - <error>" line per problem on stderr.
@@ -20,11 +19,12 @@
 // * to-prompt: an <available_skills> XML block on stdout.
 // * Exit codes: 0 = success, 1 = validation or parse error, 2 = usage error.
 // Version history:
+// * v1.1 - 2026-09-15 - Parse YAML with the repo dependency `yaml` instead of the unresolvable `js-yaml`, correct the documented paths to .claude/skills/, and drop the removed pnpm alias.
 // * v1.0 - 2026-09-09 - Initial Node port of skills-ref 0.1.0.
 
 import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
-import { load } from 'js-yaml';
+import { parse as load } from 'yaml';
 
 const VERSION = '1.0';
 const MAX_SKILL_NAME_LENGTH = 64;
@@ -46,12 +46,11 @@ class ValidationError extends SkillError {}
 const HELP = `Node port of the Agent Skills reference library (validate, read-properties, to-prompt).
 
 Usage:
-  node skills/skills-ref/scripts/skills-ref.mjs validate <skill>
-  node skills/skills-ref/scripts/skills-ref.mjs read-properties <skill>
-  node skills/skills-ref/scripts/skills-ref.mjs to-prompt <skill> [skill...]
-  pnpm skills-ref <command> [args]
-  node skills/skills-ref/scripts/skills-ref.mjs --help
-  node skills/skills-ref/scripts/skills-ref.mjs --version
+  node .claude/skills/skills-ref/scripts/skills-ref.mjs validate <skill>
+  node .claude/skills/skills-ref/scripts/skills-ref.mjs read-properties <skill>
+  node .claude/skills/skills-ref/scripts/skills-ref.mjs to-prompt <skill> [skill...]
+  node .claude/skills/skills-ref/scripts/skills-ref.mjs --help
+  node .claude/skills/skills-ref/scripts/skills-ref.mjs --version
 
 Commands:
   validate         Check SKILL.md frontmatter against the Agent Skills spec.
