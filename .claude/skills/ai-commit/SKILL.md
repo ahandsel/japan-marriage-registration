@@ -7,8 +7,8 @@ description: Auto-gather git changes, confirm scope with the user, and draft a c
 
 Review git changes, confirm scope with the user, and draft a commit message following the selected commit style guide. This skill supports normal commits, `--head` message-only amend mode, `--commit <hash>` message-only reword mode for a specific commit, and `--auto` no-question drafting.
 
-* If a file named `repo-commit-style-guide.md` exists anywhere in the repository, use it. In this repository it lives at `docs/repo-commit-style-guide.md`.
-* Otherwise, use `skills/ai-commit/default-commit-style-guide.md`.
+* If a file named `repo-commit-style-guide.md` exists anywhere in the repository, use it. This repository has no such file today, so the default guide applies.
+* Otherwise, use `.claude/skills/ai-commit/default-commit-style-guide.md`.
 
 
 ## Workflow flags
@@ -16,7 +16,7 @@ Review git changes, confirm scope with the user, and draft a commit message foll
 
 ### Default workflow (No flags)
 
-1. **Resolve style guide source.** Detect the repository root (for example, with `git rev-parse --show-toplevel`). Search the repository for a file named `repo-commit-style-guide.md` (for example, with `git ls-files ':(glob)**/repo-commit-style-guide.md'` from the repo root, or `find <repo-root> -name repo-commit-style-guide.md -not -path '*/node_modules/*'`). If exactly one match is found, use it as the source of truth. If multiple matches are found, prefer one under `docs/`, then one at the repo root, then ask the user which to use. If no match is found, use `skills/ai-commit/default-commit-style-guide.md`.
+1. **Resolve style guide source.** Detect the repository root (for example, with `git rev-parse --show-toplevel`). Search the repository for a file named `repo-commit-style-guide.md` (for example, with `git ls-files ':(glob)**/repo-commit-style-guide.md'` from the repo root, or `find <repo-root> -name repo-commit-style-guide.md -not -path '*/node_modules/*'`). If exactly one match is found, use it as the source of truth. If multiple matches are found, prefer one under `docs/`, then one at the repo root, then ask the user which to use. If no match is found, use `.claude/skills/ai-commit/default-commit-style-guide.md`.
 2. **Auto-gather git inputs.** Run `git status`, `git diff`, and `git diff --staged` automatically. Do not ask the user to paste anything.
 3. **Present findings, confirm scope, and accept notes.** Show the user a list of changed files and a brief summary of the changes. In the same prompt, ask which files are in-scope for this commit and whether the user has additional context or notes (for example, a related ticket ID or a short explanation of intent). Default if no notes provided: draft from the diff alone. Wait for the user's response before proceeding.
 4. **Run linter.** Run `pnpm lint` before drafting the commit message. If the linter reports errors, show the output to the user and fix the issues before proceeding. Do not draft a commit message until the linter passes cleanly.

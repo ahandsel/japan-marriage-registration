@@ -15,12 +15,13 @@ This skill enforces the project rule that each folder should contain a `README.m
 In scope:
 
 * All folders that contain at least one file tracked by git.
-* Both top-level folders (for example `scripts/`, `agents/`, `prompts/`) and nested folders (for example `skills/<skill-name>/scripts/`).
+* Both top-level folders (for example `scripts/`, `docs/`, `src/`) and nested folders (for example `src/template/`).
+* `.claude/skills/` itself, whose `README.md` indexes the skills; the individual skill folders use `SKILL.md` as their entry point and never get a README.
 
 Out of scope (skip these, do not create a README):
 
 * The repository root (`README.md` already exists and is hand-curated).
-* Dot folders that hold tool configuration only: `.claude/`, `.github/`, `.vscode/`, `.aliases/`, and any nested folders inside them.
+* Dot folders that hold tool configuration only, such as `.github/` and `.vscode/`, and any nested folders inside them, apart from the `.claude/skills/` exception above.
 * Folders that are empty or only contain other empty folders (no tracked files anywhere beneath).
 * Folders that exist only because of build or cache artifacts (for example `__pycache__/`, `node_modules/`).
 * Folders that contain only a single `README.md` and no other tracked content (the README would only describe itself).
@@ -102,11 +103,11 @@ For folders whose contents are tightly themed (for example a single skill's `scr
 
 ## Edge cases
 
-* **Renamed file or folder** - update both the folder's own README and any other READMEs or docs that link to the old path. The rule under "File and folder naming" in `AGENTS.md` requires updating every reference.
+* **Renamed file or folder** - update both the folder's own README and any other READMEs or docs that link to the old path, so no reference is left dangling.
 * **Folder added but not yet populated** - if the folder is tracked because of a `.gitkeep` only, skip it.
 * **Folder with sensitive or generated content** - describe the purpose without listing individual files when listing them would be noisy or could leak data.
 * **Conflicting prior README** - if a README looks intentionally minimal (for example a top-level folder that defers to a child index), preserve that style; do not expand it without reason.
-* **Index folder with many entries** - keep entries sorted alphabetically unless the existing file uses a deliberate grouping (for example `skills/README.md` groups by category); preserve the existing grouping.
+* **Index folder with many entries** - keep entries sorted alphabetically unless the existing file uses a deliberate grouping; preserve the existing grouping.
 
 
 ## Constraints
