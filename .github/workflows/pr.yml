@@ -4,25 +4,47 @@ on:
   pull_request:
     branches: [main]
 
+# The job only reads the repository and uploads an artifact.
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # actions/checkout@v5.0.0, pinned
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        # No version input: the action reads packageManager from package.json.
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # pnpm/action-setup@v4.2.0, pinned
+
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # actions/setup-node@v6.0.0, pinned
         with:
           node-version: 24
           cache: pnpm
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: create marriage registration
+
+      - name: Create marriage registration
+        # Always build from config.yaml, which holds placeholders only.
+        # The artifact is downloadable by anyone who can see the pull request,
+        # so never point this at a private config.
         # -o pins the output name: the local default is timestamped
         # (result-<template>-<HH-MM-SS>.pdf), but the artifact path is fixed.
         run: node src/main.js config.yaml -o result.pdf
-      - uses: actions/upload-artifact@v4
+
+      - name: Upload the PDF
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4.6.2, pinned
         with:
           name: marriage_registration
           path: result.pdf
