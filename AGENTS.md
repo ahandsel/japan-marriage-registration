@@ -50,7 +50,7 @@ Beyond `src/`, these files exist and are easy to miss:
 * `src/template/marriage-registration-fields.md` is the term-by-term field reference: every Japanese label on the form, a plain-language English rendering, what the box means, and the config keys that fill it.
   Read it before guessing what a field is for.
 * `docs/` holds working tickets, currently `docs/ticket-per-template-layout.md` (the per-template layout work).
-* `.claude/skills/` holds repo-local skills: `ai-commit` (commit message drafting), `code-review` (pull request review), `pr-auditor` (merge audit of a branch or pull request), `readme-maintainer` (folder README upkeep), `script-auditor` (helper script guidelines), and `skills-ref` (skill folder validation).
+* `.claude/skills/` holds repo-local skills: `ai-commit` (commit message drafting), `pr-auditor` (merge audit of a branch or pull request), `readme-maintainer` (folder README upkeep), `script-auditor` (helper script guidelines), and `skills-ref` (skill folder validation).
 * `.github/` holds the GitHub configuration: the workflows, `dependabot.yml`, `PULL_REQUEST_TEMPLATE.md`, and the Copilot instruction set.
   `.github/copilot-instructions.md` restates this document for Copilot, which does not read `AGENTS.md`, and `.github/instructions/*.instructions.md` adds path-scoped rules for the configs, the layout files, the helper scripts, and the workflows.
   A rule belongs here in `AGENTS.md` first, and those files mirror it.
