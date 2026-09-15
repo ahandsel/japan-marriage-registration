@@ -1,11 +1,33 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
-# https://help.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# Dependabot keeps two things current in this repository:
+# the pnpm dependencies in package.json, and the action SHAs pinned in
+# .github/workflows/*.yml. Every workflow pins its actions to a commit SHA,
+# so without the github-actions block below those pins never get updated.
+#
+# Pull requests open against the default branch (main), which matches the
+# branch policy in AGENTS.md.
+#
+# Configuration reference:
+# https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
 updates:
-  - package-ecosystem: 'npm' # pnpm is handled by the npm ecosystem
-    directory: '/' # Location of package manifests
+  # pnpm is handled by the npm ecosystem, which reads pnpm-lock.yaml.
+  # Left ungrouped: this project has three runtime dependencies, and a pdf-lib
+  # or yaml bump is worth reviewing on its own.
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: 'daily'
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+
+  # Grouped into a single pull request: the actions move together, and each bump
+  # is a one-line SHA change that is not useful to review separately.
+  - package-ecosystem: 'github-actions'
+    directory: '/'
+    schedule:
+      interval: 'weekly'
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - '*'
