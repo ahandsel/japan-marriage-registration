@@ -28,3 +28,6 @@ local/
 temp.md
 .env
 .env.*
+
+# Repo public audit config (local-only)
+.env.repo-audit
