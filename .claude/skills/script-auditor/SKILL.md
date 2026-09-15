@@ -19,12 +19,11 @@ The guidelines this skill enforces:
 
 In scope:
 
-* Helper and tooling scripts tracked by git under a `scripts/` directory - both the top-level `scripts/` folder and a skill's own `skills/<skill-name>/scripts/` folder.
+* Helper and tooling scripts tracked by git under a `scripts/` directory - both the top-level `scripts/` folder and a skill's own `.claude/skills/<skill-name>/scripts/` folder.
 * Files with a script extension (`.mjs`, `.js`, `.cjs`, `.sh`, `.zsh`, `.bash`, `.py`).
 
 Out of scope (the auditor skips these):
 
-* Vendored Figma plugin scripts under `skills/figma-*/scripts/`. These are Figma Plugin API snippets run inside Figma via `use_figma`, not repo CLI helpers, so the script-authoring guidelines do not apply to them.
 * Non-script files (Markdown, CSV, JSON, YAML, lockfiles).
 * Source files that are not helper scripts and do not live under a `scripts/` directory.
 
@@ -35,13 +34,13 @@ Run the bundled auditor from anywhere inside the repo (requires Node.js 24+):
 
 ```bash
 # Sweep all tracked helper scripts and print a per-script report.
-node skills/script-auditor/scripts/audit-helper-scripts.mjs
+node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs
 
 # Audit specific scripts (for example, the ones in the current diff).
-node skills/script-auditor/scripts/audit-helper-scripts.mjs scripts/my-tool.mjs
+node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs scripts/my-tool.mjs
 
 # Machine-readable output for further processing.
-node skills/script-auditor/scripts/audit-helper-scripts.mjs --json
+node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs --json
 ```
 
 Exit codes:
@@ -108,7 +107,7 @@ function printUsage() {
 console.log('✅ Done.'); // use ✅ / ⚠️ / ❌ for status
 ```
 
-For zsh, put the same notes block in `#` comments near the top, handle `--help`/`-h` in argument parsing, and prefix status output with the same emojis. See `skills/skill-allowlist-syncer/scripts/check-skill-allowlist.mjs` for a fully compliant example, and `scripts/cleanup-temp-files.sh` for the version history format (a reverse-chronological `vX.Y - YYYY-MM-DD - summary` list).
+For zsh, put the same notes block in `#` comments near the top, handle `--help`/`-h` in argument parsing, and prefix status output with the same emojis. See `.claude/skills/skills-ref/scripts/skills-ref.mjs` for a fully compliant example, and `scripts/cleanup-temp-files.sh` for the version history format (a reverse-chronological `vX.Y - YYYY-MM-DD - summary` list).
 
 
 ## Bundled resources
@@ -121,7 +120,7 @@ Audits helper scripts against the four guidelines and prints a per-script verdic
 Behavior:
 
 * Locates the repo root via `git rev-parse --show-toplevel` (override with `--repo-root <dir>`).
-* With no file arguments, discovers tracked scripts via `git ls-files`, keeping files under a `scripts/` path segment with a script extension, and skipping vendored `skills/figma-*/scripts/`.
+* With no file arguments, discovers tracked scripts via `git ls-files`, keeping files under a `scripts/` path segment with a script extension.
 * With file arguments, audits exactly those paths, skipping anything that is not a recognized script.
 * Runs four checks per file (language, `--help`, notes section, status emojis) and rolls them up into one verdict, where `fail` beats `warn` beats `ok`.
 * Prints a human-readable report by default, or a JSON array with `--json`.
@@ -135,5 +134,4 @@ The script only reads files; it never edits them. Fixes are applied by the skill
 * Treat warnings as advisory. Do not rewrite a `.sh` or `.js` script to zsh or `.mjs` just to clear a warning unless the user asks.
 * Treat failures as guideline violations to fix, but apply the smallest change that satisfies the guideline rather than rewriting a working script.
 * Never rewrite a Python script to `.mjs` or zsh without first confirming with the user; preserve behavior and any `pnpm` wiring.
-* Do not add `--help`, notes, or emojis to the vendored Figma plugin scripts - they are out of scope.
 * Before acting on a flagged finding, read the file - the checks are heuristics and can misfire on unusual wording or structure.

@@ -9,10 +9,10 @@
 //   exempt from the `--help` rule, because it has no command line of its own.
 //
 // Usage:
-//   node skills/script-auditor/scripts/audit-helper-scripts.mjs
-//   node skills/script-auditor/scripts/audit-helper-scripts.mjs --repo-root /path/to/repo
-//   node skills/script-auditor/scripts/audit-helper-scripts.mjs --json
-//   node skills/script-auditor/scripts/audit-helper-scripts.mjs path/to/one-script.mjs ...
+//   node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs
+//   node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs --repo-root /path/to/repo
+//   node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs --json
+//   node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs path/to/one-script.mjs ...
 //
 // Output:
 // * Human-readable per-script report with a ✅ / ⚠️ / ❌ verdict per check, or `--json` for a
@@ -21,6 +21,7 @@
 // * Exit codes: 0 = all scripts pass, 1 = at least one warning or failure, 2 = configuration error.
 //
 // Version history:
+// * v1.3 - 2026-09-15 - Drop the vendored-Figma skip (this repo has no such scripts) and correct the documented paths to .claude/skills/.
 // * v1.2 - 2026-08-28 - Exempt a sourced library from the --help check when its usage line documents `source`.
 // * v1.1 - 2026-06-04 - Add a version history check to the notes section audit.
 // * v1.0 - 2026-06-04 - Initial release: language, --help, notes, and emoji checks.
@@ -66,7 +67,7 @@ function printUsage() {
       '',
       'Arguments:',
       '  files...           Specific script paths to audit. When omitted, all',
-      '                     tracked scripts under scripts/ and skills/*/scripts/',
+      '                     tracked scripts under a scripts/ path segment',
       '                     are discovered automatically.',
       '',
       'Exit codes:',
@@ -140,23 +141,18 @@ function discoverTrackedScripts(repoRoot) {
   if (result.status !== 0) {
     throw new ConfigError('git ls-files failed; pass explicit files instead');
   }
-  return (
-    result.stdout
-      .split('\n')
-      .map((line) => line.trim())
-      .filter(Boolean)
-      .filter(
-        (rel) =>
-          rel === 'scripts' ||
-          rel.startsWith('scripts/') ||
-          /\/scripts\//.test(rel),
-      )
-      // Skip vendored Figma plugin scripts: they are Figma Plugin API snippets run
-      // inside Figma via use_figma, not repo CLI helpers, so the guidelines do not apply.
-      .filter((rel) => !/(^|\/)skills\/figma-[^/]+\//.test(rel))
-      .filter((rel) => SCRIPT_EXTS.has(extname(rel)))
-      .map((rel) => join(repoRoot, rel))
-  );
+  return result.stdout
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .filter(
+      (rel) =>
+        rel === 'scripts' ||
+        rel.startsWith('scripts/') ||
+        /\/scripts\//.test(rel),
+    )
+    .filter((rel) => SCRIPT_EXTS.has(extname(rel)))
+    .map((rel) => join(repoRoot, rel));
 }
 
 function isScriptFile(absPath) {
