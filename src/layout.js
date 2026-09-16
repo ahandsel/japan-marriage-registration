@@ -137,6 +137,17 @@ const LEGACY_PERSON_POS_KEYS = {
   mother_name_pos: { field: 'mother_name', shifts: [] },
 };
 
+// Every legacy `*_pos` key as a [section, key] path. Exported so main.js can
+// drop them when scaffolding a per-template config - the values are red
+// coordinates, and copying them under another template pins red positions
+// over that template's tuned layout.
+export const LEGACY_POS_KEY_PATHS = [
+  ...['husband', 'wife'].flatMap((person) =>
+    Object.keys(LEGACY_PERSON_POS_KEYS).map((key) => [person, key]),
+  ),
+  ['new_legally_domiciled', 'address_pos'],
+];
+
 // --- loading -------------------------------------------------------------------
 
 export function layoutNameForTemplate(templateName) {
@@ -152,18 +163,23 @@ export function layoutNameForTemplate(templateName) {
   return name;
 }
 
-function layoutPathForTemplate(templateName) {
+function layoutForTemplate(templateName) {
+  // Returns the layout file plus the variant it actually belongs to, so the
+  // caller can tell when the red fallback below was taken.
   const name = layoutNameForTemplate(templateName);
   const candidate = path.join(LAYOUT_DIR, `${name}.yaml`);
   if (fs.existsSync(candidate)) {
-    return candidate;
+    return { path: candidate, base: name };
   }
   // A custom template PDF has no bundled layout; start from the default grid
   // and let the config's `layout:` block adjust it.
   console.log(
     `ℹ️  No layout file for template "${name}" - using the "${DEFAULT_LAYOUT}" layout as the base.`,
   );
-  return path.join(LAYOUT_DIR, `${DEFAULT_LAYOUT}.yaml`);
+  return {
+    path: path.join(LAYOUT_DIR, `${DEFAULT_LAYOUT}.yaml`),
+    base: DEFAULT_LAYOUT,
+  };
 }
 
 // --- merging -------------------------------------------------------------------
@@ -189,6 +205,12 @@ function isPos(value) {
     Array.isArray(value) &&
     value.length === 2 &&
     value.every((n) => Number.isFinite(n))
+  );
+}
+
+function hasLegacyPosKeys(cfg) {
+  return LEGACY_POS_KEY_PATHS.some(
+    ([section, key]) => cfg?.[section]?.[key] !== undefined,
   );
 }
 
@@ -309,6 +331,29 @@ function validateLeaf(type, value, keyPath, errors) {
   }
 }
 
+function annotateKeyPaths(schema, node, keyPath) {
+  // Attach each node's dotted key path (e.g. "husband.last_name") as a
+  // non-enumerable property, so main.js can name the exact config key in an
+  // error message. Non-enumerable keeps it out of Object.keys and out of any
+  // YAML round trip of the layout.
+  if (!isPlainObject(node)) {
+    return;
+  }
+  if (keyPath) {
+    Object.defineProperty(node, 'keyPath', { value: keyPath });
+  }
+  if (typeof schema === 'string') {
+    return;
+  }
+  for (const [key, childSchema] of Object.entries(schema)) {
+    annotateKeyPaths(
+      childSchema,
+      node[key],
+      keyPath ? `${keyPath}.${key}` : key,
+    );
+  }
+}
+
 function validateNode(schema, value, keyPath, errors) {
   if (typeof schema === 'string') {
     validateLeaf(schema, value, keyPath, errors);
@@ -342,7 +387,8 @@ function validateNode(schema, value, keyPath, errors) {
 // --- public API ------------------------------------------------------------------
 
 export function resolveLayout(templateName, cfg) {
-  const layoutPath = layoutPathForTemplate(templateName);
+  const { path: layoutPath, base: baseLayout } =
+    layoutForTemplate(templateName);
   let parsed;
   try {
     parsed = YAML.parse(fs.readFileSync(layoutPath, 'utf-8'));
@@ -355,7 +401,20 @@ export function resolveLayout(templateName, cfg) {
   // Clone so the override steps below never mutate objects shared with the
   // parsed base when no `layout:` block is present.
   const merged = structuredClone(deepMerge(parsed, cfg.layout ?? {}));
-  applyLegacyPosOverrides(merged, cfg);
+  // The legacy `*_pos` keys are red coordinates by definition (they predate
+  // per-template layouts), so they only apply when the base layout is the red
+  // grid - either the red template itself or a custom PDF using the fallback
+  // above. On any other tuned layout they would drag whole field blocks onto
+  // the wrong printed rows, so they are ignored with a warning instead.
+  if (baseLayout === DEFAULT_LAYOUT) {
+    applyLegacyPosOverrides(merged, cfg);
+  } else if (hasLegacyPosKeys(cfg)) {
+    console.log(
+      `⚠️  Ignoring the legacy *_pos overrides in the config: they hold "${DEFAULT_LAYOUT}"\n` +
+        `   coordinates, and this run uses the tuned "${baseLayout}" layout. Use a\n` +
+        '   "layout:" block to nudge a position on this template.',
+    );
+  }
   const errors = [];
   validateNode(LAYOUT_SCHEMA, merged, '', errors);
   if (errors.length > 0) {
@@ -365,6 +424,7 @@ export function resolveLayout(templateName, cfg) {
         errors.map((line) => `   - ${line}`).join('\n'),
     );
   }
+  annotateKeyPaths(LAYOUT_SCHEMA, merged, '');
   return merged;
 }
 

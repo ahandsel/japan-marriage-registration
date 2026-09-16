@@ -13,6 +13,7 @@ import YAML from 'yaml';
 import {
   initLayout,
   layoutNameForTemplate,
+  LEGACY_POS_KEY_PATHS,
   resolveLayout,
   TEMPLATE_PREFIX,
 } from './layout.js';
@@ -177,7 +178,7 @@ function scaffoldVariantConfig(templateArg) {
         'nor the sample config.yaml exists to copy from.',
     );
   }
-  // parseDocument keeps the sample's comments and field order intact; only the
+  // parseDocument keeps the sample's comments and field order intact; the
   // `template:` key is set, pinning the file to the form it is named after.
   const doc = YAML.parseDocument(fs.readFileSync(seed, 'utf-8'));
   if (doc.has('template')) {
@@ -185,10 +186,26 @@ function scaffoldVariantConfig(templateArg) {
   } else {
     doc.contents.items.unshift(doc.createPair('template', variant));
   }
-  fs.writeFileSync(
-    target,
-    PRIVATE_CONFIG_HEADER + doc.toString({ lineWidth: 0 }),
-  );
+  // The legacy *_pos keys hold red coordinates, so copying them into a
+  // per-template config would pin red positions over this template's tuned
+  // layout. Drop them; a `layout:` block is the per-template way to nudge one.
+  for (const keyPath of LEGACY_POS_KEY_PATHS) {
+    doc.deleteIn(keyPath);
+  }
+  const body = doc.toString({ lineWidth: 0 });
+  const content = hasPrivateConfigHeader(body)
+    ? body
+    : PRIVATE_CONFIG_HEADER + body;
+  try {
+    // `wx` refuses to overwrite, so a config created between the existsSync
+    // check above and this write is never clobbered.
+    fs.writeFileSync(target, content, { flag: 'wx' });
+  } catch (err) {
+    if (err.code === 'EEXIST') {
+      return { path: target, created: false, seed: null };
+    }
+    throw err;
+  }
   return { path: target, created: true, seed };
 }
 
@@ -226,21 +243,36 @@ function resolveConfigPath(configArg, templateArg) {
       );
     }
     const sample = fs.readFileSync(PUBLIC_CONFIG_PATH, 'utf-8');
-    fs.writeFileSync(DEFAULT_CONFIG_PATH, PRIVATE_CONFIG_HEADER + sample);
-    console.log(
-      'config-private.yaml not found - created one from the sample config.yaml.\n' +
-        'It contains placeholder details; edit config-private.yaml with your own\n' +
-        'information and re-run to generate your real form.\n',
-    );
+    try {
+      // `wx` refuses to overwrite, so a private config created between the
+      // existsSync check above and this write is never clobbered.
+      fs.writeFileSync(DEFAULT_CONFIG_PATH, PRIVATE_CONFIG_HEADER + sample, {
+        flag: 'wx',
+      });
+      console.log(
+        'config-private.yaml not found - created one from the sample config.yaml.\n' +
+          'It contains placeholder details; edit config-private.yaml with your own\n' +
+          'information and re-run to generate your real form.\n',
+      );
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        throw err;
+      }
+    }
   }
   return DEFAULT_CONFIG_PATH;
+}
+
+function hasPrivateConfigHeader(text) {
+  return PRIVATE_CONFIG_HEADER.trimEnd()
+    .split('\n')
+    .every((line) => text.includes(line));
 }
 
 function addPrivateConfigHeader(configPath) {
   // Returns true if the header was added, false if it was already there.
   const current = fs.readFileSync(configPath, 'utf-8');
-  const headerLines = PRIVATE_CONFIG_HEADER.trimEnd().split('\n');
-  if (headerLines.every((line) => current.includes(line))) {
+  if (hasPrivateConfigHeader(current)) {
     return false;
   }
   fs.writeFileSync(configPath, PRIVATE_CONFIG_HEADER + current);
@@ -318,12 +350,27 @@ function makeCanvas(page, font) {
 // and the canvas. Husband and wife share the same functions because all
 // per-column coordinates now live in the layout sections.
 
+function requireValue(spec, text) {
+  // A missing config key must never print as the literal text "undefined" on
+  // a legal form; name the key (annotated onto the layout by layout.js) and
+  // stop. '' stays the explicit "leave blank for handwriting" value.
+  if (text === undefined || text === null) {
+    fail(
+      `❌ Config error: no value for "${spec.keyPath ?? 'a drawn field'}" - the key is missing or null.\n` +
+        '   Every key in the sample config.yaml must also exist in the config;\n' +
+        "   set a key to '' to leave its box blank for handwriting.",
+    );
+  }
+}
+
 function drawText(cc, spec, text) {
+  requireValue(spec, text);
   cc.setFont(spec.size);
   cc.drawString(spec.pos[0], spec.pos[1], text);
 }
 
 function drawMultiline(cc, spec, text) {
+  requireValue(spec, text);
   cc.setFont(spec.size);
   let y = spec.pos[1];
   for (const line of String(text).split('\n')) {
@@ -416,10 +463,17 @@ function maritalHistoryInfo(cfg, lay, cc) {
     drawText(cc, lay.first_marriage_check, '✓');
     return;
   }
+  // Anything outside 0/1/2 must fail: a typo silently checking 離別 (divorce)
+  // would put wrong legal content on the form.
   if (cfg.marriage_cat === 1) {
     drawText(cc, lay.remarriage_death_check, '✓');
-  } else {
+  } else if (cfg.marriage_cat === 2) {
     drawText(cc, lay.remarriage_divorce_check, '✓');
+  } else {
+    fail(
+      `❌ Config error: "${lay.keyPath ?? 'marital_history'}.marriage_cat" must be ` +
+        `0 (初婚), 1 (死別), or 2 (離別); got ${JSON.stringify(cfg.marriage_cat)}.`,
+    );
   }
   drawText(cc, lay.year, cfg.year);
   drawText(cc, lay.month, cfg.month);
