@@ -235,6 +235,7 @@ Then fill in your details in `config-private.yaml`.
 Text placement (coordinates, font sizes, and line spacing) comes from a per-template layout file, `src/layout/<template>.yaml`, so the config normally holds only your details.
 To nudge a field, add a top-level `layout:` block that merges over the template layout (see [Layout](#layout)).
 The legacy `*_pos` fields (`[x, y]` point coordinates) still work as overrides, so existing configs keep rendering unchanged.
+They hold red-template coordinates, so they apply only when the red layout is in use; on any other template the generator ignores them with a warning.
 
 > ⚠️ **Privacy warning:** Pushing to `main` publishes the CI-generated PDF as a **public** [Release][].
 > Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `pnpm start`). Never commit or push a config that contains real PII.
@@ -368,9 +369,9 @@ Each template also has its own pnpm scripts. The first column is the one you use
 * **`<template>:config`** - creates `config-private-<template>.yaml`, and does nothing if it already exists. You only need it to keep different details per template; one shared `config-private.yaml` works without it.
 * **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing. All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
 
-> ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing) and only rewrites the `template:` key, so it carries over whatever `*_pos` values the copied file has. Those values are red-template coordinates, so delete the `*_pos` lines after creating the file for `black` or `cinnamoroll`; every position then comes from the layout file.
+> ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing), rewrites the `template:` key, and drops any legacy `*_pos` keys the copied file has (they are red-template coordinates), so every position comes from that template's layout file.
 
-The `*_pos` values in `config.yaml` are red-template coordinates, so reusing that file with another template puts the text in the wrong place. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+The `*_pos` values in `config.yaml` are red-template coordinates, so on any other template the generator ignores them with a warning. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
 
 The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `notification.to` and `household_person` as empty strings `''` on that template.
 
@@ -393,8 +394,9 @@ layout:
     last_name: { pos: [225, 592] } # nudge one field, keep everything else
 ```
 
-The legacy `*_pos` keys are still honoured on top of the resolved layout.
+The legacy `*_pos` keys are still honoured on top of the resolved layout when the red layout is in use.
 Moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically placed relative to them (for example `address_second` and `household_person`), so old configs render exactly as before.
+On any other template the `*_pos` keys are ignored with a warning.
 
 
 ## Usage - run it locally
@@ -426,7 +428,7 @@ pnpm run init-config     # create config-private.yaml from the sample, without g
 pnpm run generate        # generate the timestamped PDF from config-private.yaml
 pnpm run generate-sample # generate the timestamped PDF from the sample config.yaml
 pnpm run index           # list every pnpm script, including the per-template ones
-pnpm run clean           # list scratch files (temp-*, .DS_Store, .pnpm-store) and delete them after confirming
+pnpm run clean           # list scratch files (temp*, import.csv, import.md, .DS_Store, .pnpm-store) and delete them after confirming
 ```
 
 `pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run. It only adds the header comments that mark the file as private and local-only, if they are missing:
@@ -448,6 +450,7 @@ Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PD
 
 > [!CAUTION]
 > `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
+> When you need a marriage registration with real personal information, fill in `config-private.yaml` and generate it locally - never via CI.
 
 
 ## GitHub directory
