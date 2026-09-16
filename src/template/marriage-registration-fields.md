@@ -12,12 +12,15 @@ Conventions used below:
 * Wording and layout vary between municipalities. These tables follow the bundled templates, so a form picked up at another city office may label or order some boxes differently.
 * A config key written without a section prefix, such as `last_name`, exists under both `husband:` and `wife:`, which share the same key names. Keys for any other section are written in full, such as `notification.to`.
 * `-` means the generator does not fill that box. Either it is for office use, or it is a form field the config does not cover yet.
-* `*_pos` keys are `[x, y]` point coordinates measured from the bottom-left of the page. Only the fields that carry a `*_pos` key can be moved from the config; every other position is a hardcoded literal in [src/main.js](../main.js).
+* Every position lives in the per-template layout file, `src/layout/<variant>.yaml`, as an absolute `[x, y]` point coordinate measured from the bottom-left of the page.
+  Any field can be moved from the config with a top-level `layout:` block, which deep-merges over that file.
+  The `*_pos` keys named below are legacy overrides kept so old configs render unchanged; they hold red coordinates and apply only when the red layout is in use.
 
 
 ## Source and attribution
 
-* Field wording follows the templates in this directory, `jp-marriage-registration-red.pdf` and `jp-marriage-registration-cinnamoroll.pdf`, both taken from page 1 of the Shinagawa City 婚姻届 form.
+* Field wording follows the three bundled templates in this directory: `jp-marriage-registration-red.pdf`, `jp-marriage-registration-black.pdf`, and `jp-marriage-registration-cinnamoroll.pdf`.
+  The cinnamoroll template is a Shinagawa City (品川区) 婚姻届 form; the red and black templates are generic layouts of the same national form.
 * The decorated template carries the character illustration rights notice `© 2025 SANRIO CO., LTD. APPROVAL NO. L655975`, which must remain on that PDF.
 
 
@@ -69,14 +72,14 @@ Office use only. Leave every item in this section blank.
 
 ### 生年月日 (date of birth)
 
-| Japanese                                               | English                                                                                               | Context                                                                         | Config                                                                                                       |
-| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| 生年月日                                               | Date of birth                                                                                         | Written using the Japanese era in which the person was born.                    | `birth_year`, `birth_month`, `birth_day`                                                                     |
-| 昭和                                                   | Showa era                                                                                             | 1926 to 1989.                                                                   | `-`. The era is written as part of the `birth_year` string, for example `平成５`. No era checkbox is ticked. |
-| 平成                                                   | Heisei era                                                                                            | 1989 to 2019.                                                                   | `-`. Same as above.                                                                                          |
-| 西暦                                                   | Western calendar year                                                                                 | Used by foreign nationals.                                                      | `-`. Same as above.                                                                                          |
-| 年　月　日                                             | Year / month / day                                                                                    | The three date boxes.                                                           | `birth_year`, `birth_month`, `birth_day`. Positions are hardcoded, so there is no `*_pos` key.               |
-| 外国人のときは西暦で書いてください。証人欄も同様です。 | If the person is a foreign national, use the Western calendar. The same applies to the witness boxes. | Japanese era years apply only to people recorded in a Japanese family register. | `-`                                                                                                          |
+| Japanese                                               | English                                                                                               | Context                                                                         | Config                                                                                                                             |
+| ------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| 生年月日                                               | Date of birth                                                                                         | Written using the Japanese era in which the person was born.                    | `birth_year`, `birth_month`, `birth_day`                                                                                           |
+| 昭和                                                   | Showa era                                                                                             | 1926 to 1989.                                                                   | `-`. The era is written as part of the `birth_year` string, for example `平成５`. No era checkbox is ticked.                       |
+| 平成                                                   | Heisei era                                                                                            | 1989 to 2019.                                                                   | `-`. Same as above.                                                                                                                |
+| 西暦                                                   | Western calendar year                                                                                 | Used by foreign nationals.                                                      | `-`. Same as above.                                                                                                                |
+| 年　月　日                                             | Year / month / day                                                                                    | The three date boxes.                                                           | `birth_year`, `birth_month`, `birth_day`. The positions come from the layout file; there is no legacy `*_pos` key for these boxes. |
+| 外国人のときは西暦で書いてください。証人欄も同様です。 | If the person is a foreign national, use the Western calendar. The same applies to the witness boxes. | Japanese era years apply only to people recorded in a Japanese family register. | `-`                                                                                                                                |
 
 
 ### (2) 住所 (address)
