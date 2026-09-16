@@ -1,14 +1,50 @@
 #!/usr/bin/env bash
-# One-command local runner for the marriage registration generator.
-# Installs Node.js dependencies (if needed), generates the PDF (named
-# result-<template>-<HH-MM-SS>.pdf unless -o is passed), and opens it.
-# Re-run this any time after editing config-private.yaml.
+# ------------------------------------------------------------------------------
+# General notes:
+#   One-command local runner for the marriage registration generator.
+#   Installs Node.js dependencies (if needed), generates the PDF (named
+#   result-<template>-<HH-MM-SS>.pdf unless -o is passed), and opens it.
+#   Re-run this any time after editing config-private.yaml.
+#
+# Usage:
+#   ./start.sh [options] [config]    # or: pnpm start [options] [config]
+#   ./start.sh --template cinnamoroll
+#   ./start.sh -h | --help           # show this help without installing
+#   Every option except -h/--help is forwarded to src/main.js untouched.
+#
+# Output:
+#   A generated PDF, at the path printed on the "Wrote:" line, opened with the
+#   system viewer when one exists. Exit code 0 on success, non-zero on failure.
+# ------------------------------------------------------------------------------
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
+usage() {
+  cat << 'EOF'
+usage: ./start.sh [options] [config]
+
+One-command local runner: installs dependencies, generates the PDF, opens it.
+Every option except -h/--help is forwarded to src/main.js, for example:
+    ./start.sh --template cinnamoroll
+    ./start.sh -o out.pdf my-config.yaml
+
+Generator options: run `pnpm run generate --help` (or `node src/main.js --help`).
+EOF
+}
+
+# Show help before touching dependencies, so `./start.sh --help` never installs.
+for arg in "$@"; do
+  case "$arg" in
+    -h | --help)
+      usage
+      exit 0
+      ;;
+  esac
+done
+
 # Install/refresh dependencies (pnpm preferred; falls back to npm).
-echo "==> Installing dependencies"
+echo "📦 Installing dependencies"
 if command -v pnpm > /dev/null 2>&1; then
   pnpm install --silent
 elif command -v corepack > /dev/null 2>&1; then
@@ -20,7 +56,7 @@ fi
 
 # Generate the PDF. Extra arguments are forwarded to main.js, e.g.
 #   ./start.sh --template cinnamoroll
-echo "==> Generating the PDF"
+echo "📝 Generating the PDF"
 generator_output="$(node src/main.js "$@")"
 printf '%s\n' "$generator_output"
 
@@ -30,11 +66,11 @@ printf '%s\n' "$generator_output"
 result_pdf="$(printf '%s\n' "$generator_output" | sed -n 's/^Wrote: //p' | tail -n 1)"
 
 if [ -z "$result_pdf" ] || [ ! -f "$result_pdf" ]; then
-  echo "==> No PDF was generated (nothing to open)."
+  echo "⚠️  No PDF was generated (nothing to open)."
   exit 0
 fi
 
-echo "==> Done: $(pwd)/${result_pdf}"
+echo "✅ Done: $(pwd)/${result_pdf}"
 
 # Open it (macOS: open, Linux: xdg-open) - skip if neither exists.
 if command -v open > /dev/null 2>&1; then
