@@ -3,10 +3,11 @@
 #===============================================================================
 : << 'DOC'
 Name:     cleanup-temp-files.sh
-Usage:    cleanup-temp-files.sh [-y|--yes] [-h|--help]
-Purpose:  Find and list temporary files, delete empty ones automatically, then optionally delete all remaining matches after user confirmation.
+Usage:    cleanup-temp-files.sh [-y|--yes] [-n|--dry-run] [-h|--help]
+Purpose:  Find and list temporary files in this repository, delete empty ones automatically, then optionally delete all remaining matches after user confirmation.
 
 Version history:
+- v5.4, 2026-09-16; Safety: always operate on the repository root (never on the caller's working directory); add -n/--dry-run to list matches without deleting anything.
 - v5.3, 2026-04-08; Fix: guard empty ADDITIONAL_DIRS; eliminate double-stat race in mod_date; surface find errors; clarify docs and prompts.
 - v5.2, 2026-04-08; Merge: incorporate 🗑️ icon for empty files from main.
 - v5.1, 2026-03-24; Refactor: idiomatic zsh (setopt, parameter expansion); remove unused cmd_exists and install_deps stubs; fix short_path HOME substitution to avoid regex bugs.
@@ -26,16 +27,22 @@ Notes:
   + and are not inside a "node_modules" directory.
 * Directories listed in ADDITIONAL_DIRS (for example, ".pnpm-store") are also removed.
 * Symlinks are not followed and not cleaned up.
-* Output paths are shown relative to the current working directory when possible, with $HOME abbreviated to ~.
+* The scan always covers the repository this script lives in, regardless of the directory it is invoked from.
+* Output paths are shown relative to the repository root when possible, with $HOME abbreviated to ~.
 DOC
 #===============================================================================
 
 # Zsh strict mode
 setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
+# Always operate on this repository's tree, never on whatever directory the
+# script happens to be invoked from: a run from $HOME would otherwise delete
+# empty .DS_Store/temp.* files across the whole home directory.
+cd "${0:a:h}/.."
+
 # Configuration
 SCRIPT_NAME="cleanup-temp-files.sh"
-VERSION="5.3"
+VERSION="5.4"
 
 # Files that deviate from "temp*" rules
 ADDITIONAL_FILES=("import.csv" "import.md" ".DS_Store")
@@ -281,14 +288,15 @@ usage() {
 $SCRIPT_NAME v$VERSION
 
 🧭 Usage:
-  $SCRIPT_NAME [-y|--yes] [-h|--help]
+  $SCRIPT_NAME [-y|--yes] [-n|--dry-run] [-h|--help]
 
 🧩 Options:
-  -y, --yes   Auto-confirm deletion prompt (skip interactive question).
-  -h, --help  Show this help message and exit.
+  -y, --yes      Auto-confirm deletion prompt (skip interactive question).
+  -n, --dry-run  List the matches and exit without deleting anything.
+  -h, --help     Show this help message and exit.
 
 📝 Description:
-  + Finds and lists temporary files in the current directory tree, deletes empty ones automatically, then prompts to delete all remaining matches.
+  + Finds and lists temporary files in this repository (always scanned from the repository root), deletes empty ones automatically, then prompts to delete all remaining matches.
   + Temporary files include temp-*, temp, temp.*, and any files listed in ADDITIONAL_FILES.
   + Directories in ADDITIONAL_DIRS are also targeted.
   + Paths inside node_modules are always excluded.
@@ -298,6 +306,7 @@ EOF
 
 main() {
   local auto_confirm="no"
+  local dry_run="no"
 
   while (($# > 0)); do
     case "$1" in
@@ -306,6 +315,7 @@ main() {
         exit 0
         ;;
       -y | --yes) auto_confirm="yes" ;;
+      -n | --dry-run) dry_run="yes" ;;
       *)
         err "Unknown option: $1"
         usage
@@ -317,6 +327,10 @@ main() {
 
   printf 'Scanning: %s\n' "$(short_path "$PWD")"
   list_temp_files
+  if [[ "$dry_run" == "yes" ]]; then
+    printf '🔎 Dry run: nothing was deleted.\n'
+    return 0
+  fi
   delete_empty_temp_files
   offer_delete_all "$auto_confirm"
   printf 'Done.\n'
