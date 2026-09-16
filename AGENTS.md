@@ -79,7 +79,7 @@ pnpm lint                          # prettier --write + markdownlint-cli2 --fix 
 pnpm run lint-code                 # prettier only
 pnpm run lint-md                   # markdownlint-cli2 only
 pnpm index                         # list every pnpm script with its command
-pnpm clean                         # delete temp.*/temp-* scratch files (asks before deleting non-empty ones)
+pnpm clean                         # delete scratch files: temp*, import.csv, import.md, .DS_Store, .pnpm-store (asks first; -n lists only)
 ```
 
 The pnpm scripts are thin wrappers: `./start.sh` and `node src/main.js [options] [config]` still work when you need them directly, and CI calls `node src/main.js config.yaml -o result.pdf` with no pnpm script in between.
@@ -108,7 +108,7 @@ Remember that `pdftotext` measures y from the _top_ of the page, while the layou
   Increasing `y` moves _up_.
 * **All positioning numbers are data, not code.**
   They live in per-template layout YAML files, `src/layout/<variant>.yaml`, selected by the same name that the `-t/--template` flag and the `template:` config key resolve (a template without a layout file falls back to the `red` layout).
-  `src/layout.js` loads that file, deep-merges an optional `layout:` block from the user config over it, applies the legacy `*_pos` overrides, validates the result, and returns the resolved layout object.
+  `src/layout.js` loads that file, deep-merges an optional `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red` - see Config shape below), validates the result, and returns the resolved layout object.
   Layout tuning means editing YAML, never `main.js`.
 * Every layout entry is absolute: `pos: [x, y]` plus a per-field `size`, and a `step` (line spacing) for the multi-line fields.
   Circles are `[x, y, r]`; ellipses are two opposite bounding-box corners.
@@ -136,6 +136,7 @@ See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READ
 An optional top-level `template:` key selects the template; the `-t/--template` flag overrides it.
 An optional top-level `layout:` block deep-merges over the template's layout file, so a config can nudge one coordinate without copying the whole grid.
 Legacy `*_pos` values (`[x, y]` point coordinates) are still honoured on top of the resolved layout; moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically drawn relative to them, so old configs render unchanged.
+The `*_pos` values are `red` coordinates by definition, so they apply only when the base layout is `red` (the red template itself, or a custom PDF on the red fallback); on any other template they are ignored with a ⚠️ warning, and `--init-config -t <variant>` strips them from the scaffolded per-template config.
 
 
 ## Templates & fonts

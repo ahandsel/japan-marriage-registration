@@ -26,4 +26,5 @@ Coordinates are PDF points measured from the bottom-left corner of the page.
 * Each form field is one section function taking `(cfg, lay, cc)`, and husband and wife share the same function, differing only in their layout data.
 * Respect the recorded template quirks, which the header comment of each layout file explains.
   The black form prints no 番地, 番, or 号 on its witness 住所 row, so a witness `is_banchi_address` is `null` there, and it leaves several boxes blank for handwriting.
-* Legacy `*_pos` overrides still apply on top of the resolved layout, so moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields historically drawn relative to them.
+* Legacy `*_pos` overrides still apply on top of the resolved layout when the base layout is `red`, so moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields historically drawn relative to them.
+  They hold `red` coordinates by definition, so on any other tuned layout they are ignored with a warning instead of applied.
