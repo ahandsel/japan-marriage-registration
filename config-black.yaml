@@ -61,8 +61,7 @@ wife:
   address_second: ３丁目　４
   is_banchi_address: false
   address_go: １０
-  address_apartment: |
-    ""
+  address_apartment: '' # 空欄のまま印刷する場合は '' を使用
   household_person: 貫井　パッパ
   legally_domiciled_first: 神奈川県横浜市
   legally_domiciled_second: ３丁目　４
@@ -94,8 +93,7 @@ national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記�
   wife_job: '02'
 
 other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
-  text: |
-    ""
+  text: ''
 
 # 証人欄。witness1 が左、witness2 が右の列です。証人に手書きしてもらう場合は
 # セクションごと削除（またはコメントアウト）すると欄全体が空白になります。

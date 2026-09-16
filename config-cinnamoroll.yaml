@@ -60,8 +60,7 @@ wife:
   address_second: ３丁目　４
   is_banchi_address: false
   address_go: １０
-  address_apartment: |
-    ""
+  address_apartment: '' # 空欄のまま印刷する場合は '' を使用
   # 夫側と同じく、この様式には世帯主の氏名の行がありません。
   # Like the husband column, this form has no 世帯主の氏名 row.
   household_person: ''
@@ -94,5 +93,4 @@ national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記�
   wife_job: '02'
 
 other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
-  text: |
-    ""
+  text: ''
