@@ -7,6 +7,7 @@ Usage:    cleanup-temp-files.sh [-y|--yes] [-n|--dry-run] [-h|--help]
 Purpose:  Find and list temporary files in this repository, delete empty ones automatically, then optionally delete all remaining matches after user confirmation.
 
 Version history:
+- v5.5, 2026-09-18; Docs: add the Output section to these notes (listing format, deletion messages, dry run, exit codes).
 - v5.4, 2026-09-16; Safety: always operate on the repository root (never on the caller's working directory); add -n/--dry-run to list matches without deleting anything.
 - v5.3, 2026-04-08; Fix: guard empty ADDITIONAL_DIRS; eliminate double-stat race in mod_date; surface find errors; clarify docs and prompts.
 - v5.2, 2026-04-08; Merge: incorporate 🗑️ icon for empty files from main.
@@ -28,7 +29,14 @@ Notes:
 * Directories listed in ADDITIONAL_DIRS (for example, ".pnpm-store") are also removed.
 * Symlinks are not followed and not cleaned up.
 * The scan always covers the repository this script lives in, regardless of the directory it is invoked from.
-* Output paths are shown relative to the repository root when possible, with $HOME abbreviated to ~.
+* Paths are shown relative to the repository root when possible, with $HOME abbreviated to ~.
+
+Output:
+* Listing: one block per match on stdout - the path, a "+ Modified: <YYYY-MM-DD HH:MM:SS>" line, and a status line: "+ Empty 🗑️" or "+ Not empty 📝" for a file, "+ Directory 📁" for a directory. "No matching temporary files found." when there is nothing.
+* Deletion: "Deleted: <path>" per removed item, then a count of the empty files removed, then, after the confirmation prompt, "<n> item(s) deleted, <m> failed." or "Skipped. Only empty files were deleted."
+* Dry run (-n): the listing only, followed by "🔎 Dry run: nothing was deleted."; no file is touched.
+* Errors ("Skip: ..." and "Error: unable to delete ...") go to stderr.
+* Exit codes: 0 = success (including a dry run and a declined prompt), 1 = a command failed (ERR_EXIT), 2 = unknown option.
 DOC
 #===============================================================================
 
@@ -42,7 +50,7 @@ cd "${0:a:h}/.."
 
 # Configuration
 SCRIPT_NAME="cleanup-temp-files.sh"
-VERSION="5.4"
+VERSION="5.5"
 
 # Files that deviate from "temp*" rules
 ADDITIONAL_FILES=("import.csv" "import.md" ".DS_Store")
