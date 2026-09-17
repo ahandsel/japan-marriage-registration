@@ -23,7 +23,23 @@ Review git changes, confirm scope with the user, and draft a commit message foll
 5. **Draft the commit message.** Based only on the in-scope diffs and any user-provided notes, draft a commit title and message body following the rules below and in the selected style guide source.
 6. **Determine single or split commit.** Prefer a single commit unless the evidence clearly supports a logical split into multiple commits with distinct purposes.
 7. **Handle ambiguity.** If the in-scope diffs or notes are too ambiguous to write a reliable commit message, ask clarifying questions with 2-3 suggested answers instead of guessing.
-8. **Confirm and commit.** Show the drafted commit message to the user. If the user approves, stage the in-scope files and run `git commit` with the approved message. If the user requests changes, revise the message and confirm again before committing.
+8. **Confirm and commit.** Show the drafted commit message to the user. If the user approves, run the privacy gate below on the in-scope files, stage them, and run `git commit` with the approved message. If the user requests changes, revise the message and confirm again before committing.
+
+
+### Privacy gate (runs before any `git add`)
+
+This repository handles real personal information (see the Privacy section of `AGENTS.md`).
+The gitignore covers `config-private*.yaml`, `result*.pdf`, and `failed-*.pdf`, but a private config saved under any other name, or a generated PDF renamed by hand, is not ignored and would be staged by a blanket `git add`.
+So before staging anything, in every mode that stages files:
+
+1. List what would be staged: `git status --porcelain --untracked-files=all` (all of it in `--auto` mode, the in-scope files otherwise).
+2. Treat a path as suspicious when it matches any of these, unless it is one of the tracked placeholder configs (`config.yaml`, `config-black.yaml`, `config-cinnamoroll.yaml`) or a bundled template under `src/template/`:
+   * any `*.yaml` or `*.yml` file that is new or untracked,
+   * any `*.pdf` file,
+   * `save.yaml`, `p.yaml`, or any name starting with `config-private`,
+   * any file whose content holds a filled-in config: real-looking names, birthdates, addresses, or 本籍 values that do not appear in the tracked sample `config.yaml`.
+3. If any path is suspicious, do not run `git add`. Print the suspicious paths with a ❌ line each, explain that they may hold real personal information or a generated form, and stop. The user decides whether to gitignore, delete, or explicitly stage them; never stage them on your own, even in `--auto` mode.
+4. Only when nothing is suspicious, stage the files and continue.
 
 
 ### `--head` workflow flag
@@ -82,7 +98,7 @@ When `--auto` is used, the workflow drafts a commit message without asking any i
 5. **Confirmation policy.**
    * **Single commit.** Show the draft and proceed directly without asking for confirmation.
    * **Multiple commits (split recommendation).** Show the draft and ask exactly one yes/no confirmation question before committing.
-6. **Commit action (default mode).** Run `git add -A`, then create the commit(s) with the drafted message(s). For multiple commits, only proceed after a `yes` confirmation.
+6. **Commit action (default mode).** Run the privacy gate above on every unstaged and untracked path; abort on any suspicious file. Only when the gate passes, run `git add -A`, then create the commit(s) with the drafted message(s). For multiple commits, only proceed after a `yes` confirmation.
 7. **Commit action (`--head` mode).** Run `git commit --amend --only` with the drafted message. `--head` is always a single commit, so no confirmation is needed.
 8. **Commit action (`--commit <hash>` mode).** Reword only the target commit using the rebase approach described in the `--commit <hash>` workflow. Always a single commit, so no confirmation is needed.
 9. **On non-`yes` (multiple commits only).** Do not run git write commands; stop and wait for new instructions.
@@ -151,5 +167,6 @@ Clarifying questions:
 * In `--commit <hash>` mode, require a clean working tree and index before running the rebase. If the working tree is dirty, stop and ask the user to commit or stash first.
 * In `--commit <hash>` mode, if `<hash>` resolves to the same commit as `HEAD`, fall back to the `--head` workflow rather than running a rebase.
 * In `--auto` mode, ask no intermediate questions. Skip the final confirmation when drafting a single commit; ask exactly one yes/no confirmation only when drafting multiple commits (split recommendation).
-* In `--auto` mode without `--head`, run `git add -A` before committing.
+* In `--auto` mode without `--head`, run `git add -A` before committing, and only after the privacy gate passes; a suspicious path aborts the run without staging anything.
+* Never stage a file that may hold real personal information or a generated form PDF, in any mode; the privacy gate is the check, and `--auto` does not skip it.
 * In `--auto --head` mode, do not include additional files and do not stage files. Always a single commit, so no confirmation is asked.
