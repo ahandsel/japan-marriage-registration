@@ -145,6 +145,7 @@ Every top-level section is optional: a config without one (for example one writt
 A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `job_type` outside 1-6; `0` and `''` leave the job box blank.
 A config file that is not valid YAML is reported with the parser's line and column, never as a stack trace.
 `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
+Any other value, including a missing key or a quoted `'false'`, is an error (`requireTriState` in `main.js`), so a required mark can never go missing silently.
 The witness `name` should stay `''` because a witness signature must be handwritten.
 See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READMEs for the full field reference.
 An optional top-level `template:` key selects the template; the `-t/--template` flag overrides it.

@@ -454,6 +454,54 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.ok(!stderr.includes('    at '), 'no stack trace');
   });
 
+  test('an is_banchi value outside true, false, and null is rejected in every section', async (t) => {
+    const dir = makeTempDir(t);
+    const cases = [
+      ['husband', 'is_banchi_address', 'false'],
+      ['wife', 'is_banchi_legally_domiciled', 1],
+      ['new_legally_domiciled', 'is_banchi_address', 'yes'],
+      ['witness1', 'is_banchi_address', 'null'],
+      ['witness2', 'is_banchi_legally_domiciled', 0],
+    ];
+    for (const [section, key, value] of cases) {
+      const cfgPath = writeConfig(dir, 'banchi.yaml', 'config.yaml', (cfg) => {
+        cfg[section][key] = value;
+      });
+      const out = path.join(dir, 'out.pdf');
+      const { code, stderr } = await runMain([cfgPath, '-o', out]);
+      assert.equal(code, 1, `${section}.${key} = ${JSON.stringify(value)}`);
+      assert.match(
+        stderr,
+        new RegExp(
+          `❌ Config error: "${section}\\.${key}" must be true \\(番地\\), false \\(番\\), or null to draw no mark; got `,
+        ),
+      );
+      assert.ok(
+        stderr.includes(`got ${JSON.stringify(value)}.`),
+        `names the bad value: ${stderr}`,
+      );
+      assert.ok(!fs.existsSync(out), 'no PDF is written on a config error');
+    }
+  });
+
+  test('a missing is_banchi key is an error even when the new 本籍 address is blank', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(dir, 'banchi.yaml', 'config.yaml', (cfg) => {
+      cfg.new_legally_domiciled.address = '';
+      delete cfg.new_legally_domiciled.is_banchi_address;
+    });
+    const { code, stderr } = await runMain([
+      cfgPath,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(
+      stderr,
+      /"new_legally_domiciled\.is_banchi_address" must be true .* the key is missing\./,
+    );
+  });
+
   test('an -o path in a directory that does not exist fails with a ❌ message', async (t) => {
     const dir = makeTempDir(t);
     const out = path.join(dir, 'no-such-dir', 'out.pdf');

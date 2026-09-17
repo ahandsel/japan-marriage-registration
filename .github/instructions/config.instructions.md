@@ -21,6 +21,7 @@ A tracked config is public.
 * Every top-level section is optional: deleting one leaves that part of the form blank for handwriting.
   A key missing inside a section that is present is an error, and so is a `job_type` outside 1-6 (`0` and `''` leave the box blank).
 * `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section.
+  Any other value, or a missing key, is an error.
 * A `layout:` block in a config deep-merges over the template's layout file.
   It nudges a coordinate for one user, and it is not the place to fix a layout defect that every user has.
 * `src/template/marriage-registration-fields.md` is the term-by-term reference for what each field means.

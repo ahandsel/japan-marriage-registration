@@ -436,6 +436,23 @@ function requireValue(spec, text) {
   }
 }
 
+function requireTriState(lay, key, value) {
+  // is_banchi_address / is_banchi_legally_domiciled: true draws the 番地
+  // ellipse, false the 番 circle, and null draws nothing on purpose. Anything
+  // else - the key missing, or a quoted 'false' - must stop the run like every
+  // other bad config value, or a required mark silently goes missing.
+  if (value === true || value === false || value === null) {
+    return;
+  }
+  const section = lay.keyPath ?? 'a section';
+  fail(
+    `❌ Config error: "${section}.${key}" must be true (番地), false (番), or null to draw no mark; ` +
+      (value === undefined
+        ? 'the key is missing.'
+        : `got ${JSON.stringify(value)}.`),
+  );
+}
+
 function drawText(cc, spec, text) {
   requireValue(spec, text);
   cc.setFont(spec.size);
@@ -467,6 +484,7 @@ function addressInfo(cfg, lay, cc) {
   drawText(cc, lay.address_second, cfg.address_second);
   // `null` skips the 番地/番 mark, as it does for 本籍 and for the witnesses,
   // so the same key means the same thing in every section.
+  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
   if (cfg.is_banchi_address === true) {
     cc.ellipse(...lay.address_banchi_ellipse);
   } else if (cfg.is_banchi_address === false) {
@@ -482,6 +500,11 @@ function legallyDomiciledInfo(cfg, lay, cc) {
   drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
   // A foreign national has no 本籍 - the column holds a nationality instead, so
   // neither 番地 nor 号 applies. `null` in the config skips the marking.
+  requireTriState(
+    lay,
+    'is_banchi_legally_domiciled',
+    cfg.is_banchi_legally_domiciled,
+  );
   if (cfg.is_banchi_legally_domiciled === true) {
     cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
   } else if (cfg.is_banchi_legally_domiciled === false) {
@@ -535,6 +558,9 @@ function newLegallyDomiciled(cfg, lay, cc) {
         `or null to leave both 氏 boxes blank; got ${JSON.stringify(lastnameOf)}.`,
     );
   }
+  // Checked even when the address is blank: a present section must hold every
+  // key the sample has, and a blank address is not a reason to skip that rule.
+  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
   if (cfg.address !== '') {
     drawText(cc, lay.address, cfg.address);
     if (cfg.is_banchi_address === true) {
@@ -636,6 +662,7 @@ function witnessInfo(cfg, lay, cc) {
   drawText(cc, lay.address_second, cfg.address_second);
   drawText(cc, lay.address_go, cfg.address_go);
   // `null` skips the 番地/番 marking, as in legallyDomiciledInfo.
+  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
   if (cfg.is_banchi_address === true) {
     cc.ellipse(...lay.address_banchi_ellipse);
   } else if (cfg.is_banchi_address === false) {
@@ -643,6 +670,11 @@ function witnessInfo(cfg, lay, cc) {
   }
   drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
   drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
+  requireTriState(
+    lay,
+    'is_banchi_legally_domiciled',
+    cfg.is_banchi_legally_domiciled,
+  );
   if (cfg.is_banchi_legally_domiciled === true) {
     cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
   } else if (cfg.is_banchi_legally_domiciled === false) {

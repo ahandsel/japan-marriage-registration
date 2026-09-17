@@ -328,6 +328,7 @@ husband:
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
 
 `is_banchi_address` and `is_banchi_legally_domiciled` take `true` (ellipse around 番地), `false` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
+Any other value, a quoted `'false'` or a missing key for example, stops the run with an error instead of quietly leaving the mark out.
 
 `witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields.
 Remove (or comment out) a whole section to leave that column blank for handwriting.
