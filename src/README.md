@@ -32,7 +32,7 @@ The folder is listed in `.prettierignore`, so nothing in it is reformatted autom
 * [ipa-font-license-v1.0.txt][] - the IPA Font License v1.0, in Japanese and English.
   This is the license both fonts ship under.
 * [ipaexfont-readme.txt][] - the upstream "はじめにお読みください" readme from the IPAex two-face pack.
-  It is kept unchanged alongside the fonts it describes.
+  It travels with the fonts it describes; the only edit is in its file listing, where the two license and readme filenames were updated to the lowercase names used here.
 
 Do not remove either license file.
 Article 3 Paragraph 2 of the IPA Font License requires a copy of the agreement to be attached when the font is redistributed, and the upstream readme is part of the original IPAex package.
