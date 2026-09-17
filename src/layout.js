@@ -321,7 +321,8 @@ function validateLeaf(type, value, keyPath, errors) {
     if (!isPlainObject(value.positions)) {
       errors.push(`"${keyPath}.positions" must map job_type 1-6 to [x, y].`);
     } else {
-      for (const jobType of ['1', '2', '3', '4', '5', '6']) {
+      const jobTypes = ['1', '2', '3', '4', '5', '6'];
+      for (const jobType of jobTypes) {
         if (!(jobType in value.positions)) {
           errors.push(`"${keyPath}.positions.${jobType}" is missing.`);
         } else {
@@ -331,6 +332,16 @@ function validateLeaf(type, value, keyPath, errors) {
             `${keyPath}.positions.${jobType}`,
             'a position [x, y]',
             errors,
+          );
+        }
+      }
+      // The schema is closed here too: a stray `7:` or a typo such as `l:`
+      // would otherwise pass validation and never be drawn, because
+      // job_type itself is limited to 1-6 in main.js.
+      for (const key of Object.keys(value.positions)) {
+        if (!jobTypes.includes(key)) {
+          errors.push(
+            `"${keyPath}.positions.${key}" is not a job_type; only 1-6 are.`,
           );
         }
       }

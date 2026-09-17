@@ -502,6 +502,23 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     );
   });
 
+  test('a job_type_checks position outside 1-6 is not a known layout key', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(dir, 'layout.yaml', 'config.yaml', (cfg) => {
+      cfg.layout = { wife: { job_type_checks: { positions: { 7: [1, 2] } } } };
+    });
+    const { code, stderr } = await runMain([
+      cfgPath,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(
+      stderr,
+      /- "wife\.job_type_checks\.positions\.7" is not a job_type; only 1-6 are\./,
+    );
+  });
+
   test('an -o path in a directory that does not exist fails with a ❌ message', async (t) => {
     const dir = makeTempDir(t);
     const out = path.join(dir, 'no-such-dir', 'out.pdf');
