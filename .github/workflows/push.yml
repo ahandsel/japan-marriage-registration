@@ -1,53 +1,68 @@
-name: pr
+name: push
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+
+# contents: write is required to create the release and upload its asset.
+permissions:
+  contents: write
+
+# Releases are cumulative, so let an in-flight run finish rather than cancelling it.
+concurrency:
+  group: push-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: create marriage registration
-      run: |
-        python src/main.py config-public.yaml
-    - name: release version
-      id: release_version
-      run: |
-        echo ::set-output name=version::$(date "+%Y%m%d_%H%M%S")
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.release_version.outputs.version }}
-        release_name: Release ${{ steps.release_version.outputs.version }}
-        body: |
-          Auto created
-          ${{ github.event.head_commit.message }}
-        draft: false
-        prerelease: false
-    - name: Upload Release Assets
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.github_token }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./result.pdf
-        asset_name: marriage_registration.pdf
-        asset_content_type: application/pdf
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # actions/checkout@v5.0.0, pinned
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        # No version input: the action reads packageManager from package.json.
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # pnpm/action-setup@v4.2.0, pinned
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # actions/setup-node@v6.0.0, pinned
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Create marriage registration
+        # This PDF is published as a PUBLIC release asset, so it must always be
+        # built from config.yaml, which holds placeholders only.
+        # -o pins the output name: the local default is timestamped
+        # (result-<template>-<HH-MM-SS>.pdf), but the release asset path is fixed.
+        run: node src/main.js config.yaml -o result.pdf
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          # Read through the environment, never interpolated into the shell,
+          # so a commit message cannot inject a command.
+          COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          version="$(date '+%Y%m%d_%H%M%S')"
+
+          # gh names the asset after the file, so rename before uploading.
+          mv result.pdf marriage_registration.pdf
+
+          {
+            echo 'Auto created'
+            echo
+            printf '%s\n' "$COMMIT_MESSAGE"
+          } > release-notes.md
+
+          gh release create "$version" marriage_registration.pdf \
+            --title "Release $version" \
+            --notes-file release-notes.md
+
+          echo "✅ Published release $version."

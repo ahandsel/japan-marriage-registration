@@ -1,0 +1,4 @@
+# pnpm settings for this repo
+
+# Delay installing freshly published versions to reduce supply-chain risk.
+minimumReleaseAge: 4320 # Three-day buffer for security updates.

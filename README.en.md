@@ -2,74 +2,263 @@
 
 🌐 Languages:
 
-**English** | [日本語](README.md)
+**English** | [日本語][]
 
-![header](./public/hero-img-ja.png)
+![header][]
 
-> Want to apply continuous integration and delivery to your marriage registration too! Want to write your happiness in YAML! Want to marry a software engineer! This solves those problems!
+> Fill out your Japanese marriage registration form (`婚姻届`) in YAML and generate a PDF with a single command.
+
+[header]: ./public/hero-img-ja.png
+[日本語]: README.md
+
 
 ## Table of contents <!-- omit in toc -->
+
 * [Overview](#overview)
+* [Quick start](#quick-start)
 * [Initial setup](#initial-setup)
+  * [Requirements](#requirements)
+  * [Steps](#steps)
+  * [Dependencies](#dependencies)
+* [Command-line reference](#command-line-reference)
 * [Configuration](#configuration)
   * [Details](#details)
+  * [Templates](#templates)
+  * [Layout](#layout)
 * [Usage - run it locally](#usage---run-it-locally)
 * [Usage - run via GitHub Actions](#usage---run-via-github-actions)
+* [GitHub directory](#github-directory)
 
 
 ## Overview
 
-This project generates a filled-in Japanese marriage registration form (婚姻届) as a PDF from a single YAML file.
+This project generates a filled-in Japanese marriage registration form (`婚姻届`) as a PDF from a single YAML file.
 
-You describe both partners' details - names, birthdays, addresses, legal domiciles (本籍), parents, and so on - in a YAML file, and `src/main.py` overlays that text onto the official form template and writes `result.pdf`. The configuration is split across two files (see [Configuration](#configuration)): locally you use `config-private.yaml` (your details, gitignored), while GitHub Actions uses the sample `config-public.yaml`.
+You describe both partners' details - names, birthdays, addresses, etc. - in the [YAML][] file, and `src/main.js` overlays that text onto the official form template and writes a timestamped PDF, `result-<template>-<HH-MM-SS>.pdf` (override the name with `-o`).
+The configuration is split across two files (see [Configuration](#configuration)):
+
+* locally you use `config-private.yaml` (your details, gitignored)
+* while GitHub Actions uses the sample `config.yaml`.
 
 You can generate the PDF two ways:
 
-* **Locally** with a one-command script (`./run.sh`), or
+* **Locally** with a one-command pnpm script (`pnpm start`), or
 * **Via GitHub Actions**, which builds the PDF on every push and publishes it as a release.
 
+[YAML]: config.yaml
 
-## Initial setup
 
-Requires Python 3.8+ (tested on 3.13).
+## Quick start
+
+With [Node.js][] 24 or newer installed (see [Requirements](#requirements)):
 
 ```bash
 git clone https://github.com/ahandsel/japan-marriage-registration.git
 cd japan-marriage-registration
+pnpm start
 ```
 
-The local runner (`./run.sh`) creates the virtualenv and installs dependencies for you, so no further setup is needed to run locally. If you prefer to prepare the environment manually:
+`pnpm start` installs the dependencies, creates `config-private.yaml` from the sample on the first run, generates `result-red-<HH-MM-SS>.pdf`, and opens it.
+That first PDF shows the sample placeholder details, so the next two steps make it yours:
+
+1. Edit `config-private.yaml` with your own details (see [Details](#details) for the field reference).
+2. Run `pnpm start` again.
+   Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one (a second run within the same second gets a `-2` suffix).
+
+Everything after the setup is a pnpm script, and two of them cover almost everything else:
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
+pnpm run generate --help    # show every option and exit
+pnpm start --template black # fill in a different form: red (default), black, or cinnamoroll
 ```
 
-Dependencies (see `requirements.txt`):
+pnpm passes every argument after the script name straight to the generator, so any option below works with any of these scripts.
+See [Command-line reference](#command-line-reference) for the full list and [Templates](#templates) for the forms.
 
-* `reportlab` - draws the text overlay
-* `pdfrw` - merges the overlay onto the form template
-* `PyYAML` - reads the config files (`config-private.yaml` / `config-public.yaml`)
+> ⚠️ **Privacy:** put your real details only in `config-private.yaml` (gitignored) and generate the PDF locally.
+> The committed `config.yaml` is built by CI and published as a **public** release.
+
+
+## Initial setup
+
+
+### Requirements
+
+| Requirement | Version     | Notes                                                                                                                                                               |
+| ----------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [Node.js][] | 24 or newer | `.npmrc` sets `engine-strict=true`, so older versions are rejected instead of failing later.                                                                        |
+| [pnpm][]    | 10 or newer | The recommended package manager. `package.json` pins the exact version through `packageManager`, so [Corepack][] can provision it for you. npm works as a fallback. |
+
+No other tooling is required: the Japanese fonts and the form templates are bundled in `src/`, and there is no build step.
+
+On macOS, install both with [Homebrew][]:
+
+```bash
+brew install node pnpm
+```
+
+`brew install node` installs the latest Node.js release, which satisfies the requirement.
+To stay on the Node.js 24 line instead, run `brew install node@24` and follow the `PATH` instructions Homebrew prints at the end.
+
+On other platforms, see the [Node.js][] and [pnpm][] download pages.
+If you already have Node.js, you can also get pnpm through Corepack instead of Homebrew:
+
+```bash
+corepack enable pnpm
+```
+
+Confirm that both tools are on your `PATH` and new enough:
+
+```bash
+node --version # v24.0.0 or newer
+pnpm --version # 10.0.0 or newer
+```
+
+
+### Steps
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/ahandsel/japan-marriage-registration.git
+   cd japan-marriage-registration
+   ```
+
+2. Create your private config file:
+
+   ```bash
+   pnpm run init-config
+   ```
+
+   This step is optional.
+   If `config-private.yaml` does not exist, the first run creates it from the sample `config.yaml` for you and prints a reminder to edit it.
+   Either way you end up with the same file, filled with the sample placeholder details.
+
+   Prefer `pnpm run init-config` over a plain `cp`: it also prepends the two header comments that mark the file as private and local-only, and it never overwrites an existing config.
+
+   `config-private.yaml` is listed in `.gitignore`, so it is the one file where your real personal information belongs.
+   See [Configuration](#configuration) for why the config is split in two.
+
+3. Generate your first PDF:
+
+   ```bash
+   pnpm start
+   ```
+
+   `pnpm start` runs `start.sh`, which handles the rest for you.
+   It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it.
+   At this point the PDF still shows the sample placeholder details.
+
+4. Edit `config-private.yaml` with your own details, then run `pnpm start` again.
+   See [Configuration](#configuration) for the field reference.
+
+If you prefer to prepare the environment yourself instead of letting `pnpm start` do it:
+
+```bash
+corepack enable # optional: provisions the pinned pnpm version
+pnpm install    # install the dependencies once
+pnpm run generate
+```
+
+> [!NOTE]
+> `pnpm-workspace.yaml` sets `minimumReleaseAge` to three days, so pnpm ignores dependency versions published very recently.
+> This reduces supply chain risk and is expected behavior, not an outdated lockfile.
+
+
+### Dependencies
+
+Runtime dependencies (see `package.json`):
+
+* `pdf-lib` - draws the text overlay and merges it onto the form template
+* `@pdf-lib/fontkit` - embeds the bundled Japanese font (IPAex Mincho)
+* `yaml` - reads the config files (`config-private.yaml` / `config.yaml`)
+
+Development dependencies cover formatting only (`prettier` and `markdownlint-cli2`, plus their plugins).
+Run `pnpm lint` to apply the autofixes before committing.
+`pnpm test` runs the test suite with the test runner built into Node.js, so it needs no extra package.
+Install `poppler-utils` (`brew install poppler` on macOS) to also run the text placement checks, which read the generated PDF back with `pdftotext`.
+Without it those checks are skipped.
+The tests confirm that every value lands where its layout entry says, not that the layout matches the printed form, so still verify a coordinate change by regenerating the PDF and checking it visually.
+
+[Corepack]: https://nodejs.org/api/corepack.html
+[Homebrew]: https://brew.sh/
+[Node.js]: https://nodejs.org/
+[pnpm]: https://pnpm.io/
+
+
+## Command-line reference
+
+After the [Initial setup](#initial-setup), every command is a pnpm script:
+
+| Script                     | What it does                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.                    |
+| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result.                |
+| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                                          |
+| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, or append any section it lacks, then exit without generating a PDF. |
+| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.                  |
+| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                                 |
+| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                                        |
+| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                                           |
+| `pnpm test`                | Run the test suite. The text placement checks need `pdftotext` (poppler) and are skipped without it.               |
+
+`pnpm run` may be shortened to `pnpm` for any of these, as in `pnpm start` or `pnpm generate`.
+
+pnpm passes everything you type after the script name to the generator, so the options below work with `pnpm start`, `pnpm run generate`, and the per-template scripts alike.
+The generator documents itself: run it with `-h` or `--help` to print the usage message and exit.
+`pnpm start --help` prints the short help of the runner script instead, so use `pnpm run generate` for the generator options.
+
+```bash
+pnpm run generate --help
+```
+
+| Option                    | What it does                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-h`, `--help`            | Print the usage message with every option, then exit.                                                                                                                      |
+| `-t`, `--template <name>` | Fill in a different form: `red` (the default), `black`, `cinnamoroll`, the full template file stem, or a path to any PDF. See [Templates](#templates).                     |
+| `-o`, `--output <path>`   | Where to write the PDF. Defaults to `result-<template>-<HH-MM-SS>.pdf` in the current directory.                                                                           |
+| `--list-templates`        | Print the bundled templates and their file paths, then exit.                                                                                                               |
+| `--init-config`           | Create the private config if it is missing, or append any section it lacks, then exit without generating a PDF. With `-t`, the target is `config-private-<template>.yaml`. |
+| `--init-layout`           | Create `src/layout/<template>.yaml` from the default grid if it is missing, then exit. If the file already exists, it is validated, not overwritten.                       |
+| `[config]`                | Positional argument: the YAML config to read. Defaults to `config-private-<template>.yaml` when that file exists, and `config-private.yaml` otherwise.                     |
+
+```bash
+pnpm run generate --list-templates           # which forms are bundled
+pnpm run generate -t black                   # fill in the black form with your local details
+pnpm run generate -t black config-black.yaml # ... or with that form's sample config
+pnpm run generate -o /tmp/draft.pdf          # write somewhere else, e.g. while tuning a layout
+pnpm run index                               # list every pnpm script in package.json
+```
+
+The scripts are thin wrappers, so `./start.sh` and `node src/main.js` still work if you prefer to call them directly.
+If you use npm instead of pnpm, add `--` before the options: `npm run generate -- -t black`.
+
 
 ## Configuration
 
 The configuration is split across two YAML files with identical field structures:
 
-| File                  | Role                                                                                             |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| `config-public.yaml`  | The committed sample. Used by GitHub Actions in CI, and the file you copy from to create your private config. **Keep it placeholder-only - never put real personal information here.** |
-| `config-private.yaml` | Your local file with your real details. It is gitignored and is the **default for local runs**.   |
+| File                  | Role                                                                                                                                                                                   |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config.yaml`         | The committed sample. Used by GitHub Actions in CI, and the file you copy from to create your private config. **Keep it placeholder-only - never put real personal information here.** |
+| `config-private.yaml` | Your local file with your real details. It is gitignored and is the **default for local runs**.                                                                                        |
 
-The first time, copy the sample to create your own file:
+The first local run creates `config-private.yaml` for you by copying the sample, so there is nothing to set up by hand.
+To create it yourself before the first run:
 
 ```bash
-cp config-public.yaml config-private.yaml
+pnpm run init-config
 ```
 
-Then fill in your details in `config-private.yaml`. Every `*_pos` field is an `[x, y]` coordinate (in points) that places the text on the form template - adjust these to nudge text into the right box.
+Then fill in your details in `config-private.yaml`.
+Text placement (coordinates, font sizes, and line spacing) comes from a per-template layout file, `src/layout/<template>.yaml`, so the config normally holds only your details.
+To nudge a field, add a top-level `layout:` block that merges over the template layout (see [Layout](#layout)).
+The legacy `*_pos` fields (`[x, y]` point coordinates) still work as overrides, so existing configs keep rendering unchanged.
+They hold red-template coordinates, so they apply only when the red layout is in use; on any other template the generator ignores them with a warning.
 
-> ⚠️ **Privacy warning:** Pushing to `main` publishes the CI-generated PDF as a **public** [Release](https://github.com/ahandsel/japan-marriage-registration/releases). Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `./run.sh`). Never commit or push a config that contains real PII.
+> ⚠️ **Privacy warning:** Pushing to `main` publishes the CI-generated PDF as a **public** [Release][].
+> Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `pnpm start`).
+> Never commit or push a config that contains real PII.
 
 Each file has the following top-level sections:
 
@@ -82,21 +271,28 @@ Each file has the following top-level sections:
 | `to_live_together`      | When the couple started (or will start) living together       |
 | `national_census`       | National census info (only required during the census period) |
 | `other`                 | Free-text notes (e.g. old/new kanji changes, consent)         |
+| `witness1`              | Left witness column (omit to leave it blank for handwriting)  |
+| `witness2`              | Right witness column (omit to leave it blank for handwriting) |
+
+Every section is optional: remove one and that part of the form stays blank for handwriting (the generator prints a note naming it).
+A key missing inside a section that is present is an error, so set a key to `''` to leave a single box blank.
+
 
 ### Details
 
-The `husband` and `wife` sections share the same fields. For example:
+The `husband` and `wife` sections share the same fields.
+For example:
 
 ```yaml
 husband:
   last_name: 山田
-  last_name_pos: [220,590]
+  last_name_pos: [220, 590]
   last_name_kana: やまだ
-  last_name_kana_pos: [221,623]
+  last_name_kana_pos: [221, 623]
   first_name: 太郎
-  first_name_pos: [300,590]
+  first_name_pos: [300, 590]
   first_name_kana: たろう
-  first_name_kana_pos: [305,623]
+  first_name_kana_pos: [305, 623]
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
@@ -105,7 +301,8 @@ husband:
   address_second: ３丁目　４
   is_banchi_address: false
   address_go: １０
-  address_apartment: | # Can be displayed without breaking layout if within 3 lines
+  address_apartment:
+    | # Can be displayed without breaking layout if within 3 lines
     インチキタワー
     マンション
     ３６１０号室
@@ -125,39 +322,215 @@ husband:
     year: 令和3
     month: 6
     day: 1
-  job_type: 6
+  job_type: 6 # 1-6 ticks that box; 0 or '' leaves it blank
 ```
 
-Fill in the `wife` section the same way (its `*_pos` coordinates are shifted to the right-hand column of the form).
+Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
+
+`is_banchi_address` and `is_banchi_legally_domiciled` take `true` (ellipse around 番地), `false` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
+Any other value, a quoted `'false'` or a missing key for example, stops the run with an error instead of quietly leaving the mark out.
+
+`witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields.
+Remove (or comment out) a whole section to leave that column blank for handwriting.
+
+```yaml
+witness1:
+  # The signature must be handwritten by the witness, so leave name as ''
+  # and have them sign the printout.
+  name: ''
+  birth_year: 昭和６０
+  birth_month: １
+  birth_day: ２３
+  address_first: 東京都新宿区西新宿
+  address_second: ２丁目　８
+  is_banchi_address: false
+  address_go: １
+  # A foreign witness writes only their nationality; set
+  # is_banchi_legally_domiciled to null to skip the 番地/番 mark.
+  legally_domiciled_first: 東京都新宿区西新宿
+  legally_domiciled_second: ２丁目　８
+  is_banchi_legally_domiciled: true
+```
+
+[Release]: https://github.com/ahandsel/japan-marriage-registration/releases
+
+
+### Templates
+
+Three form templates ship in `src/template/`.
+The default is `red`.
+
+| Template      | File                                       | Notes                                                                                     |
+| ------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `red`         | `jp-marriage-registration-red.pdf`         | The red-printed standard form. The default, and fully tuned.                              |
+| `black`       | `jp-marriage-registration-black.pdf`       | A black-printed form with a denser grid, era checkboxes, and 養父/養母 rows. Fully tuned. |
+| `cinnamoroll` | `jp-marriage-registration-cinnamoroll.pdf` | Shinagawa City's Cinnamoroll form. Fully tuned.                                           |
+
+There are three ways to switch forms, and they win in this order:
+
+1. **The `-t/--template` flag** - the quickest, and the only one that also looks for a per-template config:
+
+   ```bash
+   pnpm start --template black        # generate and open the black form
+   pnpm run generate -t cinnamoroll   # same, without installing or opening
+   pnpm run generate --list-templates # see what is bundled
+   ```
+
+2. **The top-level `template:` key** in your config, for a form you always use:
+
+   ```yaml
+   template: black
+   ```
+
+3. **The default**, `red`, when neither is set.
+
+You can also pass a path to any other PDF (`-t ~/Downloads/my-form.pdf`), but a custom PDF falls back to the `red` layout, so expect to tune the positions yourself (see [Layout](#layout)).
+
+Each template also has its own pnpm scripts.
+The first column is the one you use day to day.
+
+| Template      | Generate the PDF           | Create a template-specific config | Create or check the layout file |
+| ------------- | -------------------------- | --------------------------------- | ------------------------------- |
+| `red`         | `pnpm run red:pdf`         | `pnpm run red:config`             | `pnpm run red:layout`           |
+| `black`       | `pnpm run black:pdf`       | `pnpm run black:config`           | `pnpm run black:layout`         |
+| `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config`     | `pnpm run cinnamoroll:layout`   |
+
+* **`<template>:pdf`** - generates the timestamped `result-<template>-<HH-MM-SS>.pdf` from that form, so a run never overwrites an earlier output.
+  It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
+* **`<template>:config`** - creates `config-private-<template>.yaml`.
+  If the file already exists, it keeps what you typed and adds only what is missing: the private-file header, a `template:` key when the file has none, and the sections the sample `config.yaml` has and the file does not.
+  You only need it to keep different details per template; one shared `config-private.yaml` works without it.
+* **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing.
+  All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
+
+> ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing), rewrites the `template:` key, and drops any legacy `*_pos` keys the copied file has (they are red-template coordinates), so every position comes from that template's layout file.
+
+The `*_pos` values in `config.yaml` are red-template coordinates, so on any other template the generator ignores them with a warning.
+`black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+
+The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `notification.to` and `household_person` as empty strings `''` on that template.
+Its 住所 and 本籍 rows for the husband and wife also pre-print 丁目 right after the chome number, so write `address_second` and `legally_domiciled_second` without 丁目 and with two full-width spaces in its place, `３　　４` rather than `３丁目　４`, or the value prints on top of the label.
+The witness rows do not have that label in the way, so a witness value keeps the usual `２丁目　８` shape.
+
+The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom.
+Those stay blank for handwriting.
+Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
+
+
+### Layout
+
+All drawing positions live in per-template layout files, `src/layout/red.yaml`, `src/layout/black.yaml`, and `src/layout/cinnamoroll.yaml`, selected by the same name as the `-t/--template` flag or the `template:` config key.
+Every entry is absolute: `pos: [x, y]` is the text baseline in PDF points measured from the bottom-left corner, `size` is the font size in points, and the multi-line fields (`address_apartment` and `other.text`) also have a `step`, the distance between lines.
+Circles are `[x, y, r]`, and ellipses are two opposite bounding-box corners `[x1, y1, x2, y2]`.
+The `job_type_checks` entry maps each `job_type` value (1-6) to the absolute position of its ✓ mark.
+
+To adjust a field without editing the layout file, add a `layout:` block to your config.
+It deep-merges over the template layout, so you only write the keys you want to change:
+
+```yaml
+layout:
+  husband:
+    last_name: { pos: [225, 592] } # nudge one field, keep everything else
+```
+
+The legacy `*_pos` keys are still honoured on top of the resolved layout when the red layout is in use.
+Moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically placed relative to them (for example `address_second` and `household_person`), so old configs render exactly as before.
+On any other template the `*_pos` keys are ignored with a warning.
+When a `layout:` entry and a `*_pos` key both position the same field, the `layout:` entry wins and the generator prints a ⚠️ naming the ignored key.
+This matters because `config.yaml` (and so every `config-private.yaml` copied from it) carries a `*_pos` key for the names, the addresses, the 本籍, and the parents; delete the `*_pos` key to silence the warning.
+
 
 ## Usage - run it locally
 
 > [!TIP]
 > Use `config-private.yaml` and generate it locally to use this setup privately.
 
-Edit `config-private.yaml` with your details, then run (if you haven't created it yet, see [Configuration](#configuration) to copy the sample):
+Edit `config-private.yaml` with your details, then run (if the file does not exist yet, the first run creates it from the sample):
 
 ```bash
-./run.sh
+pnpm start
 ```
 
-That's it. The script creates a virtualenv, installs dependencies, generates `result.pdf`, and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
+That is it.
+`pnpm start` runs `start.sh`, which installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it.
+Run with no arguments, it uses your local `config-private.yaml`.
+Re-run it any time you change `config-private.yaml`.
 
-To run the generator step manually instead (after activating the virtualenv from [Initial setup](#initial-setup)):
+pnpm passes every argument after the script name to the generator, so the options from the [Command-line reference](#command-line-reference) work here too.
+The one exception is `--help`, which `start.sh` answers itself with its own short usage; run `pnpm run generate --help` for the generator options.
 
 ```bash
-python src/main.py                      # uses config-private.yaml, writes result.pdf
-python src/main.py config-public.yaml   # or pass a config path explicitly
+pnpm start -t cinnamoroll    # fill in a different form
+pnpm start -o /tmp/draft.pdf # write the PDF somewhere else
+pnpm start config.yaml       # read a specific config
 ```
+
+The other scripts each do one step, and none of them installs the dependencies or opens the PDF for you:
+
+```bash
+pnpm run init-config     # create config-private.yaml from the sample, without generating a PDF
+pnpm run generate        # generate the timestamped PDF from config-private.yaml
+pnpm run generate-sample # generate the timestamped PDF from the sample config.yaml
+pnpm run index           # list every pnpm script, including the per-template ones
+pnpm run clean           # list scratch files (temp*, import.csv, import.md, .DS_Store, .pnpm-store) and delete them after confirming
+```
+
+`pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run.
+On an existing file it only adds what is missing, and leaves everything you have already typed untouched.
+
+First, the header comments that mark the file as private and local-only, if they are missing:
+
+```yaml
+# ローカル実行時のみ使用される非公開の設定ファイルです。
+# Private configuration file that is only used for local execution.
+```
+
+Second, any whole section that the sample `config.yaml` has and your file does not.
+Your `config-private.yaml` is copied from the sample only once, on the very first run, so a file created before a section was added to the project never grows it on its own - the witness box (`witness1` and `witness2`) is the common case.
+The missing sections are appended at the end of the file with their sample placeholder values and their comments, so edit them with your own details afterwards.
+
+A normal `pnpm start` run never changes the file.
+It only prints a note when a section is absent, because deleting a section is also how you leave that part of the form blank for handwriting:
+
+```text
+ℹ️  This config has no witness1, witness2 sections. Those parts of the form stay blank.
+   If that is not deliberate, run `pnpm run init-config` to append them from the sample.
+```
+
+The remedy in the note targets the config in use: `pnpm run init-config` for the shared `config-private.yaml`, `pnpm run init-config -t <template>` for a per-template `config-private-<template>.yaml`, and a manual copy from `config.yaml` for a config you passed by path.
+
 
 ## Usage - run via GitHub Actions
 
 Two workflows build the PDF in CI:
 
-* **`.github/workflows/pr.yml`** - runs on every pull request against `main`, builds the PDF, and uploads it as a workflow artifact you can download from the run's summary page.
-* **`.github/workflows/push.yml`** - runs on every push to `main`, builds the PDF, and publishes it as a new [Release](https://github.com/ahandsel/japan-marriage-registration/releases) (tagged with a timestamp) with `marriage_registration.pdf` attached.
+* **`.github/workflows/pr.yml`** - runs on every pull request against `main`, installs poppler and runs `pnpm test`, then builds the PDF and uploads it as a workflow artifact you can download from the run's summary page.
+* **`.github/workflows/push.yml`** - runs on every push to `main`, builds the PDF, and publishes it as a new [Release][] (tagged with a timestamp) with `marriage_registration.pdf` attached.
 
-Both workflows run `python src/main.py config-public.yaml`, building the PDF from the committed sample `config-public.yaml`. So the typical flow is: edit `config-public.yaml`, commit, and push to `main`. If all goes well, the generated PDF appears in the [Release](https://github.com/ahandsel/japan-marriage-registration/releases) section. No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
+Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PDF from the committed sample `config.yaml` under a fixed output name (locally the name is timestamped instead).
+So the typical flow is: edit `config.yaml`, commit, and push to `main`.
+If all goes well, the generated PDF appears in the [Release][] section.
+No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
 
 > [!CAUTION]
-> `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config-public.yaml`.
+> `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
+> When you need a marriage registration with real personal information, fill in `config-private.yaml` and generate it locally - never via CI.
+
+
+## GitHub directory
+
+The `.github/` directory holds the repository's GitHub automation configuration.
+
+| File                                     | Trigger                                                  | Role                                                                                                                                                                                                                  |
+| ---------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/dependabot.yml`                 | Weekly (scheduled)                                       | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) and the `github-actions` ecosystem (the pinned action SHAs) weekly, and opens pull requests when updates exist.                                 |
+| `.github/workflows/pr.yml`               | Pull requests against `main`                             | Installs poppler and runs `pnpm test`, then builds the PDF with `node src/main.js config.yaml -o result.pdf` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the summary. |
+| `.github/workflows/push.yml`             | Pushes to `main`                                         | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.                                             |
+| `.github/workflows/pr-lint-autofix.yml`  | Pull requests against `main` (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository.                                               |
+| `.github/PULL_REQUEST_TEMPLATE.md`       | Opening a pull request                                   | The pull request body template: what changed, why, how it was verified, and the checklist of repository rules.                                                                                                        |
+| `.github/copilot-instructions.md`        | Copilot code review and authoring                        | Restates the rules of `AGENTS.md` for GitHub Copilot, which does not read `AGENTS.md`.                                                                                                                                |
+| `.github/instructions/*.instructions.md` | Copilot, when a changed file matches `applyTo`           | Path-scoped Copilot rules for the configs, the layout files, the helper scripts, and the workflows.                                                                                                                   |
+
+All workflows run on Node.js 24 with pnpm and authenticate with the built-in `GITHUB_TOKEN`, so no extra secrets are required.
+
+[Dependabot]: https://docs.github.com/code-security/dependabot

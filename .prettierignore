@@ -1,0 +1,10 @@
+# pnpm
+pnpm-lock.yaml
+
+# Dependencies & Python virtualenv
+node_modules/
+venv/
+
+# Generated output & binary/font assets
+result.pdf
+src/fonts/

@@ -1,0 +1,29 @@
+{
+  "attribution": { "commit": "", "pr": "" },
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(pnpm lint:*)",
+      "Bash(pnpm run:*)",
+      "Bash(pnpm exec:*)",
+      "Bash(node src/main.js:*)",
+      "Bash(node .claude/skills/script-auditor/scripts/audit-helper-scripts.mjs:*)",
+      "Bash(node .claude/skills/skills-ref/scripts/skills-ref.mjs:*)",
+      "Bash(./start.sh:*)",
+      "Bash(git show:*)",
+      "Bash(git check-ignore:*)",
+      "Bash(pdfinfo:*)",
+      "Bash(pdftotext:*)",
+      "Bash(pdftoppm:*)"
+    ],
+    "ask": ["Bash(git reset:*)", "Read(./config-private*.yaml)"],
+    "deny": [
+      "Bash(git push)",
+      "Bash(git push:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(yarn:*)"
+    ]
+  }
+}
