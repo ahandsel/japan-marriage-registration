@@ -19,6 +19,7 @@
 // * to-prompt: an <available_skills> XML block on stdout.
 // * Exit codes: 0 = success, 1 = validation or parse error, 2 = usage error.
 // Version history:
+// * v1.2 - 2026-09-18 - Match the frontmatter delimiters as whole lines, so a "---" inside the body no longer truncates it and an inline "---" no longer passes as a delimiter.
 // * v1.1 - 2026-09-15 - Parse YAML with the repo dependency `yaml` instead of the unresolvable `js-yaml`, correct the documented paths to .claude/skills/, and drop the removed pnpm alias.
 // * v1.0 - 2026-09-09 - Initial Node port of skills-ref 0.1.0.
 
@@ -26,7 +27,7 @@ import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { parse as load } from 'yaml';
 
-const VERSION = '1.1';
+const VERSION = '1.2';
 const MAX_SKILL_NAME_LENGTH = 64;
 const MAX_DESCRIPTION_LENGTH = 1024;
 const MAX_COMPATIBILITY_LENGTH = 500;
@@ -103,16 +104,24 @@ function findSkillMd(skillDir) {
   return null;
 }
 
+// A delimiter is a line holding exactly "---" (trailing spaces allowed). Matching
+// whole lines, rather than the substring "---", keeps a "---" thematic break in
+// the body from ending the frontmatter early and refuses an inline "---foo".
+const FRONTMATTER_OPEN = /^---[ \t]*(?:\r?\n|$)/;
+const FRONTMATTER_CLOSE = /^---[ \t]*(?:\r?\n|$)/m;
+
 function parseFrontmatter(content) {
-  if (!content.startsWith('---')) {
+  const open = content.match(FRONTMATTER_OPEN);
+  if (!open) {
     throw new ParseError('SKILL.md must start with YAML frontmatter (---)');
   }
-  const parts = content.split('---', 3);
-  if (parts.length < 3) {
+  const rest = content.slice(open[0].length);
+  const close = rest.match(FRONTMATTER_CLOSE);
+  if (!close) {
     throw new ParseError('SKILL.md frontmatter not properly closed with ---');
   }
-  const frontmatterStr = parts[1];
-  const body = parts[2].trim();
+  const frontmatterStr = rest.slice(0, close.index);
+  const body = rest.slice(close.index + close[0].length).trim();
   let parsed;
   try {
     parsed = load(frontmatterStr) ?? {};
