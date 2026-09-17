@@ -302,10 +302,15 @@ describe('workflows', () => {
   });
 
   for (const file of workflowFiles) {
-    test(`${file}: actions pinned to a SHA, permissions declared, only config.yaml built`, () => {
+    test(`${file}: keyed to main, actions pinned to a SHA, permissions declared, only config.yaml built`, () => {
       const text = read(file);
       const wf = YAML.parse(text);
       assert.ok(wf.permissions, 'top-level permissions block');
+      // AGENTS.md: pull requests open against main, and every workflow is
+      // keyed to it.
+      for (const [event, spec] of Object.entries(wf.on)) {
+        assert.deepEqual(spec?.branches, ['main'], `on.${event}.branches`);
+      }
       const usesLines = text
         .split('\n')
         .filter((line) => /^\s*-?\s*uses:/.test(line));

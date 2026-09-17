@@ -2,6 +2,7 @@ name: Lint and autofix PR
 
 on:
   pull_request:
+    branches: [main]
     types: [opened, synchronize, reopened, ready_for_review]
 
 # contents: write is required to push the lint fixes back to the PR branch.
