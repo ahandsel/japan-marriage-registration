@@ -363,6 +363,63 @@ describe('legacy *_pos overrides', () => {
     });
     assert.deepEqual(merged.husband.last_name.pos, [7, 8]);
   });
+
+  test('a layout: entry wins over the *_pos key for the same field, with a warning', (t) => {
+    // config.yaml ships every *_pos key, so this is what a `layout:` nudge on
+    // a config copied from the sample looks like.
+    const log = silence(t);
+    const cfg = readRepoYaml('config.yaml');
+    cfg.layout = { husband: { last_name: { pos: [220, 630] } } };
+    const merged = resolveLayout('red', cfg);
+    assert.deepEqual(merged.husband.last_name.pos, [220, 630]);
+    const warning = log.mock.calls
+      .map((c) => String(c.arguments[0]))
+      .find((line) => line.includes('"layout:" entry wins'));
+    assert.ok(warning, 'the ignored *_pos key is announced');
+    assert.match(
+      warning,
+      /- husband\.last_name_pos \(layout\.husband\.last_name sets pos\)/,
+    );
+    // The other *_pos keys still apply, and no other warning line appears.
+    assert.equal(warning.match(/^ {3}- /gm).length, 1);
+    assert.deepEqual(merged.wife, resolveLayout('red', {}).wife);
+  });
+
+  test('a layout: entry for a dependent field is not dragged along by the anchor *_pos shift', (t) => {
+    const log = silence(t);
+    const base = resolveLayout('red', {});
+    const [x, y] = base.husband.address_first.pos;
+    const merged = resolveLayout('red', {
+      husband: { address_first_pos: [x + 10, y - 5] },
+      layout: { husband: { address_second: { pos: [300, 500] } } },
+    });
+    assert.deepEqual(merged.husband.address_first.pos, [x + 10, y - 5]);
+    assert.deepEqual(merged.husband.address_second.pos, [300, 500]);
+    // The dependents without their own entry still move with the anchor.
+    assert.deepEqual(merged.husband.household_person.pos, [
+      base.husband.household_person.pos[0] + 10,
+      base.husband.household_person.pos[1] - 5,
+    ]);
+    const warning = log.mock.calls
+      .map((c) => String(c.arguments[0]))
+      .find((line) => line.includes('"layout:" entry wins'));
+    assert.match(
+      warning,
+      /- the husband\.address_first_pos shift of address_second \(layout\.husband\.address_second sets pos\)/,
+    );
+  });
+
+  test('no precedence warning when a layout: entry and the *_pos keys name different fields', (t) => {
+    const log = silence(t);
+    const cfg = readRepoYaml('config.yaml');
+    cfg.layout = { notification: { to: { pos: [1, 2] } } };
+    resolveLayout('red', cfg);
+    assert.ok(
+      !log.mock.calls.some((c) =>
+        String(c.arguments[0]).includes('"layout:" entry wins'),
+      ),
+    );
+  });
 });
 
 describe('key path annotation', () => {

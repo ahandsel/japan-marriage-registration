@@ -143,6 +143,7 @@ See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READ
 An optional top-level `template:` key selects the template; the `-t/--template` flag overrides it.
 An optional top-level `layout:` block deep-merges over the template's layout file, so a config can nudge one coordinate without copying the whole grid.
 Legacy `*_pos` values (`[x, y]` point coordinates) are still honoured on top of the resolved layout; moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically drawn relative to them, so old configs render unchanged.
+When a `layout:` entry sets `pos` for the same field as a `*_pos` key, the `layout:` entry wins and a ⚠️ names the ignored key, because `config.yaml` ships every `*_pos` key and a `layout:` nudge on a config copied from it would otherwise silently do nothing.
 The `*_pos` values are `red` coordinates by definition, so they apply only when the base layout is `red` (the red template itself, or a custom PDF on the red fallback); on any other template they are ignored with a ⚠️ warning, and `--init-config -t <variant>` strips them from the scaffolded per-template config.
 
 

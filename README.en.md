@@ -403,6 +403,8 @@ layout:
 The legacy `*_pos` keys are still honoured on top of the resolved layout when the red layout is in use.
 Moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically placed relative to them (for example `address_second` and `household_person`), so old configs render exactly as before.
 On any other template the `*_pos` keys are ignored with a warning.
+When a `layout:` entry and a `*_pos` key both position the same field, the `layout:` entry wins and the generator prints a ⚠️ naming the ignored key.
+This matters because `config.yaml` (and so every `config-private.yaml` copied from it) carries a `*_pos` key for the names, the addresses, the 本籍, and the parents; delete the `*_pos` key to silence the warning.
 
 
 ## Usage - run it locally

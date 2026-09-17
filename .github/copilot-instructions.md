@@ -34,7 +34,7 @@ All input comes from a single YAML config, and the only output is a PDF.
 * **Drawing model.** `main.js` embeds the template PDF as a page-sized XObject, then draws on top through a small canvas shim (`makeCanvas`).
   Coordinates are PDF points measured from the bottom-left corner, and `drawString(x, y, ...)` places the text baseline at `(x, y)`, so a larger `y` moves the text up.
 * **Positions are data.** Every coordinate lives in a per-template layout file under `src/layout/`, never in `main.js`.
-  `src/layout.js` loads that file, deep-merges a `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red`; other templates ignore them with a warning), validates the result, and returns the resolved layout.
+  `src/layout.js` loads that file, deep-merges a `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red`; other templates ignore them with a warning, and a `layout:` entry for the same field wins with a warning), validates the result, and returns the resolved layout.
 * **Templates.** `src/template/jp-marriage-registration-<variant>.pdf`, with the bundled variants `red` (the default), `black`, and `cinnamoroll`.
   Each bundled template has a fully tuned layout file, and each form has its own quirks, which the header comment of its layout file records.
 * **There is no build step, and `pnpm test` runs the test suite in `test/`.**

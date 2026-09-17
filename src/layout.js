@@ -230,6 +230,14 @@ function applyLegacyPosOverrides(layout, cfg) {
     { field: 'address', shifts: [] },
     'new_legally_domiciled',
   ]);
+  // A `layout:` entry that sets a field's `pos` is the explicit, newer
+  // mechanism, so it wins over a legacy `*_pos` key for the same field. The
+  // sample config.yaml ships every `*_pos` key, so without this rule a
+  // `layout:` nudge on a config copied from it would silently do nothing.
+  const layoutSetsPos = (sectionName, field) =>
+    isPlainObject(cfg.layout?.[sectionName]?.[field]) &&
+    cfg.layout[sectionName][field].pos !== undefined;
+  const ignored = [];
   for (const [sectionCfg, sectionLayout, key, spec, sectionName] of overrides) {
     const pos = sectionCfg?.[key];
     if (pos === undefined || pos === null) {
@@ -245,15 +253,35 @@ function applyLegacyPosOverrides(layout, cfg) {
       // The layout itself is broken; validation below reports the details.
       continue;
     }
+    if (layoutSetsPos(sectionName, spec.field)) {
+      ignored.push(
+        `${sectionName}.${key} (layout.${sectionName}.${spec.field} sets pos)`,
+      );
+      continue;
+    }
     const dx = pos[0] - anchor.pos[0];
     const dy = pos[1] - anchor.pos[1];
     anchor.pos = [pos[0], pos[1]];
     for (const dependent of spec.shifts) {
+      if (layoutSetsPos(sectionName, dependent)) {
+        // The dependent has its own explicit position; do not drag it along.
+        ignored.push(
+          `the ${sectionName}.${key} shift of ${dependent} (layout.${sectionName}.${dependent} sets pos)`,
+        );
+        continue;
+      }
       const target = sectionLayout[dependent];
       if (isPlainObject(target) && isPos(target.pos)) {
         target.pos = [target.pos[0] + dx, target.pos[1] + dy];
       }
     }
+  }
+  if (ignored.length > 0) {
+    console.log(
+      '⚠️  A "layout:" entry wins over a legacy *_pos key for the same field. Ignored:\n' +
+        ignored.map((line) => `   - ${line}`).join('\n') +
+        '\n   Delete the *_pos key to silence this.',
+    );
   }
 }
 
