@@ -2,16 +2,22 @@
 
 ## What this changes
 
-<!-- One or two sentences. Say what the change does, not how. -->
+<!--
+One or two sentences.
+Say what the change does, not how.
+-->
 
 ## Why
 
-<!-- The problem this solves. Link an issue or a ticket under docs/ when there is one. -->
+<!--
+The problem this solves.
+Link an issue or a ticket under docs/ when there is one.
+-->
 
 ## How it was verified
 
 <!--
-There is no test suite here, so a green check proves only that the PDF builds.
+pnpm test proves that each value lands where its layout entry says, not that the entry matches the printed form, so a green check never verifies a coordinate.
 Say what you actually ran and looked at, for example:
 pnpm run generate config.yaml -o /tmp/check.pdf, then inspected the 住所 rows on the black template.
 -->

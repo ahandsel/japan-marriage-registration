@@ -1,5 +1,9 @@
 # Give every template a fully tuned layout YAML
 
+> **Status: done.**
+> Everything below describes the repository as it was when the ticket was written, and it is kept as the record of that work.
+> Names have moved since: the `layoutPathForTemplate` function is now `layoutForTemplate` in `src/layout.js`, `config-cute.yaml` is now `config-cinnamoroll.yaml`, the `cute` script is gone, and `pnpm test` now exists (see `test/README.md`), so the "no test suite" statements below are historical.
+
 
 ## Summary
 

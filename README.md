@@ -206,9 +206,10 @@ commitする前に `pnpm lint` を実行して自動修正を適用してくだ�
 
 pnpmはスクリプト名の後ろに入力した内容をそのまま生成プログラムに渡すため、以下のオプションは `pnpm start`、`pnpm run generate`、様式ごとのスクリプトのいずれでも使えます。
 生成プログラム自体にもヘルプがあり、`-h` または `--help` で使い方を表示して終了します。
+`pnpm start --help` は `start.sh` 自身の短いヘルプを表示するため、生成プログラムのオプションは `pnpm run generate` で確認してください。
 
 ```bash
-pnpm run generate --help # または: pnpm start --help
+pnpm run generate --help
 ```
 
 | オプション                | 内容                                                                                                                                                                             |
@@ -444,12 +445,15 @@ layout:
 pnpm start
 ```
 
-これだけです。`pnpm start` が `start.sh` を実行し、依存関係をインストールして `result-<template>-<HH-MM-SS>.pdf` を生成し、開きます（時刻付きの名前なので、以前の出力は上書きされません）。引数なしで実行するとローカル用の `config-private.yaml` が使われます。`config-private.yaml` を変更したら、そのつど再実行してください。
+これだけです。
+`pnpm start` が `start.sh` を実行し、依存関係をインストールして `result-<template>-<HH-MM-SS>.pdf` を生成し、開きます（時刻付きの名前なので、以前の出力は上書きされません）。
+引数なしで実行するとローカル用の `config-private.yaml` が使われます。
+`config-private.yaml` を変更したら、そのつど再実行してください。
 
 pnpmはスクリプト名の後ろに書いた引数をそのまま `main.js` に渡すため、[コマンドリファレンス](#コマンドリファレンス)のオプションがここでも使えます。
+例外は `--help` で、これは `start.sh` が自身の短いヘルプで応答するため、生成プログラムのオプションは `pnpm run generate --help` で確認してください。
 
 ```bash
-pnpm start --help            # 使えるオプションの一覧を表示する
 pnpm start -t cinnamoroll    # 別の様式で生成する
 pnpm start -o /tmp/draft.pdf # 出力先を変更する
 pnpm start config.yaml       # 設定ファイルを明示的に指定する
@@ -494,28 +498,35 @@ pnpmスクリプトは薄いラッパーなので、`./start.sh` や `node src/m
 
 CIでPDFをビルドするワークフローが2つあります。
 
-* **`.github/workflows/pr.yml`** - `main` へのプルリクエストのたびに実行され、PDFをビルドし、ワークフローのアーティファクトとしてアップロードします（実行結果のサマリーページからダウンロードできます）。
+* **`.github/workflows/pr.yml`** - `main` へのプルリクエストのたびに実行され、popplerをインストールして `pnpm test` を実行したあと、PDFをビルドし、ワークフローのアーティファクトとしてアップロードします（実行結果のサマリーページからダウンロードできます）。
 * **`.github/workflows/push.yml`** - `main` へのpushのたびに実行され、PDFをビルドし、新しい[Release][]（タイムスタンプのタグ付き）として `marriage_registration.pdf` を添付して公開します。
 
-どちらのワークフローも `node src/main.js config.yaml -o result.pdf` を実行し、commit済みの `config.yaml`（サンプル）を使って固定のファイル名でPDFを生成します（ローカル実行では時刻付きの名前になります）。つまり基本の流れは、`config.yaml` を編集してcommitし、`main` にpushするだけです。うまくいけば、生成されたPDFが[Release][]に出来上がります。シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
+どちらのワークフローも `node src/main.js config.yaml -o result.pdf` を実行し、commit済みの `config.yaml`（サンプル）を使って固定のファイル名でPDFを生成します（ローカル実行では時刻付きの名前になります）。
+つまり基本の流れは、`config.yaml` を編集してcommitし、`main` にpushするだけです。
+うまくいけば、生成されたPDFが[Release][]に出来上がります。
+シークレットや追加の設定は不要で、ワークフローは組み込みの `GITHUB_TOKEN` を使用します。
 
-> ⚠️ **注意**：`push.yml` は生成したPDFを**公開**のReleaseとして公開します。ここで使われるのはcommit済みの `config.yaml` のみです。実際の個人情報を含む婚姻届が必要な場合は、`config-private.yaml` に記入してローカルで生成してください（CIには載せないでください）。
-
-案内に表示される対処法は、使用中の設定ファイルに合わせて変わります。
-共通の `config-private.yaml` なら `pnpm run init-config`、様式専用の `config-private-<様式>.yaml` なら `pnpm run init-config -t <様式>`、パスで指定した設定ファイルなら `config.yaml` から手作業でコピーするよう案内します。
+> ⚠️ **注意**：`push.yml` は生成したPDFを**公開**のReleaseとして公開します。
+> ここで使われるのはcommit済みの `config.yaml` のみです。
+> 実際の個人情報を含む婚姻届が必要な場合は、`config-private.yaml` に記入してローカルで生成してください（CIには載せないでください）。
 
 
 ## .github ディレクトリの構成
 
-`.github/` には、GitHubの自動化に関する設定ファイルがまとまっています。各ファイルの役割は以下のとおりです。
+`.github/` には、GitHubの自動化に関する設定ファイルがまとまっています。
+各ファイルの役割は以下のとおりです。
 
-| ファイル                                | トリガー                           | 役割                                                                                                                                                                                                                |
-| --------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.github/dependabot.yml`                | 毎日（スケジュール実行）           | [Dependabot][] の設定。`npm`（pnpmを含む）の依存パッケージを毎日チェックし、更新があればプルリクエストを自動で作成します。                                                                                          |
-| `.github/workflows/pr.yml`              | `main` へのプルリクエスト          | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、ワークフローのアーティファクト（`marriage_registration`）としてアップロードします。実行結果のサマリーページから `result.pdf` をダウンロードできます。 |
-| `.github/workflows/push.yml`            | `main` へのpush                    | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                  |
-| `.github/workflows/pr-lint-autofix.yml` | プルリクエスト（作成・更新・再開） | `pnpm lint`（Prettierとmarkdownlint）を実行し、自動修正した内容をPRブランチへcommit・pushして返します。同一リポジトリ内のPRでのみ動作します。                                                                       |
+| ファイル                                 | トリガー                                         | 役割                                                                                                                                                                                                                                                |
+| ---------------------------------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/dependabot.yml`                 | 毎週（スケジュール実行）                         | [Dependabot][] の設定。`npm`（pnpmを含む）の依存パッケージと、`github-actions`（ワークフローで固定しているアクションのSHA）を毎週チェックし、更新があればプルリクエストを自動で作成します。                                                         |
+| `.github/workflows/pr.yml`               | `main` へのプルリクエスト                        | popplerをインストールして `pnpm test` を実行し、`node src/main.js config.yaml -o result.pdf` でPDFをビルドして、ワークフローのアーティファクト（`marriage_registration`）としてアップロードします。サマリーページから `result.pdf` を取得できます。 |
+| `.github/workflows/push.yml`             | `main` へのpush                                  | `node src/main.js config.yaml -o result.pdf` でPDFをビルドし、タイムスタンプをタグにした**公開**の[Release][]を作成して `marriage_registration.pdf` を添付します。                                                                                  |
+| `.github/workflows/pr-lint-autofix.yml`  | `main` へのプルリクエスト（作成・更新・再開）    | `pnpm lint`（Prettierとmarkdownlint）を実行し、自動修正した内容をPRブランチへcommit・pushして返します。同一リポジトリ内のPRでのみ動作します。                                                                                                       |
+| `.github/PULL_REQUEST_TEMPLATE.md`       | プルリクエストの作成                             | プルリクエスト本文のテンプレート。変更内容、理由、確認方法、リポジトリのルールのチェックリストを記入します。                                                                                                                                        |
+| `.github/copilot-instructions.md`        | Copilotのコードレビューと編集                    | `AGENTS.md` を読まないGitHub Copilotのために、`AGENTS.md` のルールを言い直したものです。                                                                                                                                                            |
+| `.github/instructions/*.instructions.md` | 変更ファイルが `applyTo` に一致したときのCopilot | 設定ファイル、レイアウトファイル、補助スクリプト、ワークフローに対するCopilot向けのパス限定ルールです。                                                                                                                                             |
 
-いずれのワークフローもNode.js 24とpnpmで動作し、認証には組み込みの `GITHUB_TOKEN` を使用します。追加のシークレット設定は不要です。
+いずれのワークフローもNode.js 24とpnpmで動作し、認証には組み込みの `GITHUB_TOKEN` を使用します。
+追加のシークレット設定は不要です。
 
 [Dependabot]: https://docs.github.com/code-security/dependabot

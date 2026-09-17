@@ -80,7 +80,8 @@ Always pass `config.yaml` explicitly and write output to the scratchpad with `-o
 | `node src/main.js --list-templates`                                             | Broken template discovery after a rename or addition                           | A bundled template must also ship its three `<variant>:*` scripts                                          |
 | `node src/main.js --init-layout -t <variant>`                                   | An invalid `src/layout/<variant>.yaml`                                         | Validates only the layout file itself, never a `layout:` override block inside a config                    |
 | `pnpm lint`                                                                     | Prettier and markdownlint drift, including curly quotes and em dashes in `.md` | Autofixing: run only on a clean tree, read the resulting diff as the finding, restore with `git restore .` |
-| Open every generated audit PDF                                                  | A coordinate that lands on the wrong printed box                               | There is no test suite; visual inspection is the only behavioral check the layout data has                 |
+| `pnpm test`                                                                     | A drift between `main.js` and `layout.js`, a broken CLI path, a hygiene rule   | Passes `pdftotext` placement checks against the layout file, never against the printed form                |
+| Open every generated audit PDF                                                  | A coordinate that lands on the wrong printed box                               | Visual inspection is the only behavioral check the layout data has                                         |
 
 To check a placement without eyeballing it, `pdftotext -bbox-layout src/template/jp-marriage-registration-black.pdf out.xhtml` lists every printed label with exact coordinates; the `black` template has a text layer, `red` does not, and `pdftotext` measures y from the top of the page while the layout files measure it from the bottom (`y_layout = page_height - y_pdftotext`).
 
@@ -134,7 +135,7 @@ Hunt each of these by name.
 * A new bundled template that leans on the `red` layout fallback, skips the conventional filename, or ships without its three `<variant>:*` scripts; that fallback exists for user-supplied PDFs only.
 * A template quirk silently violated: text drawn into the cinnamoroll form's pre-printed 品川区長殿 or missing 世帯主 row, or a witness `is_banchi_address` set on the black form, whose witness row prints no 番地/番/号.
 * A second implementation of a utility the repository already has. Grep for the behavior before accepting a new helper.
-* A test-shaped claim with nothing behind it: this repository has no test suite, so "tests pass" and a green CI check prove only that the sample PDF builds.
+* A test-shaped claim with nothing behind it: `pnpm test` proves that `main.js` draws each value where `layout.js` resolves it, never that a coordinate matches the printed form, so "tests pass" and a green CI check do not verify a layout change.
 * A change made to turn CI green rather than to fix the behavior the failure names.
 * An abstraction, refactor, or rename the task did not require, including deriving one field's position from another; every layout entry is absolute by design.
 * A partial migration: the new path added, the old path left live, and callers split between the two.

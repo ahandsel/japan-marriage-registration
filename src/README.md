@@ -1,7 +1,7 @@
 # Src
 
 The whole implementation of the generator, plus the assets it needs at run time.
-There is no build step: [main.js][] is the file that `./start.sh`, every pnpm script, and all CI workflows run directly.
+There is no build step: [main.js][] is the file that `./start.sh`, every generate and scaffold pnpm script, and the two PDF-building workflows (`pr.yml` and `push.yml`) run directly.
 
 The split between the two JavaScript files is the important thing to know before changing anything here.
 [main.js][] only draws, and [layout.js][] owns every number that says where to draw.

@@ -29,7 +29,7 @@ It overlays text onto a blank Japanese marriage registration form (婚姻届) PD
 There is no UI, no server, and no database.
 All input comes from a single YAML config, and the only output is a PDF.
 
-* **Entry point.** `src/main.js` is the only implementation, and it is what `start.sh` and every workflow run.
+* **Entry point.** `src/main.js` is the only implementation, and it is what `start.sh` and the two PDF-building workflows (`pr.yml` and `push.yml`) run.
   It is ESM JavaScript on Node.js 24 or newer, and it uses `pdf-lib`, `@pdf-lib/fontkit`, and `yaml`.
 * **Drawing model.** `main.js` embeds the template PDF as a page-sized XObject, then draws on top through a small canvas shim (`makeCanvas`).
   Coordinates are PDF points measured from the bottom-left corner, and `drawString(x, y, ...)` places the text baseline at `(x, y)`, so a larger `y` moves the text up.

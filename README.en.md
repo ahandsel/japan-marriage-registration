@@ -195,9 +195,10 @@ After the [Initial setup](#initial-setup), every command is a pnpm script:
 
 pnpm passes everything you type after the script name to the generator, so the options below work with `pnpm start`, `pnpm run generate`, and the per-template scripts alike.
 The generator documents itself: run it with `-h` or `--help` to print the usage message and exit.
+`pnpm start --help` prints the short help of the runner script instead, so use `pnpm run generate` for the generator options.
 
 ```bash
-pnpm run generate --help # or: pnpm start --help
+pnpm run generate --help
 ```
 
 | Option                    | What it does                                                                                                                                                               |
@@ -429,12 +430,15 @@ Edit `config-private.yaml` with your details, then run (if the file does not exi
 pnpm start
 ```
 
-That is it. `pnpm start` runs `start.sh`, which installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it. Run with no arguments, it uses your local `config-private.yaml`. Re-run it any time you change `config-private.yaml`.
+That is it.
+`pnpm start` runs `start.sh`, which installs dependencies, generates `result-<template>-<HH-MM-SS>.pdf` (the timestamp keeps earlier runs around), and opens it.
+Run with no arguments, it uses your local `config-private.yaml`.
+Re-run it any time you change `config-private.yaml`.
 
-pnpm passes every argument after the script name to the generator, so the options from the [Command-line reference](#command-line-reference) work here too:
+pnpm passes every argument after the script name to the generator, so the options from the [Command-line reference](#command-line-reference) work here too.
+The one exception is `--help`, which `start.sh` answers itself with its own short usage; run `pnpm run generate --help` for the generator options.
 
 ```bash
-pnpm start --help            # show every option
 pnpm start -t cinnamoroll    # fill in a different form
 pnpm start -o /tmp/draft.pdf # write the PDF somewhere else
 pnpm start config.yaml       # read a specific config
@@ -477,10 +481,13 @@ It only prints a note when a section is absent, because deleting a section is al
 
 Two workflows build the PDF in CI:
 
-* **`.github/workflows/pr.yml`** - runs on every pull request against `main`, builds the PDF, and uploads it as a workflow artifact you can download from the run's summary page.
+* **`.github/workflows/pr.yml`** - runs on every pull request against `main`, installs poppler and runs `pnpm test`, then builds the PDF and uploads it as a workflow artifact you can download from the run's summary page.
 * **`.github/workflows/push.yml`** - runs on every push to `main`, builds the PDF, and publishes it as a new [Release][] (tagged with a timestamp) with `marriage_registration.pdf` attached.
 
-Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PDF from the committed sample `config.yaml` under a fixed output name (locally the name is timestamped instead). So the typical flow is: edit `config.yaml`, commit, and push to `main`. If all goes well, the generated PDF appears in the [Release][] section. No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
+Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PDF from the committed sample `config.yaml` under a fixed output name (locally the name is timestamped instead).
+So the typical flow is: edit `config.yaml`, commit, and push to `main`.
+If all goes well, the generated PDF appears in the [Release][] section.
+No secrets or extra configuration are required - the workflows use the built-in `GITHUB_TOKEN`.
 
 > [!CAUTION]
 > `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
@@ -493,12 +500,15 @@ The remedy in the note targets the config in use: `pnpm run init-config` for the
 
 The `.github/` directory holds the repository's GitHub automation configuration.
 
-| File                                    | Trigger                                   | Role                                                                                                                                                                                 |
-| --------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `.github/dependabot.yml`                | Daily (scheduled)                         | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) daily and opens pull requests when dependency updates exist.                                                   |
-| `.github/workflows/pr.yml`              | Pull requests against `main`              | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the run's summary page. |
-| `.github/workflows/push.yml`            | Pushes to `main`                          | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.            |
-| `.github/workflows/pr-lint-autofix.yml` | Pull requests (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository.              |
+| File                                     | Trigger                                                  | Role                                                                                                                                                                                                                  |
+| ---------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.github/dependabot.yml`                 | Weekly (scheduled)                                       | [Dependabot][] config. Checks the `npm` ecosystem (which covers pnpm) and the `github-actions` ecosystem (the pinned action SHAs) weekly, and opens pull requests when updates exist.                                 |
+| `.github/workflows/pr.yml`               | Pull requests against `main`                             | Installs poppler and runs `pnpm test`, then builds the PDF with `node src/main.js config.yaml -o result.pdf` and uploads it as a workflow artifact (`marriage_registration`). Download `result.pdf` from the summary. |
+| `.github/workflows/push.yml`             | Pushes to `main`                                         | Builds the PDF with `node src/main.js config.yaml -o result.pdf` and creates a **public** [Release][] tagged with a timestamp, with `marriage_registration.pdf` attached.                                             |
+| `.github/workflows/pr-lint-autofix.yml`  | Pull requests against `main` (opened, updated, reopened) | Runs `pnpm lint` (Prettier and markdownlint), then commits and pushes the autofixes back to the PR branch. Runs only for pull requests from within the same repository.                                               |
+| `.github/PULL_REQUEST_TEMPLATE.md`       | Opening a pull request                                   | The pull request body template: what changed, why, how it was verified, and the checklist of repository rules.                                                                                                        |
+| `.github/copilot-instructions.md`        | Copilot code review and authoring                        | Restates the rules of `AGENTS.md` for GitHub Copilot, which does not read `AGENTS.md`.                                                                                                                                |
+| `.github/instructions/*.instructions.md` | Copilot, when a changed file matches `applyTo`           | Path-scoped Copilot rules for the configs, the layout files, the helper scripts, and the workflows.                                                                                                                   |
 
 All workflows run on Node.js 24 with pnpm and authenticate with the built-in `GITHUB_TOKEN`, so no extra secrets are required.
 

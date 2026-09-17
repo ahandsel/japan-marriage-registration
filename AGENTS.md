@@ -38,7 +38,7 @@ This project handles real personal information (PII: names, birthdates, addresse
 * **Runtime:** Node.js `>=24`, package manager **pnpm** `>=10` (`.npmrc` sets `engine-strict=true`).
   `package.json` pins `packageManager` to an exact pnpm version; do not bump it as a side effect of another change.
 * **Implementation:** `src/main.js` (ESM, uses `pdf-lib` + `@pdf-lib/fontkit` + `yaml`).
-  This is the only implementation, and what `start.sh` and all CI run.
+  This is the only implementation, and what `start.sh` and the two PDF-building workflows (`pr.yml` and `push.yml`) run.
 * `start.sh` falls back to npm when pnpm and corepack are both missing, so a user without pnpm can still run the tool.
   That fallback is for end users only: an agent working in this repo always uses pnpm.
   See the Package manager section below.
@@ -52,7 +52,7 @@ Beyond `src/`, these files exist and are easy to miss:
   A documentation change that belongs in one belongs in both, so never update only one of them.
 * `src/template/marriage-registration-fields.md` is the term-by-term field reference: every Japanese label on the form, a plain-language English rendering, what the box means, and the config keys that fill it.
   Read it before guessing what a field is for.
-* `docs/` holds working tickets, currently `docs/ticket-per-template-layout.md` (the per-template layout work).
+* `docs/` holds tickets; `docs/ticket-per-template-layout.md` records the finished per-template layout work, with a status note at the top naming what has been renamed since.
 * `test/` holds the test suite (`pnpm test`, Node's built-in `node:test`), with its own `README.md` describing each file and what the suite does and does not prove.
 * `.claude/skills/` holds repo-local skills: `ai-commit` (commit message drafting), `pr-auditor` (merge audit of a branch or pull request), `readme-maintainer` (folder README upkeep), `script-auditor` (helper script guidelines), and `skills-ref` (skill folder validation).
 * `.github/` holds the GitHub configuration: the workflows, `dependabot.yml`, `PULL_REQUEST_TEMPLATE.md`, and the Copilot instruction set.

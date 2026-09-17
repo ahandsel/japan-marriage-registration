@@ -354,6 +354,36 @@ describe('documentation pair', () => {
     assert.match(read('.claude/CLAUDE.md'), /AGENTS\.md/);
   });
 
+  test('no tracked guidance still claims there is no test suite', () => {
+    // docs/ holds finished tickets, which record the repository as it was and
+    // say so at the top, so they are the one place the old claim may remain.
+    const guidance = trackedFiles.filter(
+      (f) => f.endsWith('.md') && !f.startsWith('docs/'),
+    );
+    for (const file of guidance) {
+      assert.ok(
+        !/there is no test suite/i.test(read(file)),
+        `${file} still says there is no test suite`,
+      );
+    }
+  });
+
+  test('both READMEs describe the Dependabot schedule and ecosystems that dependabot.yml sets', () => {
+    const bot = YAML.parse(read('.github/dependabot.yml'));
+    const intervals = new Set(bot.updates.map((u) => u.schedule.interval));
+    assert.deepEqual([...intervals], ['weekly']);
+    for (const file of ['README.md', 'README.en.md']) {
+      const row = read(file)
+        .split('\n')
+        .find((line) => line.includes('`.github/dependabot.yml`'));
+      assert.ok(row, `${file} documents dependabot.yml`);
+      for (const eco of bot.updates.map((u) => u['package-ecosystem'])) {
+        assert.ok(row.includes(`\`${eco}\``), `${file}: ${eco} ecosystem`);
+      }
+      assert.ok(!/daily|毎日/.test(row), `${file}: not described as daily`);
+    }
+  });
+
   test('the field reference and both READMEs are free of curly quotes and dashes', () => {
     for (const file of [
       'README.md',
