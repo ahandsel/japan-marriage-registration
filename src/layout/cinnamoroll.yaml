@@ -9,8 +9,9 @@
 # 444.0 (wife); printed 年/月/日 for the birth date at x 305.3/354.9/378.8
 # (husband) with baseline 608.6.
 #
-# ⚠️ This 品川区 form differs from the generic red one in two places, so two
-# config keys have no printed slot and should stay '' here:
+# ⚠️ This 品川区 form differs from the generic red one in three places: two
+# config keys have no printed slot and should stay '' here, and the spouse
+# address rows take a different shape:
 #   * The recipient is pre-printed as 品川区長殿, so `notification.to` has no
 #     blank to land in (see the note on the entry below).
 #   * The 住所 box has no 世帯主の氏名 row (its rows are the address lines,
