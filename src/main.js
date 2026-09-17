@@ -108,7 +108,8 @@ options:
   -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF_PATTERN})
   --list-templates         list the bundled templates and exit
   --init-config             create the private config from the sample config.yaml
-                           (if it is missing) and exit, without generating a PDF.
+                           (if it is missing), or append the sections it lacks
+                           (if it exists), and exit without generating a PDF.
                            With -t, the target is config-private-<template>.yaml
   --init-layout            create src/layout/<template>.yaml from the default grid
                            (if it is missing) and exit, without generating a PDF`;
@@ -277,6 +278,53 @@ function addPrivateConfigHeader(configPath) {
   }
   fs.writeFileSync(configPath, PRIVATE_CONFIG_HEADER + current);
   return true;
+}
+
+function missingSampleSections(configPath) {
+  // Top-level sections the sample config.yaml has but this config does not.
+  // A private config is copied from the sample only once, on the first run, so
+  // one written before a section existed (the witness box, for example) never
+  // grows it on its own.
+  if (!fs.existsSync(configPath) || !fs.existsSync(PUBLIC_CONFIG_PATH)) {
+    return [];
+  }
+  const sample = YAML.parseDocument(
+    fs.readFileSync(PUBLIC_CONFIG_PATH, 'utf-8'),
+  );
+  const current = YAML.parseDocument(fs.readFileSync(configPath, 'utf-8'));
+  return (sample.contents?.items ?? [])
+    .map((item) => item.key.value)
+    .filter((name) => !current.has(name));
+}
+
+function appendMissingSections(configPath, names, { stripLegacyPos } = {}) {
+  // Append the named sections, comments and all, copied from the sample. The
+  // existing text is read and written back verbatim rather than re-serialized,
+  // so the user's own details, comments, and formatting come through untouched.
+  const wanted = new Set(names);
+  const block = YAML.parseDocument(
+    fs.readFileSync(PUBLIC_CONFIG_PATH, 'utf-8'),
+  );
+  block.commentBefore = null;
+  block.comment = null;
+  block.contents.items = block.contents.items.filter((item) =>
+    wanted.has(item.key.value),
+  );
+  if (stripLegacyPos) {
+    // The legacy *_pos keys hold red coordinates, so they would pin red
+    // positions over a per-template layout - same reason the variant scaffold
+    // drops them.
+    for (const keyPath of LEGACY_POS_KEY_PATHS) {
+      // Only the sections being appended are in the block, so most of these
+      // paths have no parent here - deleteIn throws on a missing one.
+      if (block.hasIn(keyPath)) {
+        block.deleteIn(keyPath);
+      }
+    }
+  }
+  const current = fs.readFileSync(configPath, 'utf-8').replace(/\s*$/, '');
+  const addition = block.toString({ lineWidth: 0 }).trim();
+  fs.writeFileSync(configPath, `${current}\n\n${addition}\n`);
 }
 
 function resolveTemplateName(templateArg, cfg) {
@@ -593,7 +641,20 @@ async function main() {
             `   (or its \`pnpm run ${variant}:pdf\` script, if one exists).`,
         );
       } else {
-        console.log(`⚠️  ${name} already exists - left it untouched.`);
+        // An existing per-template config is topped up the same way the shared
+        // one is below: it was seeded once and never refreshed since.
+        const missing = missingSampleSections(target);
+        if (missing.length) {
+          appendMissingSections(target, missing, { stripLegacyPos: true });
+          console.log(
+            `✅ ${name} already exists - kept its contents and appended the ` +
+              `sections it was missing: ${missing.join(', ')}.\n` +
+              '✏️  They hold the sample placeholder values, so edit them with ' +
+              'your own details.',
+          );
+        } else {
+          console.log(`⚠️  ${name} already exists - left it untouched.`);
+        }
       }
       return;
     }
@@ -602,27 +663,35 @@ async function main() {
     const existed = fs.existsSync(DEFAULT_CONFIG_PATH);
     const configPath = resolveConfigPath(undefined);
     if (!existed) {
-      console.log(`✅ Created ${configPath}.`);
+      console.log(`✅ Created ${path.relative(repoRoot, configPath)}.`);
       return;
     }
+    const name = path.relative(repoRoot, configPath);
     // The file predates this header (or was written by hand). Prepend it
     // without touching the rest, so an existing config keeps its details.
     if (addPrivateConfigHeader(configPath)) {
       console.log(
-        `⚠️  ${configPath} already exists - added the private-file header to it, but kept its contents.`,
+        `⚠️  ${name} already exists - added the private-file header to it, but kept its contents.`,
       );
     } else {
-      console.log(`⚠️  ${configPath} already exists - left it untouched.`);
+      console.log(`✅ ${name} already exists - kept its contents.`);
     }
-    console.log(
-      '⚠️  A fresh copy was NOT generated, so the file may be missing fields\n' +
-        'that were added to the sample config.yaml later (for example the\n' +
-        'witness1/witness2 sections).\n' +
-        '   To regenerate from the sample, first move the existing file away:\n' +
-        '       mv config-private.yaml config-private.yaml.bak\n' +
-        '   then run `pnpm run init-config` again and copy your details back.\n' +
-        '   Deleting it instead discards the personal details it contains.',
-    );
+    // The first-run copy happens once and never again, so a config written
+    // before a section was added to the sample stays without it. Append the
+    // missing sections here instead of making the user move the file away and
+    // retype every detail it already holds.
+    const missing = missingSampleSections(configPath);
+    if (missing.length) {
+      appendMissingSections(configPath, missing);
+      console.log(
+        `✅ Appended the sections it was missing: ${missing.join(', ')}.\n` +
+          '✏️  They hold the sample placeholder values, so edit them with your own details.',
+      );
+    } else {
+      console.log(
+        '✅ It already has every section the sample config.yaml has.',
+      );
+    }
     console.log(
       '✏️  Edit it with your own information, then run `pnpm run generate`.',
     );
@@ -635,6 +704,23 @@ async function main() {
   const layout = resolveLayout(templateName, cfg);
   console.log(`Config:   ${path.relative(repoRoot, configPath)}`);
   console.log(`Template: ${templatePath}`);
+  // A generate run never rewrites the config - it only points out sections the
+  // sample has and this one does not. Removing a section on purpose is a
+  // documented way to leave that part of the form blank, so this is a note and
+  // not a warning.
+  if (path.resolve(configPath) !== PUBLIC_CONFIG_PATH) {
+    const missing = missingSampleSections(configPath);
+    if (missing.length) {
+      const many = missing.length > 1;
+      console.log(
+        `ℹ️  This config has no ${missing.join(', ')} ` +
+          `${many ? 'sections' : 'section'}. ` +
+          `${many ? 'Those parts of the form stay' : 'That part of the form stays'} blank.\n` +
+          '   If that is not deliberate, run `pnpm run init-config` to append ' +
+          `${many ? 'them' : 'it'} from the sample.`,
+      );
+    }
+  }
   const { doc, page, ipaexm } = await setup(templatePath, FONT_PATH);
   const cc = makeCanvas(page, ipaexm);
   nameInfo(cfg.husband, layout.husband, cc);

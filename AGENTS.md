@@ -20,7 +20,9 @@ This project handles real personal information (PII: names, birthdates, addresse
   It is the default config for local runs and is **not committed** (it is gitignored and untracked).
   It is created automatically: on the first local run `main.js` copies the public sample `config.yaml` to `config-private.yaml` if it is missing, so a new user gets a ready-to-edit starting point with zero setup.
   The copy is written with `PRIVATE_CONFIG_HEADER` prepended - two comment lines (Japanese and English) marking the file as private and local-only.
-  `--init-config` also adds that header to an existing config that lacks it; a normal generate run never rewrites the file.
+  `--init-config` also tops up an existing config: it adds that header when the file lacks it, and appends every top-level section the sample has and the file does not, copied from `config.yaml` with its comments.
+  That copy-once scaffold is why a config written before a section existed (the witness box, for example) stays without it, and the top-up is append-only, so the details already in the file are never rewritten or reformatted.
+  A normal generate run still never rewrites the file; it only prints an ℹ️ note naming the sections the config does not have, because deleting a section is also the documented way to leave that part of the form blank.
   Never commit it, and never put real PII anywhere tracked.
 * **Every tracked config must contain placeholders only** - no real PII.
   This covers `config.yaml` and the per-template samples `config-black.yaml` and `config-cinnamoroll.yaml`.

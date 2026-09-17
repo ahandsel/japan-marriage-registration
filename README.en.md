@@ -179,17 +179,17 @@ The tests confirm that every value lands where its layout entry says, not that t
 
 After the [Initial setup](#initial-setup), every command is a pnpm script:
 
-| Script                     | What it does                                                                                         |
-| -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.      |
-| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result.  |
-| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                            |
-| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, then exit without generating a PDF.                   |
-| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.    |
-| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                   |
-| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                          |
-| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                             |
-| `pnpm test`                | Run the test suite. The text placement checks need `pdftotext` (poppler) and are skipped without it. |
+| Script                     | What it does                                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.                    |
+| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result.                |
+| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                                          |
+| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, or append any section it lacks, then exit without generating a PDF. |
+| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.                  |
+| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                                 |
+| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                                        |
+| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                                           |
+| `pnpm test`                | Run the test suite. The text placement checks need `pdftotext` (poppler) and are skipped without it.               |
 
 `pnpm run` may be shortened to `pnpm` for any of these, as in `pnpm start` or `pnpm generate`.
 
@@ -200,15 +200,15 @@ The generator documents itself: run it with `-h` or `--help` to print the usage 
 pnpm run generate --help # or: pnpm start --help
 ```
 
-| Option                    | What it does                                                                                                                                           |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `-h`, `--help`            | Print the usage message with every option, then exit.                                                                                                  |
-| `-t`, `--template <name>` | Fill in a different form: `red` (the default), `black`, `cinnamoroll`, the full template file stem, or a path to any PDF. See [Templates](#templates). |
-| `-o`, `--output <path>`   | Where to write the PDF. Defaults to `result-<template>-<HH-MM-SS>.pdf` in the current directory.                                                       |
-| `--list-templates`        | Print the bundled templates and their file paths, then exit.                                                                                           |
-| `--init-config`           | Create the private config if it is missing, then exit without generating a PDF. With `-t`, the target is `config-private-<template>.yaml`.             |
-| `--init-layout`           | Create `src/layout/<template>.yaml` from the default grid if it is missing, then exit. If the file already exists, it is validated, not overwritten.   |
-| `[config]`                | Positional argument: the YAML config to read. Defaults to `config-private-<template>.yaml` when that file exists, and `config-private.yaml` otherwise. |
+| Option                    | What it does                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `-h`, `--help`            | Print the usage message with every option, then exit.                                                                                                                      |
+| `-t`, `--template <name>` | Fill in a different form: `red` (the default), `black`, `cinnamoroll`, the full template file stem, or a path to any PDF. See [Templates](#templates).                     |
+| `-o`, `--output <path>`   | Where to write the PDF. Defaults to `result-<template>-<HH-MM-SS>.pdf` in the current directory.                                                                           |
+| `--list-templates`        | Print the bundled templates and their file paths, then exit.                                                                                                               |
+| `--init-config`           | Create the private config if it is missing, or append any section it lacks, then exit without generating a PDF. With `-t`, the target is `config-private-<template>.yaml`. |
+| `--init-layout`           | Create `src/layout/<template>.yaml` from the default grid if it is missing, then exit. If the file already exists, it is validated, not overwritten.                       |
+| `[config]`                | Positional argument: the YAML config to read. Defaults to `config-private-<template>.yaml` when that file exists, and `config-private.yaml` otherwise.                     |
 
 ```bash
 pnpm run generate --list-templates           # which forms are bundled
@@ -437,11 +437,26 @@ pnpm run index           # list every pnpm script, including the per-template on
 pnpm run clean           # list scratch files (temp*, import.csv, import.md, .DS_Store, .pnpm-store) and delete them after confirming
 ```
 
-`pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run. It only adds the header comments that mark the file as private and local-only, if they are missing:
+`pnpm run init-config` never overwrites an existing `config-private.yaml`, so it is safe to re-run.
+On an existing file it only adds what is missing, and leaves everything you have already typed untouched.
+
+First, the header comments that mark the file as private and local-only, if they are missing:
 
 ```yaml
 # ローカル実行時のみ使用される非公開の設定ファイルです。
 # Private configuration file that is only used for local execution.
+```
+
+Second, any whole section that the sample `config.yaml` has and your file does not.
+Your `config-private.yaml` is copied from the sample only once, on the very first run, so a file created before a section was added to the project never grows it on its own - the witness box (`witness1` and `witness2`) is the common case.
+The missing sections are appended at the end of the file with their sample placeholder values and their comments, so edit them with your own details afterwards.
+
+A normal `pnpm start` run never changes the file.
+It only prints a note when a section is absent, because deleting a section is also how you leave that part of the form blank for handwriting:
+
+```text
+ℹ️  This config has no witness1, witness2 sections. Those parts of the form stay blank.
+   If that is not deliberate, run `pnpm run init-config` to append them from the sample.
 ```
 
 
