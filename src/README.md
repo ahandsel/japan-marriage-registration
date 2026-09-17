@@ -102,8 +102,8 @@ All three forms are a single A3 landscape page, 1190 x 842 points.
 
 ## Notes
 
-* There is no test suite.
-  To check a change, regenerate the PDF and look at it, writing throwaway output somewhere outside the repository with `-o`.
+* The test suite in `../test/` (`pnpm test`) checks that every value renders at the position its layout entry names.
+  It cannot tell whether that position matches the printed form, so to check a coordinate change, regenerate the PDF and look at it, writing throwaway output somewhere outside the repository with `-o`.
 
 See [AGENTS.md][] for the full architecture guidance, and [README.md][] for how to run the generator.
 

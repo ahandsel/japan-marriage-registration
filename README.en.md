@@ -162,7 +162,12 @@ Runtime dependencies (see `package.json`):
 * `@pdf-lib/fontkit` - embeds the bundled Japanese font (IPAex Mincho)
 * `yaml` - reads the config files (`config-private.yaml` / `config.yaml`)
 
-Development dependencies cover formatting only (`prettier` and `markdownlint-cli2`, plus their plugins). Run `pnpm lint` to apply the autofixes before committing. There is no test suite, so verify a change by regenerating the PDF and checking it visually.
+Development dependencies cover formatting only (`prettier` and `markdownlint-cli2`, plus their plugins).
+Run `pnpm lint` to apply the autofixes before committing.
+`pnpm test` runs the test suite with the test runner built into Node.js, so it needs no extra package.
+Install `poppler-utils` (`brew install poppler` on macOS) to also run the text placement checks, which read the generated PDF back with `pdftotext`.
+Without it those checks are skipped.
+The tests confirm that every value lands where its layout entry says, not that the layout matches the printed form, so still verify a coordinate change by regenerating the PDF and checking it visually.
 
 [Corepack]: https://nodejs.org/api/corepack.html
 [Homebrew]: https://brew.sh/
@@ -174,16 +179,17 @@ Development dependencies cover formatting only (`prettier` and `markdownlint-cli
 
 After the [Initial setup](#initial-setup), every command is a pnpm script:
 
-| Script                     | What it does                                                                                        |
-| -------------------------- | --------------------------------------------------------------------------------------------------- |
-| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.     |
-| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result. |
-| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                           |
-| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, then exit without generating a PDF.                  |
-| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.   |
-| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                  |
-| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                         |
-| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                            |
+| Script                     | What it does                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------------------------- |
+| `pnpm start`               | The everyday command: install the dependencies, generate the PDF, and open it. Runs `start.sh`.      |
+| `pnpm run generate`        | Generate the PDF from `config-private.yaml`, without installing dependencies or opening the result.  |
+| `pnpm run generate-sample` | Generate the PDF from the committed sample `config.yaml`.                                            |
+| `pnpm run init-config`     | Create `config-private.yaml` if it is missing, then exit without generating a PDF.                   |
+| `pnpm run <template>:pdf`  | Generate one specific form. See [Templates](#templates) for the full set of per-template scripts.    |
+| `pnpm run index`           | List every pnpm script in `package.json` with the command it runs.                                   |
+| `pnpm run clean`           | List the scratch files in the repository and delete them after you confirm.                          |
+| `pnpm lint`                | Apply the Prettier and markdownlint autofixes. Run it before committing.                             |
+| `pnpm test`                | Run the test suite. The text placement checks need `pdftotext` (poppler) and are skipped without it. |
 
 `pnpm run` may be shortened to `pnpm` for any of these, as in `pnpm start` or `pnpm generate`.
 

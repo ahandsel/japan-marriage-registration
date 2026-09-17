@@ -37,8 +37,8 @@ All input comes from a single YAML config, and the only output is a PDF.
   `src/layout.js` loads that file, deep-merges a `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red`; other templates ignore them with a warning), validates the result, and returns the resolved layout.
 * **Templates.** `src/template/jp-marriage-registration-<variant>.pdf`, with the bundled variants `red` (the default), `black`, and `cinnamoroll`.
   Each bundled template has a fully tuned layout file, and each form has its own quirks, which the header comment of its layout file records.
-* **There is no test suite and no build step.**
-  A green check never proves a coordinate is right.
+* **There is no build step, and `pnpm test` runs the test suite in `test/`.**
+  The tests prove that each value lands where its layout entry says, not that the entry matches the printed form, so a green check never proves a coordinate is right.
   The only way to verify a positioning change is to regenerate the PDF and look at it.
 * **Package manager.** pnpm, always.
   Never `npm`, `npx`, or `yarn`.
@@ -162,7 +162,7 @@ Do not comment on:
 * Requests for comments on self-explanatory code.
 * Refactoring ideas without a concrete correctness or maintainability problem.
 * Missing dependencies that a clean `pnpm install` or the workflow setup will detect.
-* A missing test, because this repository has no test suite.
+* A missing test for a coordinate change, because a coordinate is verified by inspecting the regenerated PDF, not by a test.
 * Several unrelated issues in one comment.
 
 

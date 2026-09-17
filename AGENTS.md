@@ -50,6 +50,7 @@ Beyond `src/`, these files exist and are easy to miss:
 * `src/template/marriage-registration-fields.md` is the term-by-term field reference: every Japanese label on the form, a plain-language English rendering, what the box means, and the config keys that fill it.
   Read it before guessing what a field is for.
 * `docs/` holds working tickets, currently `docs/ticket-per-template-layout.md` (the per-template layout work).
+* `test/` holds the test suite (`pnpm test`, Node's built-in `node:test`), with its own `README.md` describing each file and what the suite does and does not prove.
 * `.claude/skills/` holds repo-local skills: `ai-commit` (commit message drafting), `pr-auditor` (merge audit of a branch or pull request), `readme-maintainer` (folder README upkeep), `script-auditor` (helper script guidelines), and `skills-ref` (skill folder validation).
 * `.github/` holds the GitHub configuration: the workflows, `dependabot.yml`, `PULL_REQUEST_TEMPLATE.md`, and the Copilot instruction set.
   `.github/copilot-instructions.md` restates this document for Copilot, which does not read `AGENTS.md`, and `.github/instructions/*.instructions.md` adds path-scoped rules for the configs, the layout files, the helper scripts, and the workflows.
@@ -78,6 +79,7 @@ pnpm run < variant > :pdf          # generate result-<variant>-<HH-MM-SS>.pdf fr
 pnpm lint                          # prettier --write + markdownlint-cli2 --fix (autofixing)
 pnpm run lint-code                 # prettier only
 pnpm run lint-md                   # markdownlint-cli2 only
+pnpm test                          # run the test suite (node --test); pdftotext (poppler) enables the text placement checks
 pnpm index                         # list every pnpm script with its command
 pnpm clean                         # delete scratch files: temp*, import.csv, import.md, .DS_Store, .pnpm-store (asks first; -n lists only)
 ```
@@ -90,8 +92,11 @@ A run with no explicit config path uses `config-private-<variant>.yaml` when `-t
 Only the `-t` flag reaches that lookup: it runs before the config is parsed, so a `template:` key inside the shared config never switches to a per-template config.
 `--init-layout` validates only the layout YAML file itself; a broken `layout:` override block in a private config is caught by a generate run, not by `:layout`.
 
-There is **no test suite** and no build step.
-To verify a change, regenerate the PDF and inspect it visually - coordinates cannot be checked any other way.
+There is no build step.
+The test suite in `test/` runs with `pnpm test` and covers the CLI, the layout loader, repository hygiene, and, when `pdftotext` is installed, that every drawn value lands at the position its layout entry names on all three templates.
+That proves the text landed where the layout file says, not that the layout file matches the printed form.
+To verify a coordinate change, regenerate the PDF and inspect it visually - the tests cannot do that part.
+Run `pnpm test` after a change to `main.js` or `layout.js`, and extend the suite when a rule about the tracked files changes.
 Write throwaway output to the scratchpad with `-o`, not into the repo root: the timestamped default name never overwrites anything, but the files pile up.
 
 To _derive_ a coordinate rather than eyeball it, note that some templates carry a real text layer: `pdftotext -bbox-layout <template>.pdf out.xhtml` then lists every printed label (年, 月, 日, 番地, 番, 号, the □ boxes) with exact coordinates, so a field can be placed against the label it belongs next to.

@@ -174,7 +174,11 @@ pnpm run generate
 
 開発時の依存パッケージはフォーマッター（`prettier` と `markdownlint-cli2` とそのプラグイン）だけです。
 commitする前に `pnpm lint` を実行して自動修正を適用してください。
-テストスイートはないため、変更の確認はPDFを再生成して目視で行います。
+`pnpm test` はNode.js標準のテストランナーでテストスイートを実行するため、追加のパッケージは不要です。
+`poppler-utils`（macOSでは `brew install poppler`）をインストールすると、生成したPDFを `pdftotext` で読み戻して文字の位置を確認するテストも実行されます。
+無い場合、その確認はスキップされます。
+テストは各項目がレイアウトファイルの指定位置に描かれたことを確認するもので、レイアウトが印刷様式と合っているかは確認できません。
+座標の変更はこれまでどおりPDFを再生成して目視で確認してください。
 
 [Corepack]: https://nodejs.org/api/corepack.html
 [Homebrew]: https://brew.sh/
@@ -186,16 +190,17 @@ commitする前に `pnpm lint` を実行して自動修正を適用してくだ�
 
 [初期セットアップ](#初期セットアップ)のあとは、すべての操作がpnpmスクリプトです。
 
-| スクリプト                 | 内容                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------- |
-| `pnpm start`               | ふだん使うコマンド。依存関係をインストールし、PDFを生成して開きます。`start.sh` を実行します。  |
-| `pnpm run generate`        | `config-private.yaml` からPDFを生成します。依存関係のインストールとPDFを開く操作は行いません。  |
-| `pnpm run generate-sample` | commit済みのサンプル `config.yaml` からPDFを生成します。                                        |
-| `pnpm run init-config`     | `config-private.yaml` が無ければ作成し、PDFを生成せずに終了します。                             |
-| `pnpm run <様式>:pdf`      | 特定の様式で生成します。様式ごとのスクリプトは[テンプレート](#テンプレート)を参照してください。 |
-| `pnpm run index`           | `package.json` のすべてのpnpmスクリプトを、実行するコマンドとあわせて一覧表示します。           |
-| `pnpm run clean`           | リポジトリ内の一時ファイルを一覧表示し、確認のうえ削除します。                                  |
-| `pnpm lint`                | Prettierとmarkdownlintの自動修正を適用します。commitする前に実行してください。                  |
+| スクリプト                 | 内容                                                                                                        |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `pnpm start`               | ふだん使うコマンド。依存関係をインストールし、PDFを生成して開きます。`start.sh` を実行します。              |
+| `pnpm run generate`        | `config-private.yaml` からPDFを生成します。依存関係のインストールとPDFを開く操作は行いません。              |
+| `pnpm run generate-sample` | commit済みのサンプル `config.yaml` からPDFを生成します。                                                    |
+| `pnpm run init-config`     | `config-private.yaml` が無ければ作成し、PDFを生成せずに終了します。                                         |
+| `pnpm run <様式>:pdf`      | 特定の様式で生成します。様式ごとのスクリプトは[テンプレート](#テンプレート)を参照してください。             |
+| `pnpm run index`           | `package.json` のすべてのpnpmスクリプトを、実行するコマンドとあわせて一覧表示します。                       |
+| `pnpm run clean`           | リポジトリ内の一時ファイルを一覧表示し、確認のうえ削除します。                                              |
+| `pnpm lint`                | Prettierとmarkdownlintの自動修正を適用します。commitする前に実行してください。                              |
+| `pnpm test`                | テストスイートを実行します。文字位置の確認には `pdftotext`（poppler）が必要で、無い場合はスキップされます。 |
 
 どのスクリプトも `pnpm run` を `pnpm` に短縮できます（例: `pnpm start`、`pnpm generate`）。
 

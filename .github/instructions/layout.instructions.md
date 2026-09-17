@@ -19,7 +19,7 @@ Coordinates are PDF points measured from the bottom-left corner of the page.
 * **No entry is shared between templates.**
   Each of the three layout files was measured against its own printed grid, so a value copied verbatim from another template is a defect even when it renders plausibly.
 * **A coordinate change is only verified by looking at the PDF.**
-  There is no test suite, and the CI check proves only that the file builds.
+  The test suite checks that the file validates and that each value renders at the position it names, and the CI check proves only that the file builds; neither proves that a position matches the printed form.
   A pull request that changes a coordinate without saying which template was regenerated and inspected has not been verified.
   To derive a coordinate rather than eyeball it, `pdftotext -bbox-layout <template>.pdf out.xhtml` lists the printed labels with exact coordinates on a template that has a text layer, such as `black`; `red` is a flattened image and has none.
   `pdftotext` measures `y` from the top of the page, so `y_layout = page_height - y_pdftotext`.
