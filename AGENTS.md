@@ -128,7 +128,8 @@ Remember that `pdftotext` measures y from the _top_ of the page, while the layou
   Adding it to only one layout file breaks the other two templates at generate time, not at review time.
 * All three bundled layouts (`red.yaml`, `black.yaml`, `cinnamoroll.yaml`) are fully tuned: every entry was placed against its own template's printed grid, and no entry is shared verbatim with another template's file.
 * The cinnamoroll form is a 品川区 layout with two fields the other forms have but it does not: the recipient 品川区長殿 is pre-printed and so `notification.to` should stay `''`, and its 住所 box has no 世帯主の氏名 row and so `household_person` should stay `''` too.
-  The header comment in `cinnamoroll.yaml` records both quirks.
+  Its spouse 住所 and 本籍 rows also pre-print 丁目 right after the chome number, so `address_second` and `legally_domiciled_second` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows are written above their printed 丁目 and keep the usual `２丁目　８` shape.
+  The header comment in `cinnamoroll.yaml` records all three quirks.
 * The black form is a denser grid than the red one, so `black.yaml` uses smaller sizes (names at 18pt rather than 24, kana at 9pt rather than 12) and it prints boxes the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the bottom 事件簿番号 block all stay blank for handwriting.
   Its witness 住所 row prints no 番地/番/号, so a witness's `is_banchi_address` should be `null` on this template.
   The header comment in `black.yaml` records the measured grid and every one of these quirks.

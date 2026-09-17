@@ -17,6 +17,13 @@
 #     丁目/□番地/□番/号, and 方書), so `household_person` has nowhere to go;
 #     its position below only parks a value on the empty right part of the
 #     方書 line.
+#   * The husband and wife 住所 and 本籍 rows pre-print 丁目 (x 257 and x 444)
+#     right after the 12pt slot for the chome number, so `address_second` and
+#     `legally_domiciled_second` must leave 丁目 out and hold two full-width
+#     spaces in its place (`３　　４`, not `３丁目　４`), or the value's own
+#     丁目 lands on top of the printed one and prints as a smudged double.
+#     The witness rows are written on the ☐番地 line above their printed 丁目,
+#     so a witness value keeps its own 丁目 as on the other templates.
 
 husband:
   last_name: { pos: [235, 623], size: 24 }
@@ -27,6 +34,9 @@ husband:
   birth_month: { pos: [316, 608.6], size: 12 }
   birth_day: { pos: [350, 608.6], size: 12 }
   address_first: { pos: [257, 556], size: 12 }
+  # Starts one 12pt glyph before the printed 丁目 (x 257), so the value holds
+  # the chome number, two full-width spaces for the printed label, then the
+  # block number: `３　　４`. See the header note.
   address_second: { pos: [245, 535], size: 12 }
   address_go: { pos: [357, 535], size: 12 }
   # No 世帯主の氏名 row on this form - see the header note. Keep '' in the
@@ -36,6 +46,7 @@ husband:
   address_banchi_ellipse: [350, 558.5, 313, 546.5]
   address_go_circle: [320, 539, 6]
   legally_domiciled_first: { pos: [245, 482], size: 12 }
+  # Same printed 丁目 as the 住所 row, so the same `３　　４` shape.
   legally_domiciled_second: { pos: [245, 461], size: 12 }
   head_of_person_of_legally_domiciled: { pos: [255, 438], size: 12 }
   legally_domiciled_banchi_ellipse: [350, 480, 313, 468.5]
@@ -72,6 +83,7 @@ wife:
   birth_month: { pos: [503, 608.6], size: 12 }
   birth_day: { pos: [537, 608.6], size: 12 }
   address_first: { pos: [444, 556], size: 12 }
+  # Printed 丁目 at x 444; the value leaves it out, as in the husband column.
   address_second: { pos: [432, 535], size: 12 }
   address_go: { pos: [544, 535], size: 12 }
   household_person: { pos: [487, 512], size: 12 }
@@ -79,6 +91,7 @@ wife:
   address_banchi_ellipse: [537, 558.5, 500, 546.5]
   address_go_circle: [507, 539, 6]
   legally_domiciled_first: { pos: [432, 482], size: 12 }
+  # Same printed 丁目 as the 住所 row, so the same `３　　４` shape.
   legally_domiciled_second: { pos: [432, 461], size: 12 }
   head_of_person_of_legally_domiciled: { pos: [442, 438], size: 12 }
   legally_domiciled_banchi_ellipse: [537, 480, 500, 468.5]

@@ -377,11 +377,16 @@ Each template also has its own pnpm scripts. The first column is the one you use
 
 > ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing), rewrites the `template:` key, and drops any legacy `*_pos` keys the copied file has (they are red-template coordinates), so every position comes from that template's layout file.
 
-The `*_pos` values in `config.yaml` are red-template coordinates, so on any other template the generator ignores them with a warning. `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
+The `*_pos` values in `config.yaml` are red-template coordinates, so on any other template the generator ignores them with a warning.
+`black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
 
 The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `notification.to` and `household_person` as empty strings `''` on that template.
+Its 住所 and 本籍 rows for the husband and wife also pre-print 丁目 right after the chome number, so write `address_second` and `legally_domiciled_second` without 丁目 and with two full-width spaces in its place, `３　　４` rather than `３丁目　４`, or the value prints on top of the label.
+The witness rows do not have that label in the way, so a witness value keeps the usual `２丁目　８` shape.
 
-The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom. Those stay blank for handwriting. Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
+The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom.
+Those stay blank for handwriting.
+Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
 
 
 ### Layout

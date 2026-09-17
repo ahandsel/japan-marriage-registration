@@ -134,9 +134,9 @@ describe('tracked configs', () => {
         [],
         'no legacy *_pos keys',
       );
-      // The witness sections are optional; everything else must be present.
-      const required = sampleKeys.filter((k) => !k.startsWith('witness'));
-      const missing = required.filter((k) => !keys.includes(k));
+      // A per-template sample demonstrates every section, the witness box
+      // included, so its layout is exercised by a tracked config.
+      const missing = sampleKeys.filter((k) => !keys.includes(k));
       assert.deepEqual(missing, [], 'keys from config.yaml missing');
       const extra = keys.filter(
         (k) => k !== 'template' && !sampleKeys.includes(k),
@@ -161,6 +161,31 @@ describe('tracked configs', () => {
     assert.equal(cfg.notification.to, '');
     assert.equal(cfg.husband.household_person, '');
     assert.equal(cfg.wife.household_person, '');
+  });
+
+  test('the cinnamoroll sample leaves 丁目 out of the spouse address rows, where the form prints it', () => {
+    // The husband and wife 住所/本籍 rows pre-print 丁目; a value that carries
+    // its own 丁目 prints on top of it. The witness rows do not, so those keep
+    // the usual "２丁目　８" shape (see the layout header).
+    const cfg = readRepoYaml('config-cinnamoroll.yaml');
+    for (const who of ['husband', 'wife']) {
+      for (const key of ['address_second', 'legally_domiciled_second']) {
+        const value = String(cfg[who][key]);
+        assert.ok(!value.includes('丁目'), `${who}.${key} = ${value}`);
+        assert.match(
+          value,
+          /　　/,
+          `${who}.${key} leaves room for the printed 丁目`,
+        );
+      }
+    }
+    for (const who of ['witness1', 'witness2']) {
+      assert.match(
+        String(cfg[who].address_second),
+        /丁目/,
+        `${who}.address_second`,
+      );
+    }
   });
 
   test('the black sample skips the witness 番地/番 mark its form does not print', () => {
