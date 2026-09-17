@@ -197,11 +197,12 @@ Keep scripts in `package.json` sorted alphabetically.
 
 ## CI (`.github/workflows/`)
 
-* `pr.yml` - on PRs to `main`: build the PDF from `config.yaml`, upload as an artifact.
+* `pr.yml` - on PRs to `main`: run `pnpm test`, build the PDF from `config.yaml`, upload as an artifact.
 * `push.yml` - on push to `main`: build the PDF and publish it as a **public** timestamped GitHub Release (`marriage_registration.pdf`).
 * `pr-lint-autofix.yml` - runs `pnpm lint` on PRs and commits the fixes back.
 
 `pr.yml` and `push.yml` run `node src/main.js config.yaml -o result.pdf` on Node 24 with pnpm, and `pr-lint-autofix.yml` runs `pnpm lint` only.
+`pr.yml` also installs `poppler-utils` and runs `pnpm test` before the build, so the text placement checks run in CI.
 Every workflow pins each action to a full commit SHA with a trailing comment naming the version, and declares an explicit `permissions` block.
 `push.yml` creates the release with `gh release create`.
 

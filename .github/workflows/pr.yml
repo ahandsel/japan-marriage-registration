@@ -35,6 +35,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install poppler-utils
+        # pdftotext lets the render tests read the overlay text back and check
+        # where every value landed. Without it those tests are skipped.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Run the tests
+        run: pnpm test
+
       - name: Create marriage registration
         # Always build from config.yaml, which holds placeholders only.
         # The artifact is downloadable by anyone who can see the pull request,

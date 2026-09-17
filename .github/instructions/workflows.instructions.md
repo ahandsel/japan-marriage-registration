@@ -5,7 +5,7 @@ applyTo: '.github/workflows/**,.github/dependabot.yml'
 # GitHub Actions workflows
 
 Three workflows run here, and the "CI" section of `AGENTS.md` describes them.
-`pr.yml` builds the PDF on a pull request and uploads it as an artifact, `push.yml` publishes it as a public release on a push to `main`, and `pr-lint-autofix.yml` runs `pnpm lint` and commits the fixes back.
+`pr.yml` runs the test suite and builds the PDF on a pull request and uploads it as an artifact, `push.yml` publishes it as a public release on a push to `main`, and `pr-lint-autofix.yml` runs `pnpm lint` and commits the fixes back.
 
 * **A workflow always builds `config.yaml`**, which holds placeholders only.
   Pointing a workflow at `config-private.yaml` or any other private config would publish real personal information, and `push.yml` publishes to a **public** release.
