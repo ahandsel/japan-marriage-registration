@@ -398,7 +398,7 @@ The first column is the one you use day to day.
 * **`<template>:pdf`** - generates the timestamped `result-<template>-<HH-MM-SS>.pdf` from that form, so a run never overwrites an earlier output.
   It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
 * **`<template>:config`** - creates `config-private-<template>.yaml`.
-  If the file already exists, it keeps every detail in it and only adds what is missing: the private-file header, and any whole section the sample `config.yaml` has and the file does not.
+  If the file already exists, it keeps what you typed and adds only what is missing: the private-file header, a `template:` key when the file has none, and the sections the sample `config.yaml` has and the file does not.
   You only need it to keep different details per template; one shared `config-private.yaml` works without it.
 * **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing.
   All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.

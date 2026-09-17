@@ -275,6 +275,33 @@ function hasPrivateConfigHeader(text) {
     .every((line) => text.includes(line));
 }
 
+function pinTemplateKey(configPath, variant) {
+  // A per-template config is named after its form, so it should also say so
+  // in its `template:` key: without one, the file falls back to the red
+  // template when it is later passed by path instead of through -t. Returns
+  // 'added' when the key was inserted, 'kept' when it already names this
+  // variant, and the existing value when it names another one. The key is
+  // inserted as text after the leading comment block, so the rest of the file
+  // is never re-serialized.
+  const text = fs.readFileSync(configPath, 'utf-8');
+  const doc = YAML.parseDocument(text);
+  if (doc.has('template')) {
+    const current = doc.get('template');
+    return current === variant ? 'kept' : String(current);
+  }
+  const lines = text.split('\n');
+  let insertAt = 0;
+  while (
+    insertAt < lines.length &&
+    (lines[insertAt].trim() === '' || lines[insertAt].startsWith('#'))
+  ) {
+    insertAt++;
+  }
+  lines.splice(insertAt, 0, `template: ${variant}`, '');
+  fs.writeFileSync(configPath, lines.join('\n'));
+  return 'added';
+}
+
 function addPrivateConfigHeader(configPath) {
   // Returns true if the header was added, false if it was already there.
   const current = fs.readFileSync(configPath, 'utf-8');
@@ -717,6 +744,10 @@ async function main() {
     // With -t, scaffold the per-template config instead of the shared one, so
     // each template can carry its own details and its own `template:` key.
     if (args.template) {
+      // Resolve the template before writing anything, so a typo such as
+      // `-t blakc` is refused here rather than creating a config-private-
+      // blakc.yaml that no generate run can use.
+      resolveTemplatePath(args.template);
       const {
         path: target,
         created,
@@ -734,22 +765,34 @@ async function main() {
       } else {
         // An existing per-template config is topped up the same way the shared
         // one is below: it was seeded once and never refreshed since.
+        const variant = layoutNameForTemplate(args.template);
         const headerAdded = addPrivateConfigHeader(target);
+        const templateKey = pinTemplateKey(target, variant);
         const missing = missingSampleSections(target);
         if (missing.length) {
           appendMissingSections(target, missing, { stripLegacyPos: true });
         }
-        if (headerAdded || missing.length) {
+        if (templateKey !== 'kept' && templateKey !== 'added') {
+          console.log(
+            `⚠️  ${name} says \`template: ${templateKey}\` although it is named after ${variant}.\n` +
+              `   Left as is; \`pnpm run generate -t ${variant}\` overrides it, but a run that passes\n` +
+              `   the file by path renders on ${templateKey}. Fix the key by hand if that is wrong.`,
+          );
+        }
+        if (headerAdded || templateKey === 'added' || missing.length) {
           const added = [
             headerAdded ? 'the private-file header' : null,
+            templateKey === 'added' ? `the \`template: ${variant}\` key` : null,
             missing.length
               ? `the sections it was missing: ${missing.join(', ')}`
               : null,
-          ]
-            .filter(Boolean)
-            .join(' and ');
+          ].filter(Boolean);
+          const list =
+            added.length > 2
+              ? `${added.slice(0, -1).join(', ')}, and ${added.at(-1)}`
+              : added.join(' and ');
           console.log(
-            `✅ ${name} already exists - kept its contents and added ${added}.\n` +
+            `✅ ${name} already exists - kept its contents and added ${list}.\n` +
               '✏️  An appended section holds the sample placeholder values, so ' +
               'edit it with your own details.',
           );

@@ -838,18 +838,21 @@ describe('scaffolding in a sandbox copy', () => {
       root: sandbox,
     });
     assert.equal(code, 0);
-    // The file was written without the header, so both the header and the
-    // sections are added, and the message says so.
+    // The file was written without the header or a template: key, so the
+    // header, the key, and the sections are all added, and the message says so.
     assert.match(
       stdout,
-      /config-private-black\.yaml already exists - kept its contents and added the private-file header and the sections it was missing: witness1, witness2\./,
+      /config-private-black\.yaml already exists - kept its contents and added the private-file header, the `template: black` key, and the sections it was missing: witness1, witness2\./,
     );
     const text = fs.readFileSync(target, 'utf-8');
     assert.ok(
-      text.startsWith(`${HEADER_LINES.join('\n')}\n\n${stale.trimEnd()}`),
-      'the header is prepended and the existing text is kept byte for byte',
+      text.startsWith(
+        `${HEADER_LINES.join('\n')}\n\ntemplate: black\n\n${stale.trimEnd()}`,
+      ),
+      'the header and the template: key are prepended and the existing text is kept byte for byte',
     );
     const cfg = YAML.parse(text);
+    assert.equal(cfg.template, 'black');
     assert.deepEqual(cfg.witness1, readRepoYaml('config.yaml').witness1);
     // Re-running finds nothing to add.
     const second = await runMain(['--init-config', '-t', 'black'], {
@@ -1055,6 +1058,44 @@ describe('scaffolding in a sandbox copy', () => {
       root: sandbox,
     });
     assert.match(again.stdout, /already exists and is valid/);
+  });
+
+  test('--init-config -t refuses a template that does not exist, and creates nothing', async (t) => {
+    const sandbox = makeSandbox(t);
+    const { code, stderr } = await runMain(['--init-config', '-t', 'blakc'], {
+      root: sandbox,
+    });
+    assert.equal(code, 1);
+    assert.match(stderr, /Unknown template: blakc/);
+    assert.ok(!fs.existsSync(path.join(sandbox, 'config-private-blakc.yaml')));
+  });
+
+  test('--init-config -t warns about a template: key that names another form, and keeps it', async (t) => {
+    const sandbox = makeSandbox(t);
+    const target = writeConfig(
+      sandbox,
+      'config-private-cinnamoroll.yaml',
+      'config-black.yaml',
+    );
+    const body = fs.readFileSync(target, 'utf-8');
+    const { code, stdout } = await runMain(
+      ['--init-config', '-t', 'cinnamoroll'],
+      { root: sandbox },
+    );
+    assert.equal(code, 0);
+    assert.match(
+      stdout,
+      /⚠️ {2}config-private-cinnamoroll\.yaml says `template: black` although it is named after cinnamoroll\./,
+    );
+    assert.equal(
+      YAML.parse(fs.readFileSync(target, 'utf-8')).template,
+      'black',
+    );
+    assert.equal(
+      fs.readFileSync(target, 'utf-8'),
+      `${HEADER_LINES.join('\n')}\n\n${body}`,
+      'only the header is added; the key is never rewritten',
+    );
   });
 
   test('--init-layout refuses a template that does not exist', async (t) => {
