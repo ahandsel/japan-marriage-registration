@@ -113,7 +113,12 @@ export function hasPdftotext() {
     try {
       execFileSync('pdftotext', ['-v'], { stdio: 'ignore' });
       pdftotextAvailable = true;
-    } catch {
+    } catch (err) {
+      // Only "not installed" means skip. A pdftotext that is present but
+      // broken is a real failure and must not be hidden behind a skip.
+      if (err.code !== 'ENOENT') {
+        throw err;
+      }
       pdftotextAvailable = false;
     }
   }

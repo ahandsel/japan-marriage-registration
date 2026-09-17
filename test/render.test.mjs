@@ -11,6 +11,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 import { after, before, describe, test } from 'node:test';
 import { PDFDict, PDFDocument, PDFName } from 'pdf-lib';
 import { resolveLayout, TEMPLATE_PREFIX } from '../src/layout.js';
@@ -29,6 +30,16 @@ import {
   writeConfig,
 } from './helpers.mjs';
 
+// Locally the placement checks are optional. In CI they are the point of
+// installing poppler, and node:test does not count a skipped describe block
+// in its summary, so a missing pdftotext there has to fail loudly rather than
+// drop ten tests behind a green check.
+if (!hasPdftotext() && process.env.CI) {
+  throw new Error(
+    '❌ pdftotext (poppler) is not installed, but CI requires the text placement checks. ' +
+      'Install poppler-utils before running pnpm test.',
+  );
+}
 const skipPlacement = hasPdftotext()
   ? false
   : 'pdftotext (poppler) is not installed, so the placement checks are skipped';

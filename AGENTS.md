@@ -97,6 +97,7 @@ Only the `-t` flag reaches that lookup: it runs before the config is parsed, so 
 
 There is no build step.
 The test suite in `test/` runs with `pnpm test` and covers the CLI, the layout loader, repository hygiene, and, when `pdftotext` is installed, that every drawn value lands at the position its layout entry names on all three templates.
+Locally a missing `pdftotext` skips those placement checks; in CI (`CI` set in the environment) it fails the run, so they can never silently drop out of `pr.yml`.
 That proves the text landed where the layout file says, not that the layout file matches the printed form.
 To verify a coordinate change, regenerate the PDF and inspect it visually - the tests cannot do that part.
 Run `pnpm test` after a change to `main.js` or `layout.js`, and extend the suite when a rule about the tracked files changes.
