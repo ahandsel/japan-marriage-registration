@@ -28,3 +28,5 @@ Coordinates are PDF points measured from the bottom-left corner of the page.
   The black form prints no 番地, 番, or 号 on its witness 住所 row, so a witness `is_banchi_address` is `null` there, and it leaves several boxes blank for handwriting.
 * Legacy `*_pos` overrides still apply on top of the resolved layout when the base layout is `red`, so moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields historically drawn relative to them.
   They hold `red` coordinates by definition, so on any other tuned layout they are ignored with a warning instead of applied.
+  A `layout:` entry that sets `pos` for the same field wins over the `*_pos` key, with a warning naming the ignored key, because the sample config ships every `*_pos` key and a `layout:` nudge would otherwise silently do nothing.
+* Respect the cinnamoroll 丁目 rule: the husband and wife 住所 and 本籍 rows pre-print 丁目, so `address_second` and `legally_domiciled_second` hold `３　　４` (two full-width spaces where the label is printed), never `３丁目　４`.

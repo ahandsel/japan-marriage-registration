@@ -17,6 +17,10 @@ A tracked config is public.
   `husband` and `wife` share one set of keys, and so do `witness1` and `witness2`, so a key added to one belongs in its sibling.
 * A witness `name` stays `''`, because a witness signature has to be handwritten.
 * On the cinnamoroll template, `notification.to` and `household_person` stay `''`: the 品川区長殿 recipient is pre-printed, and that 住所 box has no 世帯主の氏名 row.
+  Its spouse 住所 and 本籍 rows also pre-print 丁目, so `address_second` and `legally_domiciled_second` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows keep the usual `２丁目　８` shape.
+* Every top-level section is optional: deleting one leaves that part of the form blank for handwriting.
+  A key missing inside a section that is present is an error, and so is a `job_type` outside 1-6 (`0` and `''` leave the box blank).
+* `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section.
 * A `layout:` block in a config deep-merges over the template's layout file.
   It nudges a coordinate for one user, and it is not the place to fix a layout defect that every user has.
 * `src/template/marriage-registration-fields.md` is the term-by-term reference for what each field means.
