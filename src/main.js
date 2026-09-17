@@ -350,7 +350,17 @@ function defaultOutputName(templateName) {
 }
 
 function loadConfig(configPath) {
-  const cfg = YAML.parse(fs.readFileSync(configPath, 'utf-8'));
+  let cfg;
+  try {
+    cfg = YAML.parse(fs.readFileSync(configPath, 'utf-8'));
+  } catch (err) {
+    // A stray tab or an unclosed quote is the most common config mistake, and
+    // the parser's message already names the line; keep it, drop the stack.
+    fail(
+      `❌ Config error: ${configPath} is not valid YAML.\n` +
+        `   ${err.message.trim().split('\n').join('\n   ')}`,
+    );
+  }
   // An empty file parses to null and a bare scalar to a string; neither has
   // sections to draw, and the run would otherwise die on the first property
   // access with a stack trace instead of naming the file.

@@ -143,6 +143,7 @@ Top-level sections: `notification`, `husband`, `wife`, `new_legally_domiciled`, 
 `husband` and `wife` share the same keys, and so do `witness1` and `witness2` (the left and right columns of the 証人 box).
 Every top-level section is optional: a config without one (for example one written before the witness box existed) leaves that part of the form blank for handwriting, and a generate run prints an ℹ️ note naming it.
 A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `job_type` outside 1-6; `0` and `''` leave the job box blank.
+A config file that is not valid YAML is reported with the parser's line and column, never as a stack trace.
 `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
 The witness `name` should stay `''` because a witness signature must be handwritten.
 See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READMEs for the full field reference.

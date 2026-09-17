@@ -440,6 +440,20 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     }
   });
 
+  test('a malformed YAML config fails with a ❌ message naming the file, not a stack trace', async (t) => {
+    const dir = makeTempDir(t);
+    const bad = path.join(dir, 'bad.yaml');
+    fs.writeFileSync(bad, 'husband:\n  last_name: "unclosed\n');
+    const { code, stderr } = await runMain([
+      bad,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(stderr, /❌ Config error: .*bad\.yaml is not valid YAML/);
+    assert.ok(!stderr.includes('    at '), 'no stack trace');
+  });
+
   test('an -o path in a directory that does not exist fails with a ❌ message', async (t) => {
     const dir = makeTempDir(t);
     const out = path.join(dir, 'no-such-dir', 'out.pdf');
