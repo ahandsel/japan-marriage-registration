@@ -133,7 +133,8 @@ These come from `AGENTS.md`:
 * Favor readability over cleverness.
   `src/` is plain ESM JavaScript, so there is no TypeScript and no framework to account for.
 * Match the existing style: plain functions, no classes, and `node:`-prefixed builtin imports.
-* Do not nest ternary operators. Use an early return or a named helper instead.
+* Do not nest ternary operators.
+  Use an early return or a named helper instead.
 * Write a comment that explains the _why_ of a coordinate or a quirk, not what the line already says.
 * Each form field is one section function in `main.js` taking `(cfg, lay, cc)`, the config section, the resolved layout section, and the canvas.
   A new field follows that shape.

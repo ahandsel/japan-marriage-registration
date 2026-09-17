@@ -62,7 +62,8 @@ pnpm start
 That first PDF shows the sample placeholder details, so the next two steps make it yours:
 
 1. Edit `config-private.yaml` with your own details (see [Details](#details) for the field reference).
-2. Run `pnpm start` again. Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one.
+2. Run `pnpm start` again.
+   Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one.
 
 Everything after the setup is a pnpm script, and two of them cover almost everything else:
 
@@ -74,7 +75,8 @@ pnpm start --template black # fill in a different form: red (default), black, or
 pnpm passes every argument after the script name straight to the generator, so any option below works with any of these scripts.
 See [Command-line reference](#command-line-reference) for the full list and [Templates](#templates) for the forms.
 
-> ⚠️ **Privacy:** put your real details only in `config-private.yaml` (gitignored) and generate the PDF locally. The committed `config.yaml` is built by CI and published as a **public** release.
+> ⚠️ **Privacy:** put your real details only in `config-private.yaml` (gitignored) and generate the PDF locally.
+> The committed `config.yaml` is built by CI and published as a **public** release.
 
 
 ## Initial setup
@@ -95,9 +97,11 @@ On macOS, install both with [Homebrew][]:
 brew install node pnpm
 ```
 
-`brew install node` installs the latest Node.js release, which satisfies the requirement. To stay on the Node.js 24 line instead, run `brew install node@24` and follow the `PATH` instructions Homebrew prints at the end.
+`brew install node` installs the latest Node.js release, which satisfies the requirement.
+To stay on the Node.js 24 line instead, run `brew install node@24` and follow the `PATH` instructions Homebrew prints at the end.
 
-On other platforms, see the [Node.js][] and [pnpm][] download pages. If you already have Node.js, you can also get pnpm through Corepack instead of Homebrew:
+On other platforms, see the [Node.js][] and [pnpm][] download pages.
+If you already have Node.js, you can also get pnpm through Corepack instead of Homebrew:
 
 ```bash
 corepack enable pnpm
@@ -126,11 +130,14 @@ pnpm --version # 10.0.0 or newer
    pnpm run init-config
    ```
 
-   This step is optional. If `config-private.yaml` does not exist, the first run creates it from the sample `config.yaml` for you and prints a reminder to edit it. Either way you end up with the same file, filled with the sample placeholder details.
+   This step is optional.
+   If `config-private.yaml` does not exist, the first run creates it from the sample `config.yaml` for you and prints a reminder to edit it.
+   Either way you end up with the same file, filled with the sample placeholder details.
 
    Prefer `pnpm run init-config` over a plain `cp`: it also prepends the two header comments that mark the file as private and local-only, and it never overwrites an existing config.
 
-   `config-private.yaml` is listed in `.gitignore`, so it is the one file where your real personal information belongs. See [Configuration](#configuration) for why the config is split in two.
+   `config-private.yaml` is listed in `.gitignore`, so it is the one file where your real personal information belongs.
+   See [Configuration](#configuration) for why the config is split in two.
 
 3. Generate your first PDF:
 
@@ -138,9 +145,12 @@ pnpm --version # 10.0.0 or newer
    pnpm start
    ```
 
-   `pnpm start` runs `start.sh`, which handles the rest for you. It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it. At this point the PDF still shows the sample placeholder details.
+   `pnpm start` runs `start.sh`, which handles the rest for you.
+   It installs the dependencies (pnpm if it is on your `PATH`, then Corepack, then npm), runs the generator against `config-private.yaml`, writes `result-<template>-<HH-MM-SS>.pdf`, and opens it.
+   At this point the PDF still shows the sample placeholder details.
 
-4. Edit `config-private.yaml` with your own details, then run `pnpm start` again. See [Configuration](#configuration) for the field reference.
+4. Edit `config-private.yaml` with your own details, then run `pnpm start` again.
+   See [Configuration](#configuration) for the field reference.
 
 If you prefer to prepare the environment yourself instead of letting `pnpm start` do it:
 
@@ -151,7 +161,8 @@ pnpm run generate
 ```
 
 > [!NOTE]
-> `pnpm-workspace.yaml` sets `minimumReleaseAge` to three days, so pnpm ignores dependency versions published very recently. This reduces supply chain risk and is expected behavior, not an outdated lockfile.
+> `pnpm-workspace.yaml` sets `minimumReleaseAge` to three days, so pnpm ignores dependency versions published very recently.
+> This reduces supply chain risk and is expected behavior, not an outdated lockfile.
 
 
 ### Dependencies
@@ -232,7 +243,8 @@ The configuration is split across two YAML files with identical field structures
 | `config.yaml`         | The committed sample. Used by GitHub Actions in CI, and the file you copy from to create your private config. **Keep it placeholder-only - never put real personal information here.** |
 | `config-private.yaml` | Your local file with your real details. It is gitignored and is the **default for local runs**.                                                                                        |
 
-The first local run creates `config-private.yaml` for you by copying the sample, so there is nothing to set up by hand. To create it yourself before the first run:
+The first local run creates `config-private.yaml` for you by copying the sample, so there is nothing to set up by hand.
+To create it yourself before the first run:
 
 ```bash
 pnpm run init-config
@@ -245,7 +257,8 @@ The legacy `*_pos` fields (`[x, y]` point coordinates) still work as overrides, 
 They hold red-template coordinates, so they apply only when the red layout is in use; on any other template the generator ignores them with a warning.
 
 > ⚠️ **Privacy warning:** Pushing to `main` publishes the CI-generated PDF as a **public** [Release][].
-> Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `pnpm start`). Never commit or push a config that contains real PII.
+> Put your real personal information only in `config-private.yaml` and generate the PDF locally (with `pnpm start`).
+> Never commit or push a config that contains real PII.
 
 Each file has the following top-level sections:
 
@@ -267,7 +280,8 @@ A key missing inside a section that is present is an error, so set a key to `''`
 
 ### Details
 
-The `husband` and `wife` sections share the same fields. For example:
+The `husband` and `wife` sections share the same fields.
+For example:
 
 ```yaml
 husband:
@@ -342,7 +356,8 @@ witness1:
 
 ### Templates
 
-Three form templates ship in `src/template/`. The default is `red`.
+Three form templates ship in `src/template/`.
+The default is `red`.
 
 | Template      | File                                       | Notes                                                                                     |
 | ------------- | ------------------------------------------ | ----------------------------------------------------------------------------------------- |
@@ -370,7 +385,8 @@ There are three ways to switch forms, and they win in this order:
 
 You can also pass a path to any other PDF (`-t ~/Downloads/my-form.pdf`), but a custom PDF falls back to the `red` layout, so expect to tune the positions yourself (see [Layout](#layout)).
 
-Each template also has its own pnpm scripts. The first column is the one you use day to day.
+Each template also has its own pnpm scripts.
+The first column is the one you use day to day.
 
 | Template      | Generate the PDF           | Create a template-specific config | Create or check the layout file |
 | ------------- | -------------------------- | --------------------------------- | ------------------------------- |
@@ -378,9 +394,13 @@ Each template also has its own pnpm scripts. The first column is the one you use
 | `black`       | `pnpm run black:pdf`       | `pnpm run black:config`           | `pnpm run black:layout`         |
 | `cinnamoroll` | `pnpm run cinnamoroll:pdf` | `pnpm run cinnamoroll:config`     | `pnpm run cinnamoroll:layout`   |
 
-* **`<template>:pdf`** - generates the timestamped `result-<template>-<HH-MM-SS>.pdf` from that form, so a run never overwrites an earlier output. It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
-* **`<template>:config`** - creates `config-private-<template>.yaml`, and does nothing if it already exists. You only need it to keep different details per template; one shared `config-private.yaml` works without it.
-* **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing. All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
+* **`<template>:pdf`** - generates the timestamped `result-<template>-<HH-MM-SS>.pdf` from that form, so a run never overwrites an earlier output.
+  It reads `config-private-<template>.yaml` when that file exists, and falls back to the shared `config-private.yaml` otherwise.
+* **`<template>:config`** - creates `config-private-<template>.yaml`.
+  If the file already exists, it keeps every detail in it and only adds what is missing: the private-file header, and any whole section the sample `config.yaml` has and the file does not.
+  You only need it to keep different details per template; one shared `config-private.yaml` works without it.
+* **`<template>:layout`** - creates `src/layout/<template>.yaml` if it is missing.
+  All three bundled templates already have a tuned file, so the command validates it instead of overwriting it.
 
 > ⚠️ `<template>:config` copies `config-private.yaml` (or the sample `config.yaml` when that is missing), rewrites the `template:` key, and drops any legacy `*_pos` keys the copied file has (they are red-template coordinates), so every position comes from that template's layout file.
 
@@ -476,6 +496,8 @@ It only prints a note when a section is absent, because deleting a section is al
    If that is not deliberate, run `pnpm run init-config` to append them from the sample.
 ```
 
+The remedy in the note targets the config in use: `pnpm run init-config` for the shared `config-private.yaml`, `pnpm run init-config -t <template>` for a per-template `config-private-<template>.yaml`, and a manual copy from `config.yaml` for a config you passed by path.
+
 
 ## Usage - run via GitHub Actions
 
@@ -492,8 +514,6 @@ No secrets or extra configuration are required - the workflows use the built-in 
 > [!CAUTION]
 > `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
 > When you need a marriage registration with real personal information, fill in `config-private.yaml` and generate it locally - never via CI.
-
-The remedy in the note targets the config in use: `pnpm run init-config` for the shared `config-private.yaml`, `pnpm run init-config -t <template>` for a per-template `config-private-<template>.yaml`, and a manual copy from `config.yaml` for a config you passed by path.
 
 
 ## GitHub directory

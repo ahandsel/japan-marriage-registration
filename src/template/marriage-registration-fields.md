@@ -42,7 +42,8 @@ Conventions used below:
 
 ### 行政処理欄 (administrative processing box)
 
-Office use only. Leave every item in this section blank.
+Office use only.
+Leave every item in this section blank.
 
 | Japanese   | English                       | Context                                                                                 | Config |
 | ---------- | ----------------------------- | --------------------------------------------------------------------------------------- | ------ |
@@ -223,7 +224,8 @@ Keys written without a prefix below exist under both sections, which share the s
 
 ## 記入の注意 (filing instructions)
 
-These are instructions pre-printed on the form, not fields. The config column points at the keys each instruction affects, where there is one.
+These are instructions pre-printed on the form, not fields.
+The config column points at the keys each instruction affects, where there is one.
 
 | Japanese                                                                                                                   | English                                                                                                                                                                                    | Context                                                                                                          | Config                                                                                                                                                                                                                              |
 | -------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -259,7 +261,8 @@ Categories for field (7).
 
 ## 左側の行政・連絡欄 (left-hand administrative and contact box)
 
-Mostly office use. Only the 連絡先 (contact) box is filled in by the couple.
+Mostly office use.
+Only the 連絡先 (contact) box is filled in by the couple.
 
 | Japanese                                   | English                                                       | Context                                                                                                                                       | Config                                                                                                                 |
 | ------------------------------------------ | ------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |

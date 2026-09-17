@@ -8,14 +8,17 @@ Coordinates are PDF points measured from the bottom-left corner of the page.
 `drawString(x, y, ...)` places the text baseline at `(x, y)`, so increasing `y` moves the text up.
 
 * **Positions are data, never code.**
-  They live in `src/layout/<variant>.yaml`. A change that puts a coordinate in `main.js` is a defect.
+  They live in `src/layout/<variant>.yaml`.
+  A change that puts a coordinate in `main.js` is a defect.
 * **The schema is closed.**
   `LAYOUT_SCHEMA` in `src/layout.js`, built from `PERSON_SCHEMA` and `WITNESS_SCHEMA`, lists every legal key, and `validateNode` reports a missing key and an unknown key alike as an error.
   Adding one positional entry is a four-file change: `src/layout.js`, `src/layout/red.yaml`, `src/layout/black.yaml`, and `src/layout/cinnamoroll.yaml`.
   Touching fewer than all four breaks the remaining templates at generate time, and no check catches it earlier.
 * **Every entry is absolute.**
-  `pos: [x, y]` with a per-field `size`, plus a `step` for a multi-line field. A circle is `[x, y, r]`, and an ellipse is two opposite bounding-box corners.
-  Nothing is derived from another field's position. Reject a refactor that computes one coordinate from another.
+  `pos: [x, y]` with a per-field `size`, plus a `step` for a multi-line field.
+  A circle is `[x, y, r]`, and an ellipse is two opposite bounding-box corners.
+  Nothing is derived from another field's position.
+  Reject a refactor that computes one coordinate from another.
 * **No entry is shared between templates.**
   Each of the three layout files was measured against its own printed grid, so a value copied verbatim from another template is a defect even when it renders plausibly.
 * **A coordinate change is only verified by looking at the PDF.**
