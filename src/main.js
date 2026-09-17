@@ -501,12 +501,29 @@ function newLegallyDomiciled(cfg, lay, cc) {
       lastnameOf = 'husband';
     } else if (cfg.is_husband_lastname === false) {
       lastnameOf = 'wife';
+    } else {
+      // null skips below; undefined means neither key exists.
+      lastnameOf = cfg.is_husband_lastname;
     }
+  }
+  // Exactly one 氏 box has to be ticked on a valid form, so a key that is
+  // missing (a typo such as lastname_off) or holds a value other than
+  // husband/wife must not print a blank pair; only null does that, on purpose.
+  if (lastnameOf === undefined) {
+    fail(
+      `❌ Config error: no value for "${lay.keyPath ?? 'new_legally_domiciled'}.lastname_of" - the key is missing.\n` +
+        "   Set it to 'husband' or 'wife', or to null to leave both 氏 boxes blank.",
+    );
   }
   if (lastnameOf === 'husband') {
     drawText(cc, lay.husband_lastname_check, '✓');
   } else if (lastnameOf === 'wife') {
     drawText(cc, lay.wife_lastname_check, '✓');
+  } else if (lastnameOf !== null) {
+    fail(
+      `❌ Config error: "${lay.keyPath ?? 'new_legally_domiciled'}.lastname_of" must be 'husband', 'wife', ` +
+        `or null to leave both 氏 boxes blank; got ${JSON.stringify(lastnameOf)}.`,
+    );
   }
   if (cfg.address !== '') {
     drawText(cc, lay.address, cfg.address);
@@ -593,32 +610,29 @@ function otherInfo(cfg, lay, cc) {
 function witnessInfo(cfg, lay, cc) {
   // The whole witness section is optional: configs written before it existed
   // do not have it, and many couples have the witnesses fill the box in by
-  // hand. Missing per-field keys are treated as empty for the same reason.
+  // hand. A key missing inside a present section is an error here as in every
+  // other section (see requireValue); `pnpm run init-config` appends a whole
+  // section from the sample, so there is no half-written witness to tolerate.
   if (cfg === undefined || cfg === null) {
     return;
   }
-  const text = (value) => value ?? '';
   // 署名 must be handwritten by the witness for the filing to be valid, so
   // leave `name` empty ('') unless the printout is a draft or a sample.
-  drawText(cc, lay.name, text(cfg.name));
-  drawText(cc, lay.birth_year, text(cfg.birth_year));
-  drawText(cc, lay.birth_month, text(cfg.birth_month));
-  drawText(cc, lay.birth_day, text(cfg.birth_day));
-  drawText(cc, lay.address_first, text(cfg.address_first));
-  drawText(cc, lay.address_second, text(cfg.address_second));
-  drawText(cc, lay.address_go, text(cfg.address_go));
+  drawText(cc, lay.name, cfg.name);
+  drawText(cc, lay.birth_year, cfg.birth_year);
+  drawText(cc, lay.birth_month, cfg.birth_month);
+  drawText(cc, lay.birth_day, cfg.birth_day);
+  drawText(cc, lay.address_first, cfg.address_first);
+  drawText(cc, lay.address_second, cfg.address_second);
+  drawText(cc, lay.address_go, cfg.address_go);
   // `null` skips the 番地/番 marking, as in legallyDomiciledInfo.
   if (cfg.is_banchi_address === true) {
     cc.ellipse(...lay.address_banchi_ellipse);
   } else if (cfg.is_banchi_address === false) {
     cc.circle(...lay.address_go_circle);
   }
-  drawText(cc, lay.legally_domiciled_first, text(cfg.legally_domiciled_first));
-  drawText(
-    cc,
-    lay.legally_domiciled_second,
-    text(cfg.legally_domiciled_second),
-  );
+  drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
+  drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
   if (cfg.is_banchi_legally_domiciled === true) {
     cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
   } else if (cfg.is_banchi_legally_domiciled === false) {

@@ -241,6 +241,79 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.match(stderr, /no value for "wife\.mother_name"/);
   });
 
+  test('a missing lastname_of is a missing key, and null is the explicit skip', async (t) => {
+    const dir = makeTempDir(t);
+    const out = path.join(dir, 'out.pdf');
+    // Neither lastname_of nor the legacy is_husband_lastname: a typo in the key
+    // name must not print a form with both 氏 boxes blank.
+    const missing = writeConfig(
+      dir,
+      'no-lastname.yaml',
+      'config.yaml',
+      (cfg) => {
+        delete cfg.new_legally_domiciled.lastname_of;
+      },
+    );
+    let result = await runMain([missing, '-o', out]);
+    assert.equal(result.code, 1);
+    assert.match(
+      result.stderr,
+      /❌ Config error: no value for "new_legally_domiciled\.lastname_of"/,
+    );
+    assert.ok(!fs.existsSync(out), 'no PDF is written on a config error');
+    // null is the documented way to leave both boxes blank (foreign spouse).
+    const skipped = writeConfig(
+      dir,
+      'null-lastname.yaml',
+      'config.yaml',
+      (cfg) => {
+        cfg.new_legally_domiciled.lastname_of = null;
+      },
+    );
+    result = await runMain([skipped, '-o', out]);
+    assert.equal(result.code, 0, result.stderr);
+    assert.ok(fs.existsSync(out));
+  });
+
+  test('a lastname_of other than husband, wife, or null is rejected', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(
+      dir,
+      'bad-lastname.yaml',
+      'config.yaml',
+      (cfg) => {
+        cfg.new_legally_domiciled.lastname_of = 'Husband';
+      },
+    );
+    const { code, stderr } = await runMain([
+      cfgPath,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(
+      stderr,
+      /"new_legally_domiciled\.lastname_of" must be 'husband', 'wife', or null.*got "Husband"/,
+    );
+  });
+
+  test('a missing witness key is a missing key, like a spouse key', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(
+      dir,
+      'witness-key.yaml',
+      'config.yaml',
+      (cfg) => {
+        delete cfg.witness2.address_go;
+      },
+    );
+    const out = path.join(dir, 'out.pdf');
+    const { code, stderr } = await runMain([cfgPath, '-o', out]);
+    assert.equal(code, 1);
+    assert.match(stderr, /no value for "witness2\.address_go"/);
+    assert.ok(!fs.existsSync(out), 'no PDF is written on a config error');
+  });
+
   test("'' is the explicit blank and is accepted", async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(dir, 'blank.yaml', 'config.yaml', (cfg) => {
