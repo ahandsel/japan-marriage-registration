@@ -107,10 +107,11 @@ options:
   -t, --template TEMPLATE  form template to fill in: ${templateChoiceHelp()}, or path to PDF
   -o, --output OUTPUT      where to write the generated PDF (default: ${RESULT_PDF_PATTERN})
   --list-templates         list the bundled templates and exit
-  --init-config             create the private config from the sample config.yaml
-                           (if it is missing), or append the sections it lacks
-                           (if it exists), and exit without generating a PDF.
-                           With -t, the target is config-private-<template>.yaml
+  --init-config            create the private config from the sample config.yaml
+                           (if it is missing), or add the private header and the
+                           sections it lacks (if it exists), and exit without
+                           generating a PDF. With -t, the target is
+                           config-private-<template>.yaml
   --init-layout            create src/layout/<template>.yaml from the default grid
                            (if it is missing) and exit, without generating a PDF`;
 }
@@ -191,7 +192,11 @@ function scaffoldVariantConfig(templateArg) {
   // per-template config would pin red positions over this template's tuned
   // layout. Drop them; a `layout:` block is the per-template way to nudge one.
   for (const keyPath of LEGACY_POS_KEY_PATHS) {
-    doc.deleteIn(keyPath);
+    // deleteIn throws when the parent section is absent, and a seed written
+    // before a section existed may lack one, so check first.
+    if (doc.hasIn(keyPath)) {
+      doc.deleteIn(keyPath);
+    }
   }
   const body = doc.toString({ lineWidth: 0 });
   const content = hasPrivateConfigHeader(body)
@@ -345,7 +350,17 @@ function defaultOutputName(templateName) {
 }
 
 function loadConfig(configPath) {
-  return YAML.parse(fs.readFileSync(configPath, 'utf-8'));
+  const cfg = YAML.parse(fs.readFileSync(configPath, 'utf-8'));
+  // An empty file parses to null and a bare scalar to a string; neither has
+  // sections to draw, and the run would otherwise die on the first property
+  // access with a stack trace instead of naming the file.
+  if (cfg === null || typeof cfg !== 'object' || Array.isArray(cfg)) {
+    fail(
+      `❌ Config error: ${configPath} is empty or is not a YAML mapping.\n` +
+        '   Start from the sample config.yaml, or run `pnpm run init-config`.',
+    );
+  }
+  return cfg;
 }
 
 async function setup(templatePath, font) {
@@ -440,9 +455,11 @@ function nameInfo(cfg, lay, cc) {
 function addressInfo(cfg, lay, cc) {
   drawText(cc, lay.address_first, cfg.address_first);
   drawText(cc, lay.address_second, cfg.address_second);
-  if (cfg.is_banchi_address) {
+  // `null` skips the 番地/番 mark, as it does for 本籍 and for the witnesses,
+  // so the same key means the same thing in every section.
+  if (cfg.is_banchi_address === true) {
     cc.ellipse(...lay.address_banchi_ellipse);
-  } else {
+  } else if (cfg.is_banchi_address === false) {
     cc.circle(...lay.address_go_circle);
   }
   drawText(cc, lay.address_go, cfg.address_go);
@@ -493,9 +510,9 @@ function newLegallyDomiciled(cfg, lay, cc) {
   }
   if (cfg.address !== '') {
     drawText(cc, lay.address, cfg.address);
-    if (cfg.is_banchi_address) {
+    if (cfg.is_banchi_address === true) {
       cc.ellipse(...lay.banchi_ellipse);
-    } else {
+    } else if (cfg.is_banchi_address === false) {
       cc.circle(...lay.go_circle);
     }
   }
@@ -507,6 +524,14 @@ function toLiveTogetherInfo(cfg, lay, cc) {
 }
 
 function maritalHistoryInfo(cfg, lay, cc) {
+  // A person section without its marital_history mapping is a missing key,
+  // not an optional section, so name it instead of dying on cfg.marriage_cat.
+  if (cfg === undefined || cfg === null) {
+    fail(
+      `❌ Config error: no value for "${lay.keyPath ?? 'marital_history'}" - the mapping is missing or null.\n` +
+        '   Every key in the sample config.yaml must also exist in the config.',
+    );
+  }
   if (cfg.marriage_cat === 0) {
     drawText(cc, lay.first_marriage_check, '✓');
     return;
@@ -529,11 +554,21 @@ function maritalHistoryInfo(cfg, lay, cc) {
 }
 
 function jobTypeInfo(cfg, lay, cc) {
-  const pos = lay.job_type_checks.positions[cfg.job_type];
-  if (pos !== undefined) {
-    cc.setFont(lay.job_type_checks.size);
-    cc.drawString(pos[0], pos[1], '✓');
+  // 1-6 tick the matching box. 0 (the value the original Python config used)
+  // and '' leave the box blank for handwriting. Anything else must fail: a
+  // typo such as 7 would otherwise silently leave a required box unmarked.
+  if (cfg.job_type === 0 || cfg.job_type === '') {
+    return;
   }
+  const pos = lay.job_type_checks.positions[cfg.job_type];
+  if (typeof cfg.job_type !== 'number' || pos === undefined) {
+    fail(
+      `❌ Config error: "${lay.keyPath ?? 'person'}.job_type" must be a number from 1 to 6, ` +
+        `or 0 or '' to leave the box blank; got ${JSON.stringify(cfg.job_type)}.`,
+    );
+  }
+  cc.setFont(lay.job_type_checks.size);
+  cc.drawString(pos[0], pos[1], '✓');
 }
 
 function nationalCensusInfo(cfg, lay, cc) {
@@ -643,14 +678,24 @@ async function main() {
       } else {
         // An existing per-template config is topped up the same way the shared
         // one is below: it was seeded once and never refreshed since.
+        const headerAdded = addPrivateConfigHeader(target);
         const missing = missingSampleSections(target);
         if (missing.length) {
           appendMissingSections(target, missing, { stripLegacyPos: true });
+        }
+        if (headerAdded || missing.length) {
+          const added = [
+            headerAdded ? 'the private-file header' : null,
+            missing.length
+              ? `the sections it was missing: ${missing.join(', ')}`
+              : null,
+          ]
+            .filter(Boolean)
+            .join(' and ');
           console.log(
-            `✅ ${name} already exists - kept its contents and appended the ` +
-              `sections it was missing: ${missing.join(', ')}.\n` +
-              '✏️  They hold the sample placeholder values, so edit them with ' +
-              'your own details.',
+            `✅ ${name} already exists - kept its contents and added ${added}.\n` +
+              '✏️  An appended section holds the sample placeholder values, so ' +
+              'edit it with your own details.',
           );
         } else {
           console.log(`⚠️  ${name} already exists - left it untouched.`);
@@ -707,51 +752,74 @@ async function main() {
   // A generate run never rewrites the config - it only points out sections the
   // sample has and this one does not. Removing a section on purpose is a
   // documented way to leave that part of the form blank, so this is a note and
-  // not a warning.
+  // not a warning. The remedy it names has to target the file actually in use:
+  // plain `init-config` edits only config-private.yaml.
   if (path.resolve(configPath) !== PUBLIC_CONFIG_PATH) {
     const missing = missingSampleSections(configPath);
     if (missing.length) {
       const many = missing.length > 1;
+      const them = many ? 'them' : 'it';
+      let remedy;
+      if (args.config) {
+        remedy = `copy ${them} from the sample config.yaml`;
+      } else if (
+        args.template &&
+        path.resolve(configPath) === variantConfigPath(args.template)
+      ) {
+        remedy = `run \`pnpm run init-config -t ${layoutNameForTemplate(args.template)}\` to append ${them} from the sample`;
+      } else {
+        remedy = `run \`pnpm run init-config\` to append ${them} from the sample`;
+      }
       console.log(
         `ℹ️  This config has no ${missing.join(', ')} ` +
           `${many ? 'sections' : 'section'}. ` +
           `${many ? 'Those parts of the form stay' : 'That part of the form stays'} blank.\n` +
-          '   If that is not deliberate, run `pnpm run init-config` to append ' +
-          `${many ? 'them' : 'it'} from the sample.`,
+          `   If that is not deliberate, ${remedy}.`,
       );
     }
   }
   const { doc, page, ipaexm } = await setup(templatePath, FONT_PATH);
   const cc = makeCanvas(page, ipaexm);
-  nameInfo(cfg.husband, layout.husband, cc);
-  addressInfo(cfg.husband, layout.husband, cc);
-  legallyDomiciledInfo(cfg.husband, layout.husband, cc);
-  familyInfo(cfg.husband, layout.husband, cc);
-  nameInfo(cfg.wife, layout.wife, cc);
-  addressInfo(cfg.wife, layout.wife, cc);
-  legallyDomiciledInfo(cfg.wife, layout.wife, cc);
-  familyInfo(cfg.wife, layout.wife, cc);
-  newLegallyDomiciled(
-    cfg.new_legally_domiciled,
-    layout.new_legally_domiciled,
-    cc,
-  );
-  toLiveTogetherInfo(cfg.to_live_together, layout.to_live_together, cc);
-  maritalHistoryInfo(
-    cfg.husband.marital_history,
-    layout.husband.marital_history,
-    cc,
-  );
-  maritalHistoryInfo(cfg.wife.marital_history, layout.wife.marital_history, cc);
-  jobTypeInfo(cfg.husband, layout.husband, cc);
-  jobTypeInfo(cfg.wife, layout.wife, cc);
-  nationalCensusInfo(cfg.national_census, layout.national_census, cc);
-  notificationInfo(cfg.notification, layout.notification, cc);
-  otherInfo(cfg.other, layout.other, cc);
-  witnessInfo(cfg.witness1, layout.witness1, cc);
-  witnessInfo(cfg.witness2, layout.witness2, cc);
+  // Every top-level section is optional: a section the config does not have
+  // leaves that part of the form blank for handwriting, which is what the
+  // note above promises. A key missing inside a section that is present is
+  // still an error (see requireValue).
+  const section = (name) => cfg[name] ?? null;
+  for (const who of ['husband', 'wife']) {
+    const person = section(who);
+    if (person === null) {
+      continue;
+    }
+    nameInfo(person, layout[who], cc);
+    addressInfo(person, layout[who], cc);
+    legallyDomiciledInfo(person, layout[who], cc);
+    familyInfo(person, layout[who], cc);
+    maritalHistoryInfo(person.marital_history, layout[who].marital_history, cc);
+    jobTypeInfo(person, layout[who], cc);
+  }
+  const optional = [
+    [newLegallyDomiciled, 'new_legally_domiciled'],
+    [toLiveTogetherInfo, 'to_live_together'],
+    [nationalCensusInfo, 'national_census'],
+    [notificationInfo, 'notification'],
+    [otherInfo, 'other'],
+    [witnessInfo, 'witness1'],
+    [witnessInfo, 'witness2'],
+  ];
+  for (const [draw, name] of optional) {
+    if (section(name) !== null) {
+      draw(section(name), layout[name], cc);
+    }
+  }
   const output = args.output ?? defaultOutputName(templateName);
-  fs.writeFileSync(output, await doc.save());
+  const bytes = await doc.save();
+  try {
+    fs.writeFileSync(output, bytes);
+  } catch (err) {
+    // A typo in -o (a directory that does not exist, a read-only location)
+    // should name the path, not print an ENOENT stack trace.
+    fail(`❌ Cannot write the PDF to ${output}:\n   ${err.message}`);
+  }
   console.log(`Wrote: ${output}`);
 }
 

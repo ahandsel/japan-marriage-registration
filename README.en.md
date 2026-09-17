@@ -260,6 +260,9 @@ Each file has the following top-level sections:
 | `witness1`              | Left witness column (omit to leave it blank for handwriting)  |
 | `witness2`              | Right witness column (omit to leave it blank for handwriting) |
 
+Every section is optional: remove one and that part of the form stays blank for handwriting (the generator prints a note naming it).
+A key missing inside a section that is present is an error, so set a key to `''` to leave a single box blank.
+
 
 ### Details
 
@@ -304,12 +307,15 @@ husband:
     year: 令和3
     month: 6
     day: 1
-  job_type: 6
+  job_type: 6 # 1-6 ticks that box; 0 or '' leaves it blank
 ```
 
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
 
-`witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields. Remove (or comment out) a whole section to leave that column blank for handwriting.
+`is_banchi_address` and `is_banchi_legally_domiciled` take `true` (ellipse around 番地), `false` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
+
+`witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields.
+Remove (or comment out) a whole section to leave that column blank for handwriting.
 
 ```yaml
 witness1:
@@ -479,6 +485,8 @@ Both workflows run `node src/main.js config.yaml -o result.pdf`, building the PD
 > [!CAUTION]
 > `push.yml` publishes the generated PDF as a **public** Release, and it uses only the committed `config.yaml`.
 > When you need a marriage registration with real personal information, fill in `config-private.yaml` and generate it locally - never via CI.
+
+The remedy in the note targets the config in use: `pnpm run init-config` for the shared `config-private.yaml`, `pnpm run init-config -t <template>` for a per-template `config-private-<template>.yaml`, and a manual copy from `config.yaml` for a config you passed by path.
 
 
 ## GitHub directory

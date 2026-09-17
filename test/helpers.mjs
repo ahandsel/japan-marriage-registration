@@ -224,7 +224,12 @@ export function expectedMarks(cfg, lay) {
     'mother_name',
     'relationship',
   ];
+  // Every top-level section is optional in main.js; a missing one draws nothing.
+  const has = (name) => cfg[name] !== undefined && cfg[name] !== null;
   for (const who of ['husband', 'wife']) {
+    if (!has(who)) {
+      continue;
+    }
     const c = cfg[who];
     const l = lay[who];
     for (const key of PERSON_TEXT_KEYS) {
@@ -244,40 +249,49 @@ export function expectedMarks(cfg, lay) {
         add(ml[key], mh[key]);
       }
     }
+    // 1-6 tick a box; 0 and '' leave it blank (main.js rejects anything else).
     const jobPos = l.job_type_checks.positions[c.job_type];
-    if (jobPos !== undefined) {
+    if (c.job_type !== 0 && c.job_type !== '' && jobPos !== undefined) {
       add({ pos: jobPos, size: l.job_type_checks.size }, '✓');
     }
   }
-  const nl = cfg.new_legally_domiciled;
-  const nll = lay.new_legally_domiciled;
-  let lastnameOf = nl.lastname_of;
-  if (lastnameOf === undefined) {
-    if (nl.is_husband_lastname === true) {
-      lastnameOf = 'husband';
-    } else if (nl.is_husband_lastname === false) {
-      lastnameOf = 'wife';
+  if (has('new_legally_domiciled')) {
+    const nl = cfg.new_legally_domiciled;
+    const nll = lay.new_legally_domiciled;
+    let lastnameOf = nl.lastname_of;
+    if (lastnameOf === undefined) {
+      if (nl.is_husband_lastname === true) {
+        lastnameOf = 'husband';
+      } else if (nl.is_husband_lastname === false) {
+        lastnameOf = 'wife';
+      }
+    }
+    if (lastnameOf === 'husband') {
+      check(nll.husband_lastname_check);
+    } else if (lastnameOf === 'wife') {
+      check(nll.wife_lastname_check);
+    }
+    if (nl.address !== '') {
+      add(nll.address, nl.address);
     }
   }
-  if (lastnameOf === 'husband') {
-    check(nll.husband_lastname_check);
-  } else if (lastnameOf === 'wife') {
-    check(nll.wife_lastname_check);
+  if (has('to_live_together')) {
+    add(lay.to_live_together.year, cfg.to_live_together.year);
+    add(lay.to_live_together.month, cfg.to_live_together.month);
   }
-  if (nl.address !== '') {
-    add(nll.address, nl.address);
-  }
-  add(lay.to_live_together.year, cfg.to_live_together.year);
-  add(lay.to_live_together.month, cfg.to_live_together.month);
-  if (cfg.national_census.year !== '') {
+  if (has('national_census') && cfg.national_census.year !== '') {
     for (const key of ['year', 'husband_job', 'wife_job']) {
       add(lay.national_census[key], cfg.national_census[key]);
     }
   }
-  for (const key of ['year', 'month', 'day', 'to']) {
-    add(lay.notification[key], cfg.notification[key]);
+  if (has('notification')) {
+    for (const key of ['year', 'month', 'day', 'to']) {
+      add(lay.notification[key], cfg.notification[key]);
+    }
   }
-  add(lay.other.text, cfg.other.text);
+  if (has('other')) {
+    add(lay.other.text, cfg.other.text);
+  }
   for (const who of ['witness1', 'witness2']) {
     const c = cfg[who];
     if (c === undefined || c === null) {

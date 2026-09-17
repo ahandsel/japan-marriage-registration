@@ -20,9 +20,10 @@ This project handles real personal information (PII: names, birthdates, addresse
   It is the default config for local runs and is **not committed** (it is gitignored and untracked).
   It is created automatically: on the first local run `main.js` copies the public sample `config.yaml` to `config-private.yaml` if it is missing, so a new user gets a ready-to-edit starting point with zero setup.
   The copy is written with `PRIVATE_CONFIG_HEADER` prepended - two comment lines (Japanese and English) marking the file as private and local-only.
-  `--init-config` also tops up an existing config: it adds that header when the file lacks it, and appends every top-level section the sample has and the file does not, copied from `config.yaml` with its comments.
+  `--init-config` also tops up an existing config, with or without `-t`: it adds that header when the file lacks it, and appends every top-level section the sample has and the file does not, copied from `config.yaml` with its comments.
   That copy-once scaffold is why a config written before a section existed (the witness box, for example) stays without it, and the top-up is append-only, so the details already in the file are never rewritten or reformatted.
-  A normal generate run still never rewrites the file; it only prints an ℹ️ note naming the sections the config does not have, because deleting a section is also the documented way to leave that part of the form blank.
+  A normal generate run still never rewrites the file; it only prints an ℹ️ note naming the sections the config does not have, because every top-level section is optional and deleting one is the documented way to leave that part of the form blank.
+  The remedy the note names targets the config in use: `pnpm run init-config` for the shared config, `pnpm run init-config -t <variant>` for a per-template one, and a manual copy from the sample for a config passed by path.
   Never commit it, and never put real PII anywhere tracked.
 * **Every tracked config must contain placeholders only** - no real PII.
   This covers `config.yaml` and the per-template samples `config-black.yaml` and `config-cinnamoroll.yaml`.
@@ -139,7 +140,10 @@ Remember that `pdftotext` measures y from the _top_ of the page, while the layou
 
 Top-level sections: `notification`, `husband`, `wife`, `new_legally_domiciled`, `to_live_together`, `national_census`, `other`, `witness1`, `witness2`.
 `husband` and `wife` share the same keys, and so do `witness1` and `witness2` (the left and right columns of the 証人 box).
-The witness sections are optional: a config without them (for example one written before they existed) leaves the whole witness box blank for handwriting, and the witness `name` should stay `''` because a witness signature must be handwritten.
+Every top-level section is optional: a config without one (for example one written before the witness box existed) leaves that part of the form blank for handwriting, and a generate run prints an ℹ️ note naming it.
+A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `job_type` outside 1-6; `0` and `''` leave the job box blank.
+`is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
+The witness `name` should stay `''` because a witness signature must be handwritten.
 See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READMEs for the full field reference.
 An optional top-level `template:` key selects the template; the `-t/--template` flag overrides it.
 An optional top-level `layout:` block deep-merges over the template's layout file, so a config can nudge one coordinate without copying the whole grid.

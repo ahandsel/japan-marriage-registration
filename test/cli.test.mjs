@@ -346,17 +346,179 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.match(stdout, /tuned "black" layout/);
   });
 
-  // The audit found these inputs end in a raw TypeError or ENOENT stack
-  // instead of a ❌ message. They are recorded here so the behaviour is
-  // visible; flip each to a test once main.js handles it.
-  test.todo('an empty config file fails with a ❌ message, not a TypeError');
-  test.todo(
-    'a config without a husband or wife section fails with a ❌ message',
-  );
-  test.todo(
-    'an -o path in a directory that does not exist fails with a ❌ message',
-  );
-  test.todo('a job_type outside 1-6 fails like a bad marriage_cat does');
+  test('an empty config file fails with a ❌ message, not a TypeError', async (t) => {
+    const dir = makeTempDir(t);
+    const empty = path.join(dir, 'empty.yaml');
+    fs.writeFileSync(empty, '');
+    const scalar = path.join(dir, 'scalar.yaml');
+    fs.writeFileSync(scalar, 'just a string\n');
+    for (const cfgPath of [empty, scalar]) {
+      const { code, stderr } = await runMain([
+        cfgPath,
+        '-o',
+        path.join(dir, 'out.pdf'),
+      ]);
+      assert.equal(code, 1);
+      assert.match(
+        stderr,
+        /❌ Config error: .* is empty or is not a YAML mapping/,
+      );
+      assert.ok(!stderr.includes('TypeError'), stderr);
+    }
+  });
+
+  test('an -o path in a directory that does not exist fails with a ❌ message', async (t) => {
+    const dir = makeTempDir(t);
+    const out = path.join(dir, 'no-such-dir', 'out.pdf');
+    const { code, stderr } = await runMain(['config.yaml', '-o', out]);
+    assert.equal(code, 1);
+    assert.match(stderr, /❌ Cannot write the PDF to .*no-such-dir/);
+    assert.ok(!stderr.includes('    at '), 'no stack trace');
+  });
+
+  test('a job_type outside 1-6 fails like a bad marriage_cat does', async (t) => {
+    const dir = makeTempDir(t);
+    for (const [who, bad] of [
+      ['husband', 9],
+      ['wife', '4'],
+      ['husband', null],
+    ]) {
+      const cfgPath = writeConfig(dir, `${who}.yaml`, 'config.yaml', (cfg) => {
+        cfg[who].job_type = bad;
+      });
+      const { code, stderr } = await runMain([
+        cfgPath,
+        '-o',
+        path.join(dir, 'out.pdf'),
+      ]);
+      assert.equal(code, 1, `job_type ${JSON.stringify(bad)}`);
+      assert.match(
+        stderr,
+        new RegExp(
+          `"${who}\\.job_type" must be a number from 1 to 6, or 0 or '' to leave the box blank; got ${JSON.stringify(bad)}`,
+        ),
+      );
+    }
+  });
+
+  test("job_type 0 and '' leave the box blank without an error", async (t) => {
+    const dir = makeTempDir(t);
+    for (const blank of [0, '']) {
+      const cfgPath = writeConfig(
+        dir,
+        'blank-job.yaml',
+        'config.yaml',
+        (cfg) => {
+          cfg.husband.job_type = blank;
+          cfg.wife.job_type = blank;
+        },
+      );
+      const { code, stderr } = await runMain([
+        cfgPath,
+        '-o',
+        path.join(dir, 'out.pdf'),
+      ]);
+      assert.equal(code, 0, stderr);
+    }
+  });
+
+  test('a person section without its marital_history mapping is a missing key', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(dir, 'no-mh.yaml', 'config.yaml', (cfg) => {
+      delete cfg.wife.marital_history;
+    });
+    const { code, stderr } = await runMain([
+      cfgPath,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(
+      stderr,
+      /❌ Config error: no value for "wife\.marital_history"/,
+    );
+  });
+});
+
+describe('every top-level section is optional', () => {
+  // Deleting a section is the documented way to leave that part of the form
+  // blank for handwriting, so a missing section is a note, never a crash.
+  const SECTIONS = [
+    'notification',
+    'husband',
+    'wife',
+    'new_legally_domiciled',
+    'to_live_together',
+    'national_census',
+    'other',
+    'witness1',
+    'witness2',
+  ];
+
+  for (const name of SECTIONS) {
+    test(`a config without ${name} renders, and the note names it`, async (t) => {
+      const dir = makeTempDir(t);
+      const cfgPath = writeConfig(
+        dir,
+        `no-${name}.yaml`,
+        'config.yaml',
+        (cfg) => {
+          delete cfg[name];
+        },
+      );
+      const out = path.join(dir, 'out.pdf');
+      const { code, stdout, stderr } = await runMain([cfgPath, '-o', out]);
+      assert.equal(code, 0, stderr);
+      assert.match(
+        stdout,
+        new RegExp(
+          `ℹ️ {2}This config has no ${name} section\\. That part of the form stays blank\\.`,
+        ),
+      );
+      assert.ok(fs.existsSync(out));
+    });
+  }
+
+  test('the note names the remedy that targets the config actually in use', async (t) => {
+    // An explicit path: init-config cannot reach it, so no command is offered.
+    const dir = makeTempDir(t);
+    const explicit = writeConfig(dir, 'explicit.yaml', 'config.yaml', (cfg) => {
+      delete cfg.other;
+    });
+    const viaPath = await runMain([explicit, '-o', path.join(dir, 'a.pdf')]);
+    assert.equal(viaPath.code, 0, viaPath.stderr);
+    assert.match(viaPath.stdout, /copy it from the sample config\.yaml\./);
+    assert.ok(!viaPath.stdout.includes('init-config'));
+    // A per-template private config picked up by -t: the -t form of init-config.
+    const sandbox = makeSandbox(t);
+    writeConfig(
+      sandbox,
+      'config-private-black.yaml',
+      'config-black.yaml',
+      (cfg) => {
+        delete cfg.witness1;
+        delete cfg.witness2;
+      },
+    );
+    const viaFlag = await runMain(['-t', 'black', '-o', 'b.pdf'], {
+      root: sandbox,
+    });
+    assert.equal(viaFlag.code, 0, viaFlag.stderr);
+    assert.match(
+      viaFlag.stdout,
+      /run `pnpm run init-config -t black` to append them from the sample\./,
+    );
+    // The shared private config: plain init-config.
+    writeConfig(sandbox, 'config-private.yaml', 'config.yaml', (cfg) => {
+      delete cfg.witness2;
+    });
+    const shared = await runMain(['-o', 'c.pdf'], { root: sandbox });
+    assert.equal(shared.code, 0, shared.stderr);
+    assert.match(
+      shared.stdout,
+      /run `pnpm run init-config` to append it from the sample\./,
+    );
+  });
 });
 
 describe('scaffolding in a sandbox copy', () => {
@@ -524,12 +686,53 @@ describe('scaffolding in a sandbox copy', () => {
       root: sandbox,
     });
     assert.equal(code, 0);
+    // The file was written without the header, so both the header and the
+    // sections are added, and the message says so.
     assert.match(
       stdout,
-      /config-private-black\.yaml already exists - kept its contents and appended the sections it was missing: witness1, witness2\./,
+      /config-private-black\.yaml already exists - kept its contents and added the private-file header and the sections it was missing: witness1, witness2\./,
     );
-    const cfg = YAML.parse(fs.readFileSync(target, 'utf-8'));
+    const text = fs.readFileSync(target, 'utf-8');
+    assert.ok(
+      text.startsWith(`${HEADER_LINES.join('\n')}\n\n${stale.trimEnd()}`),
+      'the header is prepended and the existing text is kept byte for byte',
+    );
+    const cfg = YAML.parse(text);
     assert.deepEqual(cfg.witness1, readRepoYaml('config.yaml').witness1);
+    // Re-running finds nothing to add.
+    const second = await runMain(['--init-config', '-t', 'black'], {
+      root: sandbox,
+    });
+    assert.match(
+      second.stdout,
+      /⚠️ {2}config-private-black\.yaml already exists - left it untouched/,
+    );
+    assert.equal(fs.readFileSync(target, 'utf-8'), text);
+  });
+
+  test('--init-config -t <variant> adds only the header to a complete config that lacks it', async (t) => {
+    const sandbox = makeSandbox(t);
+    const target = writeConfig(
+      sandbox,
+      'config-private-red.yaml',
+      'config-black.yaml',
+      (cfg) => {
+        cfg.template = 'red';
+      },
+    );
+    const body = fs.readFileSync(target, 'utf-8');
+    const { code, stdout } = await runMain(['--init-config', '-t', 'red'], {
+      root: sandbox,
+    });
+    assert.equal(code, 0);
+    assert.match(
+      stdout,
+      /config-private-red\.yaml already exists - kept its contents and added the private-file header\./,
+    );
+    assert.equal(
+      fs.readFileSync(target, 'utf-8'),
+      `${HEADER_LINES.join('\n')}\n\n${body}`,
+    );
   });
 
   test('--init-config -t <variant> pins template:, drops *_pos, and keeps comments', async (t) => {
@@ -598,6 +801,11 @@ describe('scaffolding in a sandbox copy', () => {
       (cfg) => {
         cfg.template = 'red';
       },
+    );
+    // Complete means the header too; without it the header would be added.
+    fs.writeFileSync(
+      target,
+      `${HEADER_LINES.join('\n')}\n\n${fs.readFileSync(target, 'utf-8')}`,
     );
     const before = fs.readFileSync(target, 'utf-8');
     const { code, stdout } = await runMain(['--init-config', '-t', 'red'], {
