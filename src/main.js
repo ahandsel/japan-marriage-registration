@@ -366,7 +366,9 @@ function resolveTemplateName(templateArg, cfg) {
 
 function defaultOutputName(templateName) {
   // result-<template>-<HH-MM-SS>.pdf, 24-hour local time, zero-padded, so
-  // repeated runs never silently overwrite an earlier PDF.
+  // repeated runs never silently overwrite an earlier PDF. Two runs within the
+  // same second would still collide, so writeDefaultOutput() below reserves
+  // the name atomically and falls back to a -2, -3, ... suffix.
   const variant = layoutNameForTemplate(templateName);
   const pad = (n) => String(n).padStart(2, '0');
   const now = new Date();
@@ -374,6 +376,31 @@ function defaultOutputName(templateName) {
     .map(pad)
     .join('-');
   return `result-${variant}-${time}.pdf`;
+}
+
+// Write the PDF under the default name without ever replacing an existing
+// file: `wx` creates the file only if it does not exist yet, so a name taken
+// by a run in the same second is detected at the write itself, not by a
+// separate existence check that a parallel run could slip past. The first free
+// suffix (result-red-12-00-00-2.pdf, -3, ...) is used instead.
+function writeDefaultOutput(name, bytes) {
+  const { dir, name: stem, ext } = path.parse(name);
+  const MAX_TRIES = 100;
+  for (let n = 1; n <= MAX_TRIES; n++) {
+    const candidate = n === 1 ? name : path.join(dir, `${stem}-${n}${ext}`);
+    try {
+      fs.writeFileSync(candidate, bytes, { flag: 'wx' });
+      return candidate;
+    } catch (err) {
+      if (err.code !== 'EEXIST') {
+        throw err;
+      }
+    }
+  }
+  fail(
+    `❌ Cannot write the PDF: ${name} and its -2 to -${MAX_TRIES} variants all exist already.\n` +
+      '   Pass -o to name the output.',
+  );
 }
 
 function loadConfig(configPath) {
@@ -910,10 +937,16 @@ async function main() {
       draw(section(name), layout[name], cc);
     }
   }
-  const output = args.output ?? defaultOutputName(templateName);
   const bytes = await doc.save();
+  let output = args.output ?? defaultOutputName(templateName);
   try {
-    fs.writeFileSync(output, bytes);
+    if (args.output) {
+      // An explicit -o keeps overwrite semantics: CI pins `-o result.pdf` and
+      // relies on the name staying stable from run to run.
+      fs.writeFileSync(output, bytes);
+    } else {
+      output = writeDefaultOutput(output, bytes);
+    }
   } catch (err) {
     // A typo in -o (a directory that does not exist, a read-only location)
     // should name the path, not print an ENOENT stack trace.

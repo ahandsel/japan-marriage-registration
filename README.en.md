@@ -63,7 +63,7 @@ That first PDF shows the sample placeholder details, so the next two steps make 
 
 1. Edit `config-private.yaml` with your own details (see [Details](#details) for the field reference).
 2. Run `pnpm start` again.
-   Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one.
+   Repeat as often as you like - each run writes a new timestamped PDF and never overwrites an earlier one (a second run within the same second gets a `-2` suffix).
 
 Everything after the setup is a pnpm script, and two of them cover almost everything else:
 

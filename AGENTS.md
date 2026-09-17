@@ -8,6 +8,7 @@ Keep it accurate as the code changes.
 
 A generator that overlays text onto a blank Japanese marriage registration form (婚姻届) PDF template and writes a filled-in PDF.
 The default output name is timestamped, `result-<template>-<HH-MM-SS>.pdf` (24-hour local time), so repeated runs never overwrite each other; `-o` overrides it, and CI pins `-o result.pdf`.
+The default name is reserved with an exclusive create, and a second run in the same second takes the next free suffix (`-2`, `-3`, ...) instead, so only an explicit `-o` ever overwrites a file.
 All input comes from a single YAML config.
 There is no UI and no server.
 

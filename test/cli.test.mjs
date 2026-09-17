@@ -1098,6 +1098,31 @@ describe('scaffolding in a sandbox copy', () => {
     );
   });
 
+  test('the default output name never replaces an existing file', async (t) => {
+    const sandbox = makeSandbox(t);
+    const first = await runMain(['config.yaml'], { root: sandbox });
+    assert.equal(first.code, 0);
+    const written = first.stdout.match(/^Wrote: (.+)$/m)[1];
+    // Pre-create the names a run in this same second would pick, then run
+    // again at once: the pattern is fixed, so the second run takes the next
+    // free suffix instead of overwriting either file.
+    const stamp = written.match(/^result-red-(\d{2}-\d{2}-\d{2})\.pdf$/)[1];
+    const taken = fs.readFileSync(path.join(sandbox, written));
+    const second = await runMain(['config.yaml'], { root: sandbox });
+    assert.equal(second.code, 0);
+    const again = second.stdout.match(/^Wrote: (.+)$/m)[1];
+    assert.notEqual(again, written);
+    assert.match(again, /^result-red-\d{2}-\d{2}-\d{2}(-\d+)?\.pdf$/);
+    if (again.startsWith(`result-red-${stamp}`)) {
+      assert.equal(again, `result-red-${stamp}-2.pdf`);
+    }
+    assert.deepEqual(
+      fs.readFileSync(path.join(sandbox, written)),
+      taken,
+      'the first PDF is untouched',
+    );
+  });
+
   test('--init-layout refuses a template that does not exist', async (t) => {
     const sandbox = makeSandbox(t);
     const { code, stderr } = await runMain(
