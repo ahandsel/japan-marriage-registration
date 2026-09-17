@@ -26,7 +26,7 @@ import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { parse as load } from 'yaml';
 
-const VERSION = '1.0';
+const VERSION = '1.1';
 const MAX_SKILL_NAME_LENGTH = 64;
 const MAX_DESCRIPTION_LENGTH = 1024;
 const MAX_COMPATIBILITY_LENGTH = 500;

@@ -28,7 +28,7 @@ setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
 # Configuration
 SCRIPT_NAME="index.sh"
-VERSION="1.3"
+VERSION="1.4"
 
 # ----------------------------
 # Utilities
