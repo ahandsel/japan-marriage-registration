@@ -1,0 +1,64 @@
+name: Lint and autofix PR
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, ready_for_review]
+
+# contents: write is required to push the lint fixes back to the PR branch.
+permissions:
+  contents: write
+
+concurrency:
+  group: lint-autofix-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  lint-autofix:
+    # A pull request from a fork cannot be pushed to, so the final step would fail.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    env:
+      PR_HEAD_REF: ${{ github.head_ref }}
+    steps:
+      - name: Checkout PR branch
+        # This job pushes, so it keeps the default persist-credentials: true.
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # actions/checkout@v5.0.0, pinned
+        with:
+          ref: ${{ env.PR_HEAD_REF }}
+          fetch-depth: 0
+
+      - name: Install pnpm
+        # No version input: the action reads packageManager from package.json.
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # pnpm/action-setup@v4.2.0, pinned
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # actions/setup-node@v6.0.0, pinned
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        # prettier --write plus markdownlint-cli2 --fix, both autofixing in place.
+        run: pnpm lint
+
+      - name: Commit and push changes
+        run: |
+          if git diff --quiet; then
+            echo "✅ No lint fixes needed."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # -u stages tracked files only: lint never adds a file, and this cannot
+          # sweep in a stray generated PDF or a private config.
+          git add -u
+          git commit -m "🎨 Apply lint fixes"
+          git push origin HEAD:"$PR_HEAD_REF"
+
+          echo "⚠️ Lint fixes were committed to the pull request branch. Pull before you push again."

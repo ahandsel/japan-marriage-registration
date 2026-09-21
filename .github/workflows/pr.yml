@@ -2,30 +2,57 @@ name: pr
 
 on:
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+# The job only reads the repository and uploads an artifact.
+permissions:
+  contents: read
+
+concurrency:
+  group: pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: [3.7]
 
     steps:
-    - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    - name: create marriage registration
-      run: |
-        python src/main.py config-public.yaml
-    - uses: actions/upload-artifact@v2
-      with:
-        name: mariage_registration
-        path: result.pdf
+      - name: Checkout
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # actions/checkout@v5.0.0, pinned
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        # No version input: the action reads packageManager from package.json.
+        uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 # pnpm/action-setup@v4.2.0, pinned
+
+      - name: Set up Node.js
+        uses: actions/setup-node@2028fbc5c25fe9cf00d9f06a71cc4710d4507903 # actions/setup-node@v6.0.0, pinned
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install poppler-utils
+        # pdftotext lets the render tests read the overlay text back and check
+        # where every value landed. Without it those tests are skipped.
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends poppler-utils
+
+      - name: Run the tests
+        run: pnpm test
+
+      - name: Create marriage registration
+        # Always build from config.yaml, which holds placeholders only.
+        # The artifact is downloadable by anyone who can see the pull request,
+        # so never point this at a private config.
+        # -o pins the output name: the local default is timestamped
+        # (result-<template>-<HH-MM-SS>.pdf), but the artifact path is fixed.
+        run: node src/main.js config.yaml -o result.pdf
+
+      - name: Upload the PDF
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # actions/upload-artifact@v4.6.2, pinned
+        with:
+          name: marriage_registration
+          path: result.pdf

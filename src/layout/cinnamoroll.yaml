@@ -1,0 +1,202 @@
+# Layout for the "cinnamoroll" template
+# (jp-marriage-registration-cinnamoroll.pdf, 品川区のシナモロール様式).
+# Same schema as red.yaml: absolute [x, y] baseline positions in PDF points
+# from the bottom-left corner, `size` in points, `step` between lines of a
+# multi-line field, circles as [x, y, r], ellipses as two opposite corners.
+#
+# Grid notes: form body y 32.7-686.8; husband column x 212.5-399.4; wife
+# column x 399.4-586.4 (a 187pt offset); printed 丁目 at x 257.0 (husband) and
+# 444.0 (wife); printed 年/月/日 for the birth date at x 305.3/354.9/378.8
+# (husband) with baseline 608.6.
+#
+# ⚠️ This 品川区 form differs from the generic red one in three places: two
+# config keys have no printed slot and should stay '' here, and the spouse
+# address rows take a different shape:
+#   * The recipient is pre-printed as 品川区長殿, so `notification.to` has no
+#     blank to land in (see the note on the entry below).
+#   * The 住所 box has no 世帯主の氏名 row (its rows are the address lines,
+#     丁目/□番地/□番/号, and 方書), so `household_person` has nowhere to go;
+#     its position below only parks a value on the empty right part of the
+#     方書 line.
+#   * The husband and wife 住所 and 本籍 rows pre-print 丁目 (x 257 and x 444)
+#     right after the 12pt slot for the chome number, so `address_second` and
+#     `legally_domiciled_second` must leave 丁目 out and hold two full-width
+#     spaces in its place (`３　　４`, not `３丁目　４`), or the value's own
+#     丁目 lands on top of the printed one and prints as a smudged double.
+#     The witness rows are written on the ☐番地 line above their printed 丁目,
+#     so a witness value keeps its own 丁目 as on the other templates.
+
+husband:
+  last_name: { pos: [235, 623], size: 24 }
+  last_name_kana: { pos: [241, 655], size: 12 }
+  first_name: { pos: [329, 623], size: 24 }
+  first_name_kana: { pos: [335, 655], size: 12 }
+  birth_year: { pos: [266, 608.6], size: 12 }
+  birth_month: { pos: [316, 608.6], size: 12 }
+  birth_day: { pos: [350, 608.6], size: 12 }
+  address_first: { pos: [257, 556], size: 12 }
+  # Starts one 12pt glyph before the printed 丁目 (x 257), so the value holds
+  # the chome number, two full-width spaces for the printed label, then the
+  # block number: `３　　４`. See the header note.
+  address_second: { pos: [245, 535], size: 12 }
+  address_go: { pos: [357, 535], size: 12 }
+  # No 世帯主の氏名 row on this form - see the header note. Keep '' in the
+  # config; the position sits on the empty part of the 方書 line.
+  household_person: { pos: [300, 512], size: 12 }
+  address_apartment: { pos: [235, 523], size: 5, step: 5 }
+  address_banchi_ellipse: [350, 558.5, 313, 546.5]
+  address_go_circle: [320, 539, 6]
+  legally_domiciled_first: { pos: [245, 482], size: 12 }
+  # Same printed 丁目 as the 住所 row, so the same `３　　４` shape.
+  legally_domiciled_second: { pos: [245, 461], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [255, 438], size: 12 }
+  legally_domiciled_banchi_ellipse: [350, 480, 313, 468.5]
+  legally_domiciled_go_circle: [320, 464, 6]
+  father_name: { pos: [233, 416], size: 12 }
+  mother_name: { pos: [233, 392], size: 12 }
+  # 続き柄 cell, x 356.0-399.1, left of the printed 男 (x 384.8-397.2).
+  relationship: { pos: [366, 395.5], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [218, 247], size: 10 }
+    remarriage_death_check: { pos: [279.3, 253.5], size: 8 }
+    remarriage_divorce_check: { pos: [279.3, 242.5], size: 8 }
+    year: { pos: [308, 247], size: 6 }
+    month: { pos: [349, 247], size: 6 }
+    day: { pos: [378, 247], size: 6 }
+  # Job checkboxes run horizontally (1-6); the wife's row sits under the
+  # husband's at the same x positions.
+  job_type_checks:
+    size: 10
+    positions:
+      1: [236.8, 222.5]
+      2: [265.6, 222.5]
+      3: [294.4, 222.5]
+      4: [323.2, 222.5]
+      5: [352, 222.5]
+      6: [380.8, 222.5]
+
+wife:
+  last_name: { pos: [422, 623], size: 24 }
+  last_name_kana: { pos: [428, 655], size: 12 }
+  first_name: { pos: [516, 623], size: 24 }
+  first_name_kana: { pos: [528, 655], size: 12 }
+  birth_year: { pos: [453, 608.6], size: 12 }
+  birth_month: { pos: [503, 608.6], size: 12 }
+  birth_day: { pos: [537, 608.6], size: 12 }
+  address_first: { pos: [444, 556], size: 12 }
+  # Printed 丁目 at x 444; the value leaves it out, as in the husband column.
+  address_second: { pos: [432, 535], size: 12 }
+  address_go: { pos: [544, 535], size: 12 }
+  household_person: { pos: [487, 512], size: 12 }
+  address_apartment: { pos: [422, 523], size: 5, step: 5 }
+  address_banchi_ellipse: [537, 558.5, 500, 546.5]
+  address_go_circle: [507, 539, 6]
+  legally_domiciled_first: { pos: [432, 482], size: 12 }
+  # Same printed 丁目 as the 住所 row, so the same `３　　４` shape.
+  legally_domiciled_second: { pos: [432, 461], size: 12 }
+  head_of_person_of_legally_domiciled: { pos: [442, 438], size: 12 }
+  legally_domiciled_banchi_ellipse: [537, 480, 500, 468.5]
+  legally_domiciled_go_circle: [507, 464, 6]
+  father_name: { pos: [420, 416], size: 12 }
+  mother_name: { pos: [420, 392], size: 12 }
+  # 続き柄 cell, x 542.0-586.4, left of the printed 女 (x 575.5-584.6).
+  relationship: { pos: [553, 395.5], size: 12 }
+  marital_history:
+    first_marriage_check: { pos: [405.5, 247], size: 10 }
+    remarriage_death_check: { pos: [466.5, 253.5], size: 8 }
+    remarriage_divorce_check: { pos: [466.5, 242.5], size: 8 }
+    year: { pos: [495, 247], size: 6 }
+    month: { pos: [536, 247], size: 6 }
+    day: { pos: [565, 247], size: 6 }
+  job_type_checks:
+    size: 10
+    positions:
+      1: [236.8, 213.5]
+      2: [265.6, 213.5]
+      3: [294.4, 213.5]
+      4: [323.2, 213.5]
+      5: [352, 213.5]
+      6: [380.8, 213.5]
+
+# 証人 (witnesses) box, top right of the form: x 720-909 for witness 1 and
+# x 909-1107 for witness 2 (a 189pt offset), rows y 470-662. The 署名 row is
+# left for a handwritten signature unless `name` is set in the config. The
+# era (昭和/平成/西暦) checkboxes are not ticked; write the era as part of
+# `birth_year`, like the husband and wife columns. The 方書 line has no
+# config key and stays handwritten.
+witness1:
+  name: { pos: [726, 635], size: 14 }
+  # Printed 年/月/日 labels sit at x 831/867/902 on baseline 605. The era
+  # checkboxes leave only 41pt before 年, so a 4-character year like 昭和６０
+  # needs the smaller 10pt size to fit.
+  birth_year: { pos: [787, 605.5], size: 10 }
+  birth_month: { pos: [841, 605.5], size: 10 }
+  birth_day: { pos: [877, 605.5], size: 10 }
+  address_first: { pos: [726, 576], size: 12 }
+  # Written on the ☐番地 line; the printed 丁目 on the ☐番 line below stays
+  # unused because the value holds its own 丁目, like the husband/wife columns.
+  address_second: { pos: [726, 557], size: 12 }
+  address_go: { pos: [858, 546], size: 12 }
+  # The ellipse rings the printed ☐番地 checkbox row; the circle rings the
+  # ☐ of 番, matching the husband/wife columns on this template.
+  address_banchi_ellipse: [863, 566.5, 826, 553.5]
+  address_go_circle: [833, 550, 6]
+  legally_domiciled_first: { pos: [726, 505], size: 12 }
+  # On the ☐番地 line, above the printed 丁目, for the same reason as
+  # address_second.
+  legally_domiciled_second: { pos: [726, 486], size: 12 }
+  legally_domiciled_banchi_ellipse: [863, 496, 826, 482.5]
+  legally_domiciled_go_circle: [833, 478.5, 6]
+
+witness2:
+  name: { pos: [915, 635], size: 14 }
+  birth_year: { pos: [976, 605.5], size: 10 }
+  birth_month: { pos: [1030, 605.5], size: 10 }
+  birth_day: { pos: [1066, 605.5], size: 10 }
+  address_first: { pos: [915, 576], size: 12 }
+  address_second: { pos: [915, 557], size: 12 }
+  address_go: { pos: [1047, 546], size: 12 }
+  address_banchi_ellipse: [1052, 566.5, 1015, 553.5]
+  address_go_circle: [1022, 550, 6]
+  legally_domiciled_first: { pos: [915, 505], size: 12 }
+  legally_domiciled_second: { pos: [915, 486], size: 12 }
+  legally_domiciled_banchi_ellipse: [1052, 496, 1015, 482.5]
+  legally_domiciled_go_circle: [1022, 478.5, 6]
+
+new_legally_domiciled:
+  husband_lastname_check: { pos: [217.8, 318.5], size: 10 }
+  wife_lastname_check: { pos: [217.8, 300.5], size: 10 }
+  # Clears the 夫の氏/妻の氏 checkbox column; whether the value's own 丁目
+  # lands on the printed 丁目 (x 436) depends on the address length, so nudge
+  # x per config if needed.
+  address: { pos: [262, 294], size: 16 }
+  banchi_ellipse: [537, 315, 501, 303.5]
+  go_circle: [507.7, 295, 6]
+
+to_live_together:
+  year: { pos: [268, 273.5], size: 12 }
+  month: { pos: [348, 273.5], size: 12 }
+
+# The 国勢調査 year drops into the gap in the printed note, between
+# 「（国勢調査の年…」 (ends x 288.5) and 「年…の」 (starts x 306.5). The job
+# values go right of the printed 夫の職業/妻の職業 labels on the same line;
+# the row is only ~25pt tall, so they are size 12 here, not red's 16.
+national_census:
+  year: { pos: [292, 193.5], size: 6 }
+  husband_job: { pos: [262, 179], size: 12 }
+  wife_job: { pos: [449, 179], size: 12 }
+
+# 「令和　年　月　日届出」 line: printed 令和 ends at x 172.1 and 年/月/日 sit
+# at x 197.3/224.4/248.9 on baseline 738.5.
+notification:
+  year: { pos: [180, 738.5], size: 12 }
+  month: { pos: [209.5, 738.5], size: 12 }
+  day: { pos: [234.5, 738.5], size: 12 }
+  # The recipient is pre-printed as 品川区長殿 (x 172.0-260.9), so there is no
+  # 届出先 blank on this form: keep `to: ''` in the config. The position below
+  # only marks the same baseline, left of the printed text.
+  to: { pos: [130, 706], size: 12 }
+
+# その他 box interior: x 145.0-583.0, y 65.0-174.3. Seven 12pt lines fit.
+other:
+  text: { pos: [152, 160], size: 12, step: 15 }
