@@ -36,7 +36,7 @@ An empty list means the skill is valid.
 * `SKILL.md` (or `skill.md`) exists and opens with a closed YAML frontmatter mapping.
 * Required fields: `name` and `description`.
 * Optional spec fields only: `license`, `allowed-tools`, `metadata`, `compatibility`.
-* `name` is lowercase, at most 64 characters, letters/digits/hyphens, no leading, trailing, or consecutive hyphens, and it matches the folder name (after NFKC normalization).
+* `name` is lowercase, at most 64 characters, ASCII letters/digits/hyphens (`a-z`, `0-9`, `-`), no leading, trailing, or consecutive hyphens, and it matches the folder name (after NFKC normalization).
 * `description` is a non-empty string at most 1024 characters.
 * `compatibility`, when present, is a string at most 500 characters.
 

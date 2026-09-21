@@ -6,9 +6,11 @@ import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
 import { describe, test } from 'node:test';
 import YAML from 'yaml';
 import {
+  makeTempDir,
   readRepoYaml,
   REPO_ROOT,
   TRACKED_CONFIGS,
@@ -285,6 +287,49 @@ describe('helper scripts', () => {
   test('no helper script is Python', () => {
     const python = trackedFiles.filter((f) => f.endsWith('.py'));
     assert.deepEqual(python, []);
+  });
+
+  test('skills-ref rejects a Unicode skill name and accepts ASCII kebab-case', (t) => {
+    const script = path.join(
+      REPO_ROOT,
+      '.claude/skills/skills-ref/scripts/skills-ref.mjs',
+    );
+    const run = (skillDir) => {
+      try {
+        const stdout = execFileSync(
+          process.execPath,
+          [script, 'validate', skillDir],
+          { encoding: 'utf-8', stdio: ['ignore', 'pipe', 'pipe'] },
+        );
+        return { code: 0, stdout, stderr: '' };
+      } catch (err) {
+        return {
+          code: err.status,
+          stdout: err.stdout ?? '',
+          stderr: err.stderr ?? '',
+        };
+      }
+    };
+    const writeSkill = (dirName, skillName) => {
+      const skillDir = path.join(makeTempDir(t, 'jmr-skill-'), dirName);
+      fs.mkdirSync(skillDir);
+      fs.writeFileSync(
+        path.join(skillDir, 'SKILL.md'),
+        `---\nname: ${skillName}\ndescription: A throwaway skill used only to check the name charset.\n---\n\n# Body\n`,
+      );
+      return skillDir;
+    };
+
+    const japanese = run(writeSkill('日本語', '日本語'));
+    assert.equal(japanese.code, 1);
+    assert.match(
+      japanese.stderr,
+      /Skill name '日本語' contains invalid characters\. Only ASCII lowercase letters, digits, and hyphens are allowed\./,
+    );
+
+    const ascii = run(writeSkill('ascii-skill', 'ascii-skill'));
+    assert.equal(ascii.code, 0);
+    assert.match(ascii.stdout, /Valid skill:/);
   });
 });
 

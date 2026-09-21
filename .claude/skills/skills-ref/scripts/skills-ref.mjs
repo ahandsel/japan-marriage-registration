@@ -19,6 +19,7 @@
 // * to-prompt: an <available_skills> XML block on stdout.
 // * Exit codes: 0 = success, 1 = validation or parse error, 2 = usage error.
 // Version history:
+// * v1.3 - 2026-09-21 - Restrict skill names to ASCII lowercase letters, digits, and hyphens, matching the Agent Skills spec.
 // * v1.2 - 2026-09-18 - Match the frontmatter delimiters as whole lines, so a "---" inside the body no longer truncates it and an inline "---" no longer passes as a delimiter.
 // * v1.1 - 2026-09-15 - Parse YAML with the repo dependency `yaml` instead of the unresolvable `js-yaml`, correct the documented paths to .claude/skills/, and drop the removed pnpm alias.
 // * v1.0 - 2026-09-09 - Initial Node port of skills-ref 0.1.0.
@@ -27,7 +28,7 @@ import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { basename, dirname, isAbsolute, join, resolve } from 'node:path';
 import { parse as load } from 'yaml';
 
-const VERSION = '1.2';
+const VERSION = '1.3';
 const MAX_SKILL_NAME_LENGTH = 64;
 const MAX_DESCRIPTION_LENGTH = 1024;
 const MAX_COMPATIBILITY_LENGTH = 500;
@@ -148,7 +149,9 @@ function parseFrontmatter(content) {
 }
 
 function isAlnumOrHyphen(char) {
-  return char === '-' || /^\p{L}$/u.test(char) || /^\p{N}$/u.test(char);
+  // The Agent Skills spec allows only a-z, 0-9, and hyphen. Unicode letters
+  // such as 日本語 must not pass this check.
+  return /^[a-z0-9-]$/.test(char);
 }
 
 function validateName(name, skillDir) {
@@ -174,7 +177,7 @@ function validateName(name, skillDir) {
   }
   if (![...normalized].every(isAlnumOrHyphen)) {
     errors.push(
-      `Skill name '${normalized}' contains invalid characters. Only letters, digits, and hyphens are allowed.`,
+      `Skill name '${normalized}' contains invalid characters. Only ASCII lowercase letters, digits, and hyphens are allowed.`,
     );
   }
   if (skillDir) {
