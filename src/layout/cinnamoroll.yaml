@@ -126,10 +126,13 @@ wife:
 # row (y 524-541.7), so the witness `address_apartment` fits one line there.
 witness1:
   name: { pos: [726, 635], size: 14 }
-  # Printed 年/月/日 labels sit at x 831/867/902 on baseline 605. The era
-  # checkboxes leave only 41pt before 年, so a 4-character year like 昭和６０
-  # needs the smaller 10pt size to fit.
-  birth_year: { pos: [787, 605.5], size: 10 }
+  # 印字の年・月・日の中心は x 831/867/902 で、ベースラインは 605 です。
+  # 元号のチェックボックスの上の行は x 792.4 の「西暦」で終わり、年（x 826.8）までの空きは約34pt しかありません。
+  # そのため `昭和６０` のような4文字の年は、大きさ8にして西暦の右に書きます。
+  # The printed 年/月/日 labels are centered at x 831/867/902 on baseline 605.
+  # The top line of the era checkboxes ends with 西暦 at x 792.4, which leaves only about 34pt before 年 (x 826.8).
+  # So a 4-character year such as `昭和６０` is drawn at size 8, right of 西暦.
+  birth_year: { pos: [793.5, 605.5], size: 8 }
   birth_month: { pos: [841, 605.5], size: 10 }
   birth_day: { pos: [877, 605.5], size: 10 }
   address_first: { pos: [726, 576], size: 12 }
@@ -152,7 +155,7 @@ witness1:
 
 witness2:
   name: { pos: [915, 635], size: 14 }
-  birth_year: { pos: [976, 605.5], size: 10 }
+  birth_year: { pos: [982.5, 605.5], size: 8 }
   birth_month: { pos: [1030, 605.5], size: 10 }
   birth_day: { pos: [1066, 605.5], size: 10 }
   address_first: { pos: [915, 576], size: 12 }
