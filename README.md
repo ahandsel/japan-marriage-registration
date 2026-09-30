@@ -307,7 +307,8 @@ husband:
   address_second: ３丁目　４
   is_banchi_address: false
   address_go: １０
-  address_apartment: | # 3行までであれば崩れず表現できます
+  # 3行までであれば崩れず表現できます。
+  address_apartment: |
     インチキタワー
     マンション
     ３６１０号室
@@ -323,11 +324,14 @@ husband:
   mother_name_pos: [221, 380]
   relationship: 長
   marital_history:
-    marriage_cat: 2 # 0: 初婚 1:死別 2:離別
+    # 0: 初婚、1: 死別、2: 離別
+    marriage_cat: 2
     year: 令和3
     month: 6
     day: 1
-  job_type: 6 # 1-6 でその番号にチェック。0 または '' で空欄
+  # 1-6 でその番号にチェックを付けます。
+  # 0 または '' にすると空欄になります。
+  job_type: 6
 ```
 
 `wife` のセクションも同様に記入します（項目は同じで、用紙の右側の列の座標はレイアウトファイルが持っています）。
@@ -341,7 +345,8 @@ husband:
 
 ```yaml
 witness1:
-  # 署名は必ず証人本人の自署が必要です。通常は '' のままにして、印刷後に署名してもらってください。
+  # 署名は必ず証人本人の自署が必要です。
+  # 通常は '' のままにして、印刷後に署名してもらってください。
   name: ''
   birth_year: 昭和６０
   birth_month: １
@@ -350,9 +355,10 @@ witness1:
   address_second: ２丁目　８
   is_banchi_address: false
   address_go: １
-  # 方書（建物名・部屋番号）。red と black は号の右に短い3行まで、cinnamoroll は印字の方書欄に1行です
+  # 方書（建物名・部屋番号）です。
+  # red と black は号の右に短い3行まで、cinnamoroll は印字の方書欄に1行書けます。
   address_apartment: ''
-  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします
+  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします。
   legally_domiciled_first: 東京都新宿区西新宿
   legally_domiciled_second: ２丁目　８
   is_banchi_legally_domiciled: true

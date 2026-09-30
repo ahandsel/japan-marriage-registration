@@ -782,7 +782,9 @@ describe('scaffolding in a sandbox copy', () => {
       'the existing text is kept byte for byte',
     );
     assert.ok(
-      text.includes('# Witness box. witness1 is the left column'),
+      text.includes(
+        '# witness1 is the left column and witness2 the right one.',
+      ),
       'the sample comments come with the appended sections',
     );
     const sample = readRepoYaml('config.yaml');
@@ -906,7 +908,7 @@ describe('scaffolding in a sandbox copy', () => {
       assert.ok(text.includes(line), 'private header present');
     }
     assert.ok(
-      text.includes('# 0: 初婚 1:死別 2:離別'),
+      text.includes('# 0: 初婚、1: 死別、2: 離別'),
       'sample comments survive',
     );
     const cfg = YAML.parse(text);

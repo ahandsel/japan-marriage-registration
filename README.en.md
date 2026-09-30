@@ -301,8 +301,8 @@ husband:
   address_second: ３丁目　４
   is_banchi_address: false
   address_go: １０
-  address_apartment:
-    | # Can be displayed without breaking layout if within 3 lines
+  # Up to three lines render without overlapping.
+  address_apartment: |
     インチキタワー
     マンション
     ３６１０号室
@@ -318,11 +318,14 @@ husband:
   mother_name_pos: [221, 380]
   relationship: 長
   marital_history:
-    marriage_cat: 2 # 0 = first marriage, 1 = widowed, 2 = divorced
+    # 0: first marriage, 1: widowed, 2: divorced
+    marriage_cat: 2
     year: 令和3
     month: 6
     day: 1
-  job_type: 6 # 1-6 ticks that box; 0 or '' leaves it blank
+  # 1-6 ticks that box.
+  # 0 or '' leaves it blank.
+  job_type: 6
 ```
 
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
@@ -335,8 +338,7 @@ Remove (or comment out) a whole section to leave that column blank for handwriti
 
 ```yaml
 witness1:
-  # The signature must be handwritten by the witness, so leave name as ''
-  # and have them sign the printout.
+  # The signature must be handwritten by the witness, so leave name as '' and have them sign the printout.
   name: ''
   birth_year: 昭和６０
   birth_month: １
@@ -345,11 +347,10 @@ witness1:
   address_second: ２丁目　８
   is_banchi_address: false
   address_go: １
-  # Building and room (方書): up to three short lines after 号 on red and
-  # black, one line on cinnamoroll's printed 方書 row.
+  # This is the building and room (方書).
+  # On red and black, up to three short lines fit to the right of 号; on cinnamoroll, one line fits on the printed 方書 row.
   address_apartment: ''
-  # A foreign witness writes only their nationality; set
-  # is_banchi_legally_domiciled to null to skip the 番地/番 mark.
+  # A foreign witness writes only their nationality here, with is_banchi_legally_domiciled set to null.
   legally_domiciled_first: 東京都新宿区西新宿
   legally_domiciled_second: ２丁目　８
   is_banchi_legally_domiciled: true
