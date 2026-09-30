@@ -536,7 +536,7 @@ function familyInfo(cfg, lay, cc) {
 function newLegallyDomiciled(cfg, lay, cc) {
   // `lastname_of` names the spouse whose surname the couple takes ('husband' or 'wife').
   // In a marriage with a foreign national the couple keeps separate surnames, so neither box applies; `null` skips the ✓.
-  // The legacy boolean `is_husband_lastname` is still honoured.
+  // The legacy boolean `is_husband_lastname` is still honored.
   let lastnameOf = cfg.lastname_of;
   if (lastnameOf === undefined) {
     if (cfg.is_husband_lastname === true) {
