@@ -5,7 +5,7 @@ applyTo: 'scripts/**,start.sh,package.json'
 # Scripts and repository automation
 
 The "Scripts" section of `AGENTS.md` sets the authoring rules, and `.claude/skills/script-auditor/SKILL.md` enforces them.
-The existing helpers are `scripts/cleanup-temp-files.sh` and `scripts/index.sh`, both zsh, invoked through `pnpm clean` and `pnpm index`.
+The existing helpers are `scripts/cleanup-temp-files.sh` and `scripts/index.sh`, both zsh, and `scripts/migrate-config-keys.mjs`, invoked through `pnpm clean`, `pnpm index`, and `pnpm run migrate-config`.
 No workflow runs any of them, so a script reaches users on review alone.
 
 * New helper scripts use Node.js ES modules (`.mjs`) or zsh by default.

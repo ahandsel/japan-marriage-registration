@@ -84,6 +84,7 @@ pnpm run < variant > :pdf          # generate result-<variant>-<HH-MM-SS>.pdf fr
 pnpm lint                          # prettier --write + markdownlint-cli2 --fix (autofixing)
 pnpm run lint-code                 # prettier only
 pnpm run lint-md                   # markdownlint-cli2 only
+pnpm run migrate-config            # rename the old config keys in every config-private*.yaml, in place (-n lists only)
 pnpm test                          # run the test suite (node --test); pdftotext (poppler) enables the text placement checks
 pnpm index                         # list every pnpm script with its command
 pnpm clean                         # delete scratch files: temp*, import.csv, import.md, .DS_Store, .pnpm-store (asks first; -n lists only)
@@ -187,7 +188,7 @@ The `*_pos` values are `red` coordinates by definition, so they apply only when 
 ## Scripts
 
 Default to creating scripts as Node.js ES modules (`.mjs`) or zsh for any new script tooling in this repo.
-The existing helpers live in `scripts/` (`cleanup-temp-files.sh` and `index.sh`, both zsh) and are invoked through the `pnpm clean` and `pnpm index` scripts.
+The existing helpers live in `scripts/` (`cleanup-temp-files.sh` and `index.sh`, both zsh, and `migrate-config-keys.mjs`) and are invoked through the `pnpm clean`, `pnpm index`, and `pnpm run migrate-config` scripts.
 
 * Do not use Python due to the overhead of managing Python environments and dependencies across different users' machines.
 * Default to Node.js for scripts that involve file system operations, string manipulation, or integration with JavaScript-based tools, as it provides a consistent runtime environment and leverages the strengths of the JavaScript ecosystem for build and automation tasks.
