@@ -238,7 +238,8 @@ These rules apply to every text this repo produces, not only Markdown files: com
 
 * Use full-width punctuation for Japanese text, half-width for English.
 * Use ASCII, lowercase, kebab-case for filenames, variables, and function names.
-  Use camelCase for object keys.
+  Use camelCase for object keys in JavaScript code.
+  Config and layout YAML keys are the exception: they use snake_case, like `address_town`.
 * Add emojis to make system messages (errors, warnings, instructions) more visible and easier to understand.
 * Use straight quotes, not curly quotes.
 * Do not use contractions (write "do not" instead of "don't").
