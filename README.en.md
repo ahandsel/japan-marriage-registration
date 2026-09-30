@@ -442,7 +442,7 @@ layout:
     last_name: { pos: [225, 592] } # nudge one field, keep everything else
 ```
 
-The legacy `*_pos` keys are still honoured on top of the resolved layout when the red layout is in use.
+The legacy `*_pos` keys are still honored on top of the resolved layout when the red layout is in use.
 Moving `address_town_pos` or `domicile_town_pos` also shifts the fields that were historically placed relative to them (for example `address_banchi` and `head_of_household`), so old configs render exactly as before.
 On any other template the `*_pos` keys are ignored with a warning.
 When a `layout:` entry and a `*_pos` key both position the same field, the `layout:` entry wins and the generator prints a ⚠️ naming the ignored key.
