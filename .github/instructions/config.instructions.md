@@ -20,6 +20,7 @@ A tracked config is public.
   Its spouse 住所 and 本籍 rows also pre-print 丁目, so `address_second` and `legally_domiciled_second` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows keep the usual `２丁目　８` shape.
 * Every top-level section is optional: deleting one leaves that part of the form blank for handwriting.
   A key missing inside a section that is present is an error, and so is a `job_type` outside 1-6 (`0` and `''` leave the box blank).
+  The one exception is a witness `address_apartment`, which was added after the witness box shipped: a missing one prints nothing.
 * `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section.
   Any other value, or a missing key, is an error.
 * A `layout:` block in a config deep-merges over the template's layout file.

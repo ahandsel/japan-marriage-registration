@@ -145,6 +145,7 @@ Top-level sections: `notification`, `husband`, `wife`, `new_legally_domiciled`, 
 `husband` and `wife` share the same keys, and so do `witness1` and `witness2` (the left and right columns of the 証人 box).
 Every top-level section is optional: a config without one (for example one written before the witness box existed) leaves that part of the form blank for handwriting, and a generate run prints an ℹ️ note naming it.
 A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `job_type` outside 1-6; `0` and `''` leave the job box blank.
+The one exception is a witness `address_apartment`, which was added after the witness box shipped: a missing one prints nothing, so a witness section written before it still renders.
 A config file that is not valid YAML is reported with the parser's line and column, never as a stack trace.
 `is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
 Any other value, including a missing key or a quoted `'false'`, is an error (`requireTriState` in `main.js`), so a required mark can never go missing silently.

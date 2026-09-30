@@ -649,7 +649,9 @@ function otherInfo(cfg, lay, cc) {
 
 function witnessInfo(cfg, lay, cc) {
   // The whole witness section is optional: configs written before it existed do not have it, and many couples have the witnesses fill the box in by hand.
-  // A key missing inside a present section is an error here as in every other section (see requireValue); `pnpm run init-config` appends a whole section from the sample, so there is no half-written witness to tolerate.
+  // A key missing inside a present section is an error here, as in every other section (see requireValue).
+  // The one exception is address_apartment, which was added after the witness box shipped.
+  // A witness section written before it has no such key, and the init-config top-up adds only whole sections, so a missing (or null) address_apartment prints nothing, like ''.
   if (cfg === undefined || cfg === null) {
     return;
   }
@@ -669,7 +671,7 @@ function witnessInfo(cfg, lay, cc) {
     cc.circle(...lay.address_go_circle);
   }
   // 方書 (building and room) has its own slot after 号: written into address_second, it runs over the 番 mark and the 号 value on the red form.
-  drawMultiline(cc, lay.address_apartment, cfg.address_apartment);
+  drawMultiline(cc, lay.address_apartment, cfg.address_apartment ?? '');
   drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
   drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
   requireTriState(

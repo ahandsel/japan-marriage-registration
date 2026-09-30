@@ -276,6 +276,7 @@ Each file has the following top-level sections:
 
 Every section is optional: remove one and that part of the form stays blank for handwriting (the generator prints a note naming it).
 A key missing inside a section that is present is an error, so set a key to `''` to leave a single box blank.
+The one exception is a witness `address_apartment`, which was added after the witness box: a config written before it has no such key, and a missing one prints nothing.
 
 
 ### Details

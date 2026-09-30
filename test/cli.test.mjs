@@ -297,6 +297,23 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     );
   });
 
+  test('a witness section written before address_apartment existed still renders', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(
+      dir,
+      'witness-no-apartment.yaml',
+      'config.yaml',
+      (cfg) => {
+        delete cfg.witness1.address_apartment;
+        delete cfg.witness2.address_apartment;
+      },
+    );
+    const out = path.join(dir, 'out.pdf');
+    const { code, stderr } = await runMain([cfgPath, '-o', out]);
+    assert.equal(code, 0, stderr);
+    assert.ok(fs.existsSync(out), 'the PDF is written');
+  });
+
   test('a missing witness key is a missing key, like a spouse key', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(

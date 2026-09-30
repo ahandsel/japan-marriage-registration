@@ -17,6 +17,7 @@ Conventions used below:
   Either it is for office use, or it is a form field the config does not cover yet.
 * Every top-level config section is optional: remove one and that part of the form stays blank for handwriting.
   A key missing inside a section that is present is an error; set it to `''` to leave a single box blank.
+  The one exception is a witness `address_apartment`, which was added after the witness box: a missing one prints nothing.
 * Every position lives in the per-template layout file, `src/layout/<variant>.yaml`, as an absolute `[x, y]` point coordinate measured from the bottom-left of the page.
   Any field can be moved from the config with a top-level `layout:` block, which deep-merges over that file.
   The `*_pos` keys named below are legacy overrides kept so old configs render unchanged; they hold red coordinates and apply only when the red layout is in use.
