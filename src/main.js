@@ -722,6 +722,9 @@ function witnessInfo(cfg, lay, cc) {
   } else if (cfg.is_banchi_address === false) {
     cc.circle(...lay.address_go_circle);
   }
+  // 方書 (building and room) has its own slot after 号: written into
+  // address_second it runs over the 番 mark and the 号 value on the red form.
+  drawMultiline(cc, lay.address_apartment, cfg.address_apartment);
   drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
   drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
   requireTriState(

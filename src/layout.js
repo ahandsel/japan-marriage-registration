@@ -61,8 +61,9 @@ const PERSON_SCHEMA = {
 };
 
 // The two witness columns share one schema, like husband and wife do. A
-// witness has no 世帯主/筆頭者 line and no 方書 row on the bundled templates,
-// so the schema is a subset of PERSON_SCHEMA.
+// witness has no 世帯主/筆頭者 line on the bundled templates, so the schema is
+// a subset of PERSON_SCHEMA. Only cinnamoroll prints a witness 方書 row; the
+// other layouts put `address_apartment` in the free space after 号.
 const WITNESS_SCHEMA = {
   name: 'text',
   birth_year: 'text',
@@ -71,6 +72,7 @@ const WITNESS_SCHEMA = {
   address_first: 'text',
   address_second: 'text',
   address_go: 'text',
+  address_apartment: 'multiline',
   address_banchi_ellipse: 'ellipse',
   address_go_circle: 'circle',
   legally_domiciled_first: 'text',

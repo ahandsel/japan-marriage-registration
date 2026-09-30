@@ -345,6 +345,9 @@ witness1:
   address_second: ２丁目　８
   is_banchi_address: false
   address_go: １
+  # Building and room (方書): up to three short lines after 号 on red and
+  # black, one line on cinnamoroll's printed 方書 row.
+  address_apartment: ''
   # A foreign witness writes only their nationality; set
   # is_banchi_legally_domiciled to null to skip the 番地/番 mark.
   legally_domiciled_first: 東京都新宿区西新宿
@@ -414,7 +417,7 @@ The witness rows do not have that label in the way, so a witness value keeps the
 
 The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom.
 Those stay blank for handwriting.
-Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`.
+Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`; the witness `address_apartment` then goes at the right end of that same line.
 
 
 ### Layout

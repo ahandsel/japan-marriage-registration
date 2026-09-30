@@ -154,6 +154,10 @@ witness1:
   # This row prints no 番地/番/号: the three items below mark where a
   # handwritten one would go. See the header note.
   address_go: { pos: [840, 549], size: 11 }
+  # 方書 has no printed slot, so it takes the right end of the lower 住所
+  # line (x 846-877, y 543-571.5), past the folded 番地/号 in address_second:
+  # up to three lines of five characters.
+  address_apartment: { pos: [846, 565], size: 6, step: 7 }
   address_banchi_ellipse: [839.8, 561, 811.8, 545]
   address_go_circle: [821.2, 549, 8]
   legally_domiciled_first: { pos: [698, 521.5], size: 11 }
@@ -170,6 +174,7 @@ witness2:
   address_first: { pos: [882.3, 576.5], size: 11 }
   address_second: { pos: [882.3, 549], size: 11 }
   address_go: { pos: [1024.3, 549], size: 11 }
+  address_apartment: { pos: [1030.3, 565], size: 6, step: 7 }
   address_banchi_ellipse: [1024.1, 561, 996.1, 545]
   address_go_circle: [1005.5, 549, 8]
   legally_domiciled_first: { pos: [882.3, 521.5], size: 11 }

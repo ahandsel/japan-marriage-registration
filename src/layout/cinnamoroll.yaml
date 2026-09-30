@@ -122,8 +122,8 @@ wife:
 # x 909-1107 for witness 2 (a 189pt offset), rows y 470-662. The 署名 row is
 # left for a handwritten signature unless `name` is set in the config. The
 # era (昭和/平成/西暦) checkboxes are not ticked; write the era as part of
-# `birth_year`, like the husband and wife columns. The 方書 line has no
-# config key and stays handwritten.
+# `birth_year`, like the husband and wife columns. The 方書 line is one
+# row (y 524-541.7), so the witness `address_apartment` fits one line there.
 witness1:
   name: { pos: [726, 635], size: 14 }
   # Printed 年/月/日 labels sit at x 831/867/902 on baseline 605. The era
@@ -137,6 +137,8 @@ witness1:
   # unused because the value holds its own 丁目, like the husband/wife columns.
   address_second: { pos: [726, 557], size: 12 }
   address_go: { pos: [858, 546], size: 12 }
+  # Right of the printed 方書 label (x 726.5-742.3), on the 方書 row.
+  address_apartment: { pos: [746, 528.5], size: 11, step: 11 }
   # The ellipse rings the printed ☐番地 checkbox row; the circle rings the
   # ☐ of 番, matching the husband/wife columns on this template.
   address_banchi_ellipse: [863, 566.5, 826, 553.5]
@@ -156,6 +158,7 @@ witness2:
   address_first: { pos: [915, 576], size: 12 }
   address_second: { pos: [915, 557], size: 12 }
   address_go: { pos: [1047, 546], size: 12 }
+  address_apartment: { pos: [935, 528.5], size: 11, step: 11 }
   address_banchi_ellipse: [1052, 566.5, 1015, 553.5]
   address_go_circle: [1022, 550, 6]
   legally_domiciled_first: { pos: [915, 505], size: 12 }

@@ -115,6 +115,7 @@ witness1:
   address_second: ２丁目　８番１号
   is_banchi_address: null
   address_go: ''
+  address_apartment: '' # 方書（建物名・部屋番号）。住所の下の行の右端に3行まで書けます
   # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null に
   legally_domiciled_first: 東京都新宿区西新宿
   legally_domiciled_second: ２丁目　８
@@ -129,6 +130,10 @@ witness2:
   address_second: １丁目　１番２号
   is_banchi_address: null
   address_go: ''
+  address_apartment: |
+    サンプル
+    ハイツ
+    ２０１
   legally_domiciled_first: 神奈川県横浜市中区日本大通
   legally_domiciled_second: １丁目　１
   is_banchi_legally_domiciled: true

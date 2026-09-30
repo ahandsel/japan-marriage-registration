@@ -350,6 +350,8 @@ witness1:
   address_second: ２丁目　８
   is_banchi_address: false
   address_go: １
+  # 方書（建物名・部屋番号）。red と black は号の右に短い3行まで、cinnamoroll は印字の方書欄に1行です
+  address_apartment: ''
   # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします
   legally_domiciled_first: 東京都新宿区西新宿
   legally_domiciled_second: ２丁目　８
@@ -423,6 +425,7 @@ witness1:
 
 黒刷り様式には対応する設定項目がない印字欄（□昭和□平成の元号チェック、□同右・□同左、養父・養母の行、□未同居・未挙式、届出人署名、事件簿番号の欄）があり、これらは手書き用に空欄のまま出力されます。
 証人の住所欄には番地・番・号の印字がないため、証人の `is_banchi_address` は `null` にして、番地と号は `address_second` にまとめてください。
+証人の `address_apartment`（方書）は同じ行の右端に書かれます。
 
 
 ### レイアウト
