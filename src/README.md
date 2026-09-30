@@ -51,7 +51,7 @@ A template with no file there falls back to [red.yaml][], which is meant for use
 | -------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [red.yaml][]         | `jp-marriage-registration-red.pdf`         | The default layout, and the fallback for any template without a file of its own. Names at 24pt and kana at 12pt. The legacy `*_pos` config overrides are red coordinates by definition, so they apply only on this base layout. |
 | [black.yaml][]       | `jp-marriage-registration-black.pdf`       | A denser grid, so the sizes are smaller (names at 18pt, kana at 9pt). Its header comment records the measured column and row grid, plus the boxes this form has that the config has no keys for.                                |
-| [cinnamoroll.yaml][] | `jp-marriage-registration-cinnamoroll.pdf` | The Shinagawa City (品川区) form. Its header comment records the two fields this form does not have, the pre-printed recipient and the missing 世帯主の氏名 row.                                                                |
+| [cinnamoroll.yaml][] | `jp-marriage-registration-cinnamoroll.pdf` | The Shinagawa City (品川区) form. Its header comment records the three quirks: the pre-printed recipient, the missing 世帯主の氏名 row, and the spouse 住所/本籍 values that leave 丁目 out.                                    |
 
 
 ### The shape of a layout file
