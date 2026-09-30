@@ -269,11 +269,11 @@ pnpm run init-config
 
 | セクション              | 内容                                       |
 | ----------------------- | ------------------------------------------ |
-| `notification`          | 届出日と提出先の市区町村（`to`）           |
+| `filing`                | 届出日と提出先の市区町村（`office`）       |
 | `husband`               | 夫になる人の情報                           |
 | `wife`                  | 妻になる人の情報                           |
-| `new_legally_domiciled` | 婚姻後の新しい本籍                         |
-| `to_live_together`      | 同居を始めた（始める）時期                 |
+| `new_domicile`          | 婚姻後の新しい本籍                         |
+| `living_together_since` | 同居を始めた（始める）時期                 |
 | `national_census`       | 国勢調査に関する情報（該当期間のみ記載）   |
 | `other`                 | 自由記入欄（旧字体⇔新字体の変更など）      |
 | `witness1`              | 証人欄の左の列（省略すると手書き用に空欄） |
@@ -282,7 +282,7 @@ pnpm run init-config
 どのセクションも省略できます。
 セクションごと削除すると、その欄は手書き用に空欄のまま出力され、生成時にその旨の案内が表示されます。
 セクションがあるのにその中の項目が無い場合はエラーになるため、特定の欄だけ空欄にしたいときは値を `''` にしてください。
-例外は証人の `address_apartment` です。
+例外は証人の `address_building` です。
 この項目は証人欄より後に追加されたため、それ以前に作った設定には無く、無い場合は何も印字しません。
 
 
@@ -304,43 +304,47 @@ husband:
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
-  address_first: 東京都千代田区神田
-  address_first_pos: [221, 545]
-  address_second: ３丁目　４
-  is_banchi_address: false
+  address_town: 東京都千代田区神田
+  address_town_pos: [221, 545]
+  address_banchi: ３丁目　４
+  address_banchi_type: ban
   address_go: １０
   # 3行までであれば崩れず表現できます。
-  address_apartment: |
+  address_building: |
     インチキタワー
     マンション
     ３６１０号室
-  household_person: 山田　太郎
-  legally_domiciled_first: 東京都千代田区飯田橋
-  legally_domiciled_first_pos: [221, 480]
-  legally_domiciled_second: ３丁目　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  head_of_household: 山田　太郎
+  domicile_town: 東京都千代田区飯田橋
+  domicile_town_pos: [221, 480]
+  domicile_banchi: ３丁目　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 山田　太郎兵衛
   father_name: 山田　権左衛門
   father_name_pos: [221, 410]
   mother_name: 山田　としこ
   mother_name_pos: [221, 380]
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    # 0: 初婚、1: 死別、2: 離別
-    marriage_cat: 2
+    # first_marriage: 初婚、widowed: 死別、divorced: 離別
+    status: divorced
     year: 令和3
     month: 6
     day: 1
   # 1-6 でその番号にチェックを付けます。
   # 0 または '' にすると空欄になります。
-  job_type: 6
+  household_work_type: 6
 ```
 
 `wife` のセクションも同様に記入します（項目は同じで、用紙の右側の列の座標はレイアウトファイルが持っています）。
 
-`is_banchi_address` と `is_banchi_legally_domiciled` には `true`（番地を楕円で囲む）、`false`（番を丸で囲む）、`null` のいずれかを指定します。
+`address_banchi_type` と `domicile_banchi_type` には `banchi`（番地を楕円で囲む）、`ban`（番を丸で囲む）、`null` のいずれかを指定します。
 `null` にすると印を付けません（外国籍の方の本籍や、番地・番の印字が無い欄に使います）。
-それ以外の値（引用符付きの `'false'` やキーの欠落など）はエラーになり、印が黙って抜け落ちることはありません。
+それ以外の値（`banch` のような打ち間違いやキーの欠落など）はエラーになり、印が黙って抜け落ちることはありません。
+
+設定のキー名は、分かりやすくするために2026-10-01に変更されました（たとえば `address_first` は `address_town` に、`notification` は `filing` になりました）。
+古いキー名が残っている設定は、新しいキー名の一覧を表示して実行を止めます。
+`pnpm run migrate-config` を実行すると、すべての `config-private*.yaml` のキー名がその場で書き換わります。コメントと値はそのまま残り、値が画面に表示されることはありません。
 
 `witness1` と `witness2` は証人欄の左右の列で、同じ項目を持ちます。
 セクションごと削除（またはコメントアウト）すると、その列は手書き用に空欄のままになります。
@@ -353,17 +357,17 @@ witness1:
   birth_year: 昭和６０
   birth_month: １
   birth_day: ２３
-  address_first: 東京都新宿区西新宿
-  address_second: ２丁目　８
-  is_banchi_address: false
+  address_town: 東京都新宿区西新宿
+  address_banchi: ２丁目　８
+  address_banchi_type: ban
   address_go: １
   # 方書（建物名・部屋番号）です。
   # red と black は号の右に短い3行まで、cinnamoroll は印字の方書欄に1行書けます。
-  address_apartment: ''
-  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします。
-  legally_domiciled_first: 東京都新宿区西新宿
-  legally_domiciled_second: ２丁目　８
-  is_banchi_legally_domiciled: true
+  address_building: ''
+  # 外国籍の証人は国籍のみを記入し、domicile_banchi_type を null にします。
+  domicile_town: 東京都新宿区西新宿
+  domicile_banchi: ２丁目　８
+  domicile_banchi_type: banchi
 ```
 
 [Release]: https://github.com/ahandsel/japan-marriage-registration/releases
@@ -426,14 +430,14 @@ witness1:
 `red` 以外の様式では生成プログラムがこれらを警告付きで無視するため配置は崩れませんが、`black` と `cinnamoroll` には様式ごとのサンプル設定（`config-black.yaml` と `config-cinnamoroll.yaml`）が用意されており、`template:` キーで様式を指定し、配置はレイアウトファイルに任せています。
 
 シナモロール様式は宛先が「品川区長殿」と印刷済みで、住所欄に世帯主の氏名の行がありません。
-この様式では `notification.to` と `household_person` を空文字 `''` のままにしてください。
-また、夫・妻の住所欄と本籍欄には丁目の数字のすぐ後ろに「丁目」が印字済みなので、`address_second` と `legally_domiciled_second` には丁目を書かず、印字の位置に全角スペースを2つ入れてください（「３丁目　４」ではなく「３　　４」）。
+この様式では `filing.office` と `head_of_household` を空文字 `''` のままにしてください。
+また、夫・妻の住所欄と本籍欄には丁目の数字のすぐ後ろに「丁目」が印字済みなので、`address_banchi` と `domicile_banchi` には丁目を書かず、印字の位置に全角スペースを2つ入れてください（「３丁目　４」ではなく「３　　４」）。
 そうしないと値の「丁目」が印字の上に重なります。
 証人欄は印字の「丁目」の上の行に書くため、証人の値は他の様式と同じ「２丁目　８」の形のままで構いません。
 
 黒刷り様式には対応する設定項目がない印字欄（□昭和□平成の元号チェック、□同右・□同左、養父・養母の行、□未同居・未挙式、届出人署名、事件簿番号の欄）があり、これらは手書き用に空欄のまま出力されます。
-証人の住所欄には番地・番・号の印字がないため、証人の `is_banchi_address` は `null` にして、番地と号は `address_second` にまとめてください。
-証人の `address_apartment`（方書）は同じ行の右端に書かれます。
+証人の住所欄には番地・番・号の印字がないため、証人の `address_banchi_type` は `null` にして、番地と号は `address_banchi` にまとめてください。
+証人の `address_building`（方書）は同じ行の右端に書かれます。
 
 
 ### レイアウト
@@ -441,9 +445,9 @@ witness1:
 すべての描画位置は、テンプレートごとのレイアウトファイル `src/layout/red.yaml`、`src/layout/black.yaml`、`src/layout/cinnamoroll.yaml` が持ちます。
 `-t/--template` フラグや `template:` キーと同じ名前で選択されます。
 各項目は絶対座標です。
-`pos: [x, y]` は左下を原点とするテキストのベースライン位置（ポイント単位）、`size` はフォントサイズで、複数行の項目（`address_apartment` と `other.text`）には行間を表す `step` があります。
+`pos: [x, y]` は左下を原点とするテキストのベースライン位置（ポイント単位）、`size` はフォントサイズで、複数行の項目（`address_building` と `other.text`）には行間を表す `step` があります。
 円は `[x, y, r]`、楕円は対角の2つの角 `[x1, y1, x2, y2]` で表します。
-`job_type_checks` は `job_type` の値（1-6）ごとに✓マークの絶対位置を持ちます。
+`household_work_type_checks` は `household_work_type` の値（1-6）ごとに✓マークの絶対位置を持ちます。
 
 レイアウトファイルを編集せずに位置を調整したいときは、設定ファイルに `layout:` ブロックを追加します。
 テンプレートのレイアウトに深いマージ（deep merge）で重なるため、変更したいキーだけを書けば済みます。
@@ -455,7 +459,7 @@ layout:
 ```
 
 従来の `*_pos` キーも、`red` レイアウトの使用時に限り、解決済みレイアウトへの上書きとして引き続き有効です。
-`address_first_pos` や `legally_domiciled_first_pos` を動かすと、従来この項目からの相対位置で描画されていた項目（`address_second` や `household_person` など）も同じ量だけ移動するため、既存の設定は以前と同じ見た目のまま出力されます。
+`address_town_pos` や `domicile_town_pos` を動かすと、従来この項目からの相対位置で描画されていた項目（`address_banchi` や `head_of_household` など）も同じ量だけ移動するため、既存の設定は以前と同じ見た目のまま出力されます。
 `red` 以外の様式では、`*_pos` キーは警告を表示したうえで無視されます。
 同じ項目に `layout:` の指定と `*_pos` キーの両方がある場合は `layout:` の指定が優先され、無視した `*_pos` キーの名前を ⚠️ で表示します。
 `config.yaml`（つまりそこからコピーした `config-private.yaml`）には氏名・住所・本籍・父母の `*_pos` キーが入っているため、この規則が無いと `layout:` での微調整が何も起こさずに終わってしまいます。

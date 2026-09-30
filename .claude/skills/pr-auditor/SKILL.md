@@ -133,7 +133,7 @@ Hunt each of these by name.
 * A `try`/`catch`, `?.`, or `|| default` that turns a defect into a silent success, such as a missing config key that silently renders as an empty box.
 * A layout entry copied verbatim from another template's file instead of measured against its own printed grid; `AGENTS.md` promises no entry is shared between templates.
 * A new bundled template that leans on the `red` layout fallback, skips the conventional filename, or ships without its three `<variant>:*` scripts; that fallback exists for user-supplied PDFs only.
-* A template quirk silently violated: text drawn into the cinnamoroll form's pre-printed 品川区長殿 or missing 世帯主 row, or a witness `is_banchi_address` set on the black form, whose witness row prints no 番地/番/号.
+* A template quirk silently violated: text drawn into the cinnamoroll form's pre-printed 品川区長殿 or missing 世帯主 row, or a witness `address_banchi_type` set on the black form, whose witness row prints no 番地/番/号.
 * A second implementation of a utility the repository already has. Grep for the behavior before accepting a new helper.
 * A test-shaped claim with nothing behind it: `pnpm test` proves that `main.js` draws each value where `layout.js` resolves it, never that a coordinate matches the printed form, so "tests pass" and a green CI check do not verify a layout change.
 * A change made to turn CI green rather than to fix the behavior the failure names.

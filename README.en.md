@@ -264,11 +264,11 @@ Each file has the following top-level sections:
 
 | Section                 | Purpose                                                       |
 | ----------------------- | ------------------------------------------------------------- |
-| `notification`          | Submission date and the municipality you file with (`to`)     |
+| `filing`                | Submission date and the municipality you file with (`office`) |
 | `husband`               | Husband-to-be's details                                       |
 | `wife`                  | Wife-to-be's details                                          |
-| `new_legally_domiciled` | The couple's new legal domicile (本籍) after marriage         |
-| `to_live_together`      | When the couple started (or will start) living together       |
+| `new_domicile`          | The couple's new legal domicile (本籍) after marriage         |
+| `living_together_since` | When the couple started (or will start) living together       |
 | `national_census`       | National census info (only required during the census period) |
 | `other`                 | Free-text notes (for example, old/new kanji changes)          |
 | `witness1`              | Left witness column (omit to leave it blank for handwriting)  |
@@ -276,7 +276,7 @@ Each file has the following top-level sections:
 
 Every section is optional: remove one and that part of the form stays blank for handwriting (the generator prints a note naming it).
 A key missing inside a section that is present is an error, so set a key to `''` to leave a single box blank.
-The one exception is a witness `address_apartment`, which was added after the witness box: a config written before it has no such key, and a missing one prints nothing.
+The one exception is a witness `address_building`, which was added after the witness box: a config written before it has no such key, and a missing one prints nothing.
 
 
 ### Details
@@ -297,42 +297,46 @@ husband:
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
-  address_first: 東京都千代田区神田
-  address_first_pos: [221, 545]
-  address_second: ３丁目　４
-  is_banchi_address: false
+  address_town: 東京都千代田区神田
+  address_town_pos: [221, 545]
+  address_banchi: ３丁目　４
+  address_banchi_type: ban
   address_go: １０
   # Up to three lines render without overlapping.
-  address_apartment: |
+  address_building: |
     インチキタワー
     マンション
     ３６１０号室
-  household_person: 山田　太郎
-  legally_domiciled_first: 東京都千代田区飯田橋
-  legally_domiciled_first_pos: [221, 480]
-  legally_domiciled_second: ３丁目　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  head_of_household: 山田　太郎
+  domicile_town: 東京都千代田区飯田橋
+  domicile_town_pos: [221, 480]
+  domicile_banchi: ３丁目　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 山田　太郎兵衛
   father_name: 山田　権左衛門
   father_name_pos: [221, 410]
   mother_name: 山田　としこ
   mother_name_pos: [221, 380]
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    # 0: first marriage, 1: widowed, 2: divorced
-    marriage_cat: 2
+    # first_marriage, widowed (ended by death), or divorced
+    status: divorced
     year: 令和3
     month: 6
     day: 1
   # 1-6 ticks that box.
   # 0 or '' leaves it blank.
-  job_type: 6
+  household_work_type: 6
 ```
 
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
 
-`is_banchi_address` and `is_banchi_legally_domiciled` take `true` (ellipse around 番地), `false` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
-Any other value, a quoted `'false'` or a missing key for example, stops the run with an error instead of quietly leaving the mark out.
+`address_banchi_type` and `domicile_banchi_type` take `banchi` (ellipse around 番地), `ban` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
+Any other value, a typo such as `banch` or a missing key for example, stops the run with an error instead of quietly leaving the mark out.
+
+The config keys were renamed on 2026-10-01 to make them easier to understand (for example, `address_first` is now `address_town`, and `notification` is now `filing`).
+A config that still uses an old key name is refused with a list of the new names.
+Run `pnpm run migrate-config` to rename the keys in every `config-private*.yaml` in place; your comments and values are kept, and no value is printed.
 
 `witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields.
 Remove (or comment out) a whole section to leave that column blank for handwriting.
@@ -344,17 +348,17 @@ witness1:
   birth_year: 昭和６０
   birth_month: １
   birth_day: ２３
-  address_first: 東京都新宿区西新宿
-  address_second: ２丁目　８
-  is_banchi_address: false
+  address_town: 東京都新宿区西新宿
+  address_banchi: ２丁目　８
+  address_banchi_type: ban
   address_go: １
   # This is the building and room (方書).
   # On red and black, up to three short lines fit to the right of 号; on cinnamoroll, one line fits on the printed 方書 row.
-  address_apartment: ''
-  # A foreign witness writes only their nationality here, with is_banchi_legally_domiciled set to null.
-  legally_domiciled_first: 東京都新宿区西新宿
-  legally_domiciled_second: ２丁目　８
-  is_banchi_legally_domiciled: true
+  address_building: ''
+  # A foreign witness writes only their nationality here, with domicile_banchi_type set to null.
+  domicile_town: 東京都新宿区西新宿
+  domicile_banchi: ２丁目　８
+  domicile_banchi_type: banchi
 ```
 
 [Release]: https://github.com/ahandsel/japan-marriage-registration/releases
@@ -413,21 +417,21 @@ The first column is the one you use day to day.
 The `*_pos` values in `config.yaml` are red-template coordinates, so on any other template the generator ignores them with a warning.
 `black` and `cinnamoroll` each have their own sample config (`config-black.yaml` and `config-cinnamoroll.yaml`) that pins the form with the `template:` key and leaves every position to the layout file.
 
-The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `notification.to` and `household_person` as empty strings `''` on that template.
-Its 住所 and 本籍 rows for the husband and wife also pre-print 丁目 right after the chome number, so write `address_second` and `legally_domiciled_second` without 丁目 and with two full-width spaces in its place, `３　　４` rather than `３丁目　４`, or the value prints on top of the label.
+The cinnamoroll form pre-prints the recipient as 品川区長殿 and has no 世帯主の氏名 row in its 住所 box, so keep `filing.office` and `head_of_household` as empty strings `''` on that template.
+Its 住所 and 本籍 rows for the husband and wife also pre-print 丁目 right after the chome number, so write `address_banchi` and `domicile_banchi` without 丁目 and with two full-width spaces in its place, `３　　４` rather than `３丁目　４`, or the value prints on top of the label.
 The witness rows do not have that label in the way, so a witness value keeps the usual `２丁目　８` shape.
 
 The black form prints several boxes that the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the 事件簿番号 block at the bottom.
 Those stay blank for handwriting.
-Its witness 住所 row prints no 番地/番/号, so set a witness's `is_banchi_address` to `null` and fold the 番地 and 号 into `address_second`; the witness `address_apartment` then goes at the right end of that same line.
+Its witness 住所 row prints no 番地/番/号, so set a witness's `address_banchi_type` to `null` and fold the 番地 and 号 into `address_banchi`; the witness `address_building` then goes at the right end of that same line.
 
 
 ### Layout
 
 All drawing positions live in per-template layout files, `src/layout/red.yaml`, `src/layout/black.yaml`, and `src/layout/cinnamoroll.yaml`, selected by the same name as the `-t/--template` flag or the `template:` config key.
-Every entry is absolute: `pos: [x, y]` is the text baseline in PDF points measured from the bottom-left corner, `size` is the font size in points, and the multi-line fields (`address_apartment` and `other.text`) also have a `step`, the distance between lines.
+Every entry is absolute: `pos: [x, y]` is the text baseline in PDF points measured from the bottom-left corner, `size` is the font size in points, and the multi-line fields (`address_building` and `other.text`) also have a `step`, the distance between lines.
 Circles are `[x, y, r]`, and ellipses are two opposite bounding-box corners `[x1, y1, x2, y2]`.
-The `job_type_checks` entry maps each `job_type` value (1-6) to the absolute position of its ✓ mark.
+The `household_work_type_checks` entry maps each `household_work_type` value (1-6) to the absolute position of its ✓ mark.
 
 To adjust a field without editing the layout file, add a `layout:` block to your config.
 It deep-merges over the template layout, so you only write the keys you want to change:
@@ -439,7 +443,7 @@ layout:
 ```
 
 The legacy `*_pos` keys are still honoured on top of the resolved layout when the red layout is in use.
-Moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically placed relative to them (for example `address_second` and `household_person`), so old configs render exactly as before.
+Moving `address_town_pos` or `domicile_town_pos` also shifts the fields that were historically placed relative to them (for example `address_banchi` and `head_of_household`), so old configs render exactly as before.
 On any other template the `*_pos` keys are ignored with a warning.
 When a `layout:` entry and a `*_pos` key both position the same field, the `layout:` entry wins and the generator prints a ⚠️ naming the ignored key.
 This matters because `config.yaml` (and so every `config-private.yaml` copied from it) carries a `*_pos` key for the names, the addresses, the 本籍, and the parents; delete the `*_pos` key to silence the warning.

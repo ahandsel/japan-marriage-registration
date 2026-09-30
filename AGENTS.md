@@ -132,29 +132,34 @@ Remember that `pdftotext` measures y from the _top_ of the page, while the layou
   So adding one positional entry is a four-file change: the schema in `layout.js` plus an entry in `red.yaml`, `black.yaml`, and `cinnamoroll.yaml`.
   Adding it to only one layout file breaks the other two templates at generate time, not at review time.
 * All three bundled layouts (`red.yaml`, `black.yaml`, `cinnamoroll.yaml`) are fully tuned: every entry was placed against its own template's printed grid, and no entry is shared verbatim with another template's file.
-* The cinnamoroll form is a 品川区 layout with two fields the other forms have but it does not: the recipient 品川区長殿 is pre-printed and so `notification.to` should stay `''`, and its 住所 box has no 世帯主の氏名 row and so `household_person` should stay `''` too.
-  Its spouse 住所 and 本籍 rows also pre-print 丁目 right after the chome number, so `address_second` and `legally_domiciled_second` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows are written above their printed 丁目 and keep the usual `２丁目　８` shape.
+* The cinnamoroll form is a 品川区 layout with two fields the other forms have but it does not: the recipient 品川区長殿 is pre-printed and so `filing.office` should stay `''`, and its 住所 box has no 世帯主の氏名 row and so `head_of_household` should stay `''` too.
+  Its spouse 住所 and 本籍 rows also pre-print 丁目 right after the chome number, so `address_banchi` and `domicile_banchi` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows are written above their printed 丁目 and keep the usual `２丁目　８` shape.
   The header comment in `cinnamoroll.yaml` records all three quirks.
 * The black form is a denser grid than the red one, so `black.yaml` uses smaller sizes (names at 18pt rather than 24, kana at 9pt rather than 12) and it prints boxes the config has no keys for: the □昭和□平成 era checkboxes, □同右/□同左, the 養父/養母 rows, □未同居・未挙式, 届出人署名, and the bottom 事件簿番号 block all stay blank for handwriting.
-  Its witness 住所 row prints no 番地/番/号, so a witness's `is_banchi_address` should be `null` on this template.
+  Its witness 住所 row prints no 番地/番/号, so a witness's `address_banchi_type` should be `null` on this template.
   The header comment in `black.yaml` records the measured grid and every one of these quirks.
 
 
 ## Config shape
 
-Top-level sections: `notification`, `husband`, `wife`, `new_legally_domiciled`, `to_live_together`, `national_census`, `other`, `witness1`, `witness2`.
+Top-level sections: `filing`, `husband`, `wife`, `new_domicile`, `living_together_since`, `national_census`, `other`, `witness1`, `witness2`.
 `husband` and `wife` share the same keys, and so do `witness1` and `witness2` (the left and right columns of the 証人 box).
 Every top-level section is optional: a config without one (for example one written before the witness box existed) leaves that part of the form blank for handwriting, and a generate run prints an ℹ️ note naming it.
-A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `job_type` outside 1-6; `0` and `''` leave the job box blank.
-The one exception is a witness `address_apartment`, which was added after the witness box shipped: a missing one prints nothing, so a witness section written before it still renders.
+A key missing inside a section that is present is an error (`requireValue` in `main.js`), and so is a `household_work_type` outside 1-6; `0` and `''` leave the job box blank.
+The one exception is a witness `address_building`, which was added after the witness box shipped: a missing one prints nothing, so a witness section written before it still renders.
 A config file that is not valid YAML is reported with the parser's line and column, never as a stack trace.
-`is_banchi_address` and `is_banchi_legally_domiciled` take `true`, `false`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
-Any other value, including a missing key or a quoted `'false'`, is an error (`requireTriState` in `main.js`), so a required mark can never go missing silently.
+`address_banchi_type` and `domicile_banchi_type` take `banchi`, `ban`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
+Any other value, including a missing key or the old boolean `true`/`false`, is an error (`requireBanchiType` in `main.js`), so a required mark can never go missing silently.
 The witness `name` should stay `''` because a witness signature must be handwritten.
 See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READMEs for the full field reference.
+The key names were changed on 2026-10-01 to make them easier to read (for example `address_first` became `address_town`, and `notification` became `filing`).
+`src/renamed-keys.js` maps every old config and layout key to its new name.
+`main.js` refuses a config that still uses an old key and names each replacement, because an old section name would otherwise be skipped as a missing optional section.
+`pnpm run migrate-config` (`scripts/migrate-config-keys.mjs`) renames the keys in place from the same table, and keeps every comment and value.
+Renaming a key again means adding it to that table as well as to the schema, the three layout files, and the tracked configs.
 An optional top-level `template:` key selects the template; the `-t/--template` flag overrides it.
 An optional top-level `layout:` block deep-merges over the template's layout file, so a config can nudge one coordinate without copying the whole grid.
-Legacy `*_pos` values (`[x, y]` point coordinates) are still honoured on top of the resolved layout; moving `address_first_pos` or `legally_domiciled_first_pos` also shifts the fields that were historically drawn relative to them, so old configs render unchanged.
+Legacy `*_pos` values (`[x, y]` point coordinates) are still honoured on top of the resolved layout; moving `address_town_pos` or `domicile_town_pos` also shifts the fields that were historically drawn relative to them, so old configs render unchanged.
 When a `layout:` entry sets `pos` for the same field as a `*_pos` key, the `layout:` entry wins and a ⚠️ names the ignored key, because `config.yaml` ships every `*_pos` key and a `layout:` nudge on a config copied from it would otherwise silently do nothing.
 The `*_pos` values are `red` coordinates by definition, so they apply only when the base layout is `red` (the red template itself, or a custom PDF on the red fallback); on any other template they are ignored with a ⚠️ warning, and `--init-config -t <variant>` strips them from the scaffolded per-template config.
 
