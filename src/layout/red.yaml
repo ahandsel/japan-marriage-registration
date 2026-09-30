@@ -1,10 +1,13 @@
+# 赤刷り様式（jp-marriage-registration-red.pdf）のレイアウトです。
+# 描画する項目はすべて絶対位置で指定し、他の項目の位置から計算するものはありません。
+# 座標は用紙の左下を原点とする PDF ポイントで、`pos` はテキストのベースラインの [x, y] です。
+# `size` はフォントサイズ（ポイント）、`step` は複数行の項目の行間です。
+# 円は [x, y, r]、楕円は外接矩形の対角の2点 [x1, y1, x2, y2] です。
 # Layout for the "red" template (jp-marriage-registration-red.pdf).
-# Every drawn item has an absolute position; nothing is derived from another
-# field. Coordinates are PDF points measured from the bottom-left corner, and
-# `pos` is the [x, y] of the text baseline. `size` is the font size in points,
-# and `step` is the distance between lines of a multi-line field.
-# Circles are [x, y, r]; ellipses are two opposite bounding-box corners
-# [x1, y1, x2, y2].
+# Every drawn item has an absolute position; nothing is derived from another field.
+# Coordinates are PDF points measured from the bottom-left corner, and `pos` is the [x, y] of the text baseline.
+# `size` is the font size in points, and `step` is the distance between lines of a multi-line field.
+# Circles are [x, y, r]; ellipses are two opposite bounding-box corners [x1, y1, x2, y2].
 
 husband:
   last_name: { pos: [220, 590], size: 24 }
@@ -19,8 +22,8 @@ husband:
   address_go: { pos: [301, 524], size: 12 }
   household_person: { pos: [231, 501], size: 12 }
   address_apartment: { pos: [351, 532], size: 5, step: 5 }
-  # Drawn when is_banchi_address is true (ellipse around 番地) or false (circle
-  # around 番).
+  # is_banchi_address が true のときは番地を楕円で、false のときは番を円で囲みます。
+  # Drawn when is_banchi_address is true (ellipse around 番地) or false (circle around 番).
   address_banchi_ellipse: [300, 539, 270, 528]
   address_go_circle: [279.5, 523, 6]
   legally_domiciled_first: { pos: [221, 480], size: 12 }
@@ -38,6 +41,7 @@ husband:
     year: { pos: [301, 289], size: 6 }
     month: { pos: [338, 289], size: 6 }
     day: { pos: [365, 289], size: 6 }
+  # job_type の値（1-6）ごとに ✓ の位置を1つ持ちます。
   # One ✓ position per job_type value (1-6).
   job_type_checks:
     size: 12
@@ -89,20 +93,26 @@ wife:
       5: [249, 209]
       6: [249, 199]
 
-# 証人 (witnesses) box, top right of the form: x 724-936 for witness 1 and
-# x 936-1148 for witness 2 (a 212pt offset), rows y 451-635. The 署名 row is
-# left for a handwritten signature unless `name` is set in the config.
+# 証人欄は用紙の右上にあり、証人1は x 724-936、証人2は x 936-1148（212pt ずれ）です。
+# 行は「証人」の見出し（y 635-657）の下の y 451-635 です。
+# 署名の行は、設定で `name` を指定しない限り手書き用に空欄のままです。
+# 証人 (witnesses) box, top right of the form: x 724-936 for witness 1 and x 936-1148 for witness 2 (a 212pt offset).
+# Its rows are y 451-635, below the 証人 header (y 635-657).
+# The 署名 row is left for a handwritten signature unless `name` is set in the config.
 witness1:
   name: { pos: [734, 610], size: 14 }
-  # Printed 年/月/日 labels sit at x 812/867/922 on baseline 579.4.
+  # 印字の年・月・日の中心は x 812/867/922 で、ベースラインは 579.4 です。
+  # The printed 年/月/日 labels are centered at x 812/867/922 on baseline 579.4.
   birth_year: { pos: [744, 581], size: 12 }
   birth_month: { pos: [830, 581], size: 12 }
   birth_day: { pos: [886, 581], size: 12 }
   address_first: { pos: [730, 546], size: 12 }
   address_second: { pos: [730, 516], size: 12 }
   address_go: { pos: [854, 516], size: 12 }
-  # 方書 goes in the free cell right of the printed 号 (x 902-936, y 509-539):
-  # up to three lines of five characters.
+  # 方書は印字の号の右の空き（x 902-936、y 509-539）に書きます。
+  # 5文字の行を3行まで書けます。
+  # 方書 goes in the free cell right of the printed 号 (x 902-936, y 509-539).
+  # It holds up to three lines of five characters.
   address_apartment: { pos: [903, 530], size: 6, step: 7 }
   address_banchi_ellipse: [850, 536.5, 825, 523.5]
   address_go_circle: [832.5, 519, 6]
