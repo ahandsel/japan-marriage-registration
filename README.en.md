@@ -270,7 +270,7 @@ Each file has the following top-level sections:
 | `new_legally_domiciled` | The couple's new legal domicile (本籍) after marriage         |
 | `to_live_together`      | When the couple started (or will start) living together       |
 | `national_census`       | National census info (only required during the census period) |
-| `other`                 | Free-text notes (e.g. old/new kanji changes, consent)         |
+| `other`                 | Free-text notes (for example, old/new kanji changes)          |
 | `witness1`              | Left witness column (omit to leave it blank for handwriting)  |
 | `witness2`              | Right witness column (omit to leave it blank for handwriting) |
 
