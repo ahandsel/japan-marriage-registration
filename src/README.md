@@ -10,13 +10,14 @@ Tuning the position of a field therefore means editing YAML in [layout][], never
 
 ## Contents
 
-| Name          | Description                                                                                                                                                                                                                                                                                                                                                   |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [main.js][]   | The entry point and the only implementation. Parses the command line and the YAML config, embeds the template PDF as a page-sized XObject, then draws the text and shapes on top with `pdf-lib`. Each form field is one section function taking the config section, the resolved layout section, and the canvas.                                              |
-| [layout.js][] | Loads `layout/<variant>.yaml`, deep-merges an optional `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red`), validates the result against a closed schema, and returns the resolved layout. Also exports the `jp-marriage-registration-` template naming convention that `main.js` shares. |
-| [fonts][]     | The bundled Japanese fonts and the license files that have to travel with them. See [Fonts](#fonts) below.                                                                                                                                                                                                                                                    |
-| [layout][]    | One layout YAML per template, holding every positioning number the generator uses. See [Layout files](#layout-files) below.                                                                                                                                                                                                                                   |
-| [template][]  | The blank form PDFs, plus the term-by-term field reference. See [Templates](#templates) below.                                                                                                                                                                                                                                                                |
+| Name                | Description                                                                                                                                                                                                                                                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| [main.js][]         | The entry point and the only implementation. Parses the command line and the YAML config, embeds the template PDF as a page-sized XObject, then draws the text and shapes on top with `pdf-lib`. Each form field is one section function taking the config section, the resolved layout section, and the canvas.                                              |
+| [layout.js][]       | Loads `layout/<variant>.yaml`, deep-merges an optional `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red`), validates the result against a closed schema, and returns the resolved layout. Also exports the `jp-marriage-registration-` template naming convention that `main.js` shares. |
+| [renamed-keys.js][] | Maps every config and layout key that was renamed to its current name. `main.js` uses it to refuse a config that still has an old key, and `scripts/migrate-config-keys.mjs` uses it to rename the keys in place.                                                                                                                                             |
+| [fonts][]           | The bundled Japanese fonts and the license files that have to travel with them. See [Fonts](#fonts) below.                                                                                                                                                                                                                                                    |
+| [layout][]          | One layout YAML per template, holding every positioning number the generator uses. See [Layout files](#layout-files) below.                                                                                                                                                                                                                                   |
+| [template][]        | The blank form PDFs, plus the term-by-term field reference. See [Templates](#templates) below.                                                                                                                                                                                                                                                                |
 
 
 ## Fonts
@@ -50,7 +51,7 @@ A template with no file there falls back to [red.yaml][], which is meant for use
 | -------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | [red.yaml][]         | `jp-marriage-registration-red.pdf`         | The default layout, and the fallback for any template without a file of its own. Names at 24pt and kana at 12pt. The legacy `*_pos` config overrides are red coordinates by definition, so they apply only on this base layout. |
 | [black.yaml][]       | `jp-marriage-registration-black.pdf`       | A denser grid, so the sizes are smaller (names at 18pt, kana at 9pt). Its header comment records the measured column and row grid, plus the boxes this form has that the config has no keys for.                                |
-| [cinnamoroll.yaml][] | `jp-marriage-registration-cinnamoroll.pdf` | The Shinagawa City (品川区) form. Its header comment records the two fields this form does not have, the pre-printed recipient and the missing 世帯主の氏名 row.                                                                |
+| [cinnamoroll.yaml][] | `jp-marriage-registration-cinnamoroll.pdf` | The Shinagawa City (品川区) form. Its header comment records the three quirks: the pre-printed recipient, the missing 世帯主の氏名 row, and the spouse 住所/本籍 values that leave 丁目 out.                                    |
 
 
 ### The shape of a layout file
@@ -61,7 +62,7 @@ A template with no file there falls back to [red.yaml][], which is meant for use
 * Circles are `[x, y, r]`, and ellipses are two opposite corners of the bounding box, `[x1, y1, x2, y2]`.
 * Every entry is absolute.
   Nothing is derived from another field, and husband and wife are independent sibling sections with identical keys, as are witness1 and witness2.
-* The top-level sections match the config: `husband`, `wife`, `witness1`, `witness2`, `new_legally_domiciled`, `to_live_together`, `national_census`, `notification`, and `other`.
+* The top-level sections match the config: `husband`, `wife`, `witness1`, `witness2`, `new_domicile`, `living_together_since`, `national_census`, `filing`, and `other`.
 
 
 ### Working on a layout
@@ -109,6 +110,7 @@ See [AGENTS.md][] for the full architecture guidance, and [README.md][] for how 
 
 [main.js]: main.js
 [layout.js]: layout.js
+[renamed-keys.js]: renamed-keys.js
 [fonts]: fonts
 [layout]: layout
 [template]: template

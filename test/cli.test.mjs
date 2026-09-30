@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
+import process from 'node:process';
 import { describe, test } from 'node:test';
 import { promisify } from 'node:util';
 import YAML from 'yaml';
@@ -175,12 +176,76 @@ describe('generating from the tracked configs', () => {
     assert.equal(code, 0, stderr);
   });
 
-  test('the legacy is_husband_lastname boolean is still honoured', async (t) => {
+  // A config written with the key names from before the rename: one old section name, one old key in a section, and one of each value that changed shape.
+  const writeOldConfig = (dir) => {
+    const cfg = readRepoYaml('config.yaml');
+    const { office, ...filing } = cfg.filing;
+    delete cfg.filing;
+    cfg.notification = { ...filing, to: office };
+    const h = cfg.husband;
+    h.address_first = h.address_town;
+    delete h.address_town;
+    h.is_banchi_address = h.address_banchi_type === 'banchi';
+    delete h.address_banchi_type;
+    h.marital_history.marriage_cat = 2;
+    delete h.marital_history.status;
+    const { surname_from, ...domicile } = cfg.new_domicile;
+    delete cfg.new_domicile;
+    cfg.new_legally_domiciled = {
+      ...domicile,
+      is_husband_lastname: surname_from === 'husband',
+    };
+    const file = path.join(dir, 'old.yaml');
+    fs.writeFileSync(
+      file,
+      '# A comment the migration keeps.\n' + YAML.stringify(cfg),
+    );
+    return file;
+  };
+
+  test('a config with old key names is refused, naming each new key and the migration', async (t) => {
     const dir = makeTempDir(t);
-    const cfgPath = writeConfig(dir, 'legacy.yaml', 'config.yaml', (cfg) => {
-      delete cfg.new_legally_domiciled.lastname_of;
-      cfg.new_legally_domiciled.is_husband_lastname = false;
-    });
+    const cfgPath = writeOldConfig(dir);
+    const out = path.join(dir, 'out.pdf');
+    const { code, stderr } = await runMain([cfgPath, '-o', out]);
+    assert.equal(code, 1);
+    for (const line of [
+      'notification is now filing',
+      'filing.to is now filing.office',
+      'husband.address_first is now husband.address_town',
+      'husband.is_banchi_address is now husband.address_banchi_type',
+      'husband.marital_history.marriage_cat is now husband.marital_history.status',
+      'new_legally_domiciled is now new_domicile',
+      'new_domicile.is_husband_lastname is now new_domicile.surname_from',
+    ]) {
+      assert.ok(stderr.includes(line), `the error says "${line}"`);
+    }
+    assert.match(stderr, /pnpm run migrate-config /);
+    assert.ok(!fs.existsSync(out), 'no PDF is written on a config error');
+  });
+
+  test('migrate-config renames the old keys in place, converts their values, and keeps comments', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeOldConfig(dir);
+    const { stdout } = await execFileAsync(process.execPath, [
+      path.join(REPO_ROOT, 'scripts/migrate-config-keys.mjs'),
+      cfgPath,
+    ]);
+    assert.match(stdout, /✅ .*old\.yaml: renamed 7 keys\./);
+    const text = fs.readFileSync(cfgPath, 'utf-8');
+    assert.ok(text.startsWith('# A comment the migration keeps.\n'));
+    // Compared section by section, because writeOldConfig re-added the renamed sections at the end.
+    const migrated = YAML.parse(text);
+    const sample = readRepoYaml('config.yaml');
+    assert.deepEqual(Object.keys(migrated).sort(), Object.keys(sample).sort());
+    for (const [section, value] of Object.entries(sample)) {
+      assert.deepEqual(migrated[section], value, section);
+    }
+    const again = await execFileAsync(process.execPath, [
+      path.join(REPO_ROOT, 'scripts/migrate-config-keys.mjs'),
+      cfgPath,
+    ]);
+    assert.match(again.stdout, /already uses the current key names/);
     const out = path.join(dir, 'out.pdf');
     const { code, stderr } = await runMain([cfgPath, '-o', out]);
     assert.equal(code, 0, stderr);
@@ -241,24 +306,24 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.match(stderr, /no value for "wife\.mother_name"/);
   });
 
-  test('a missing lastname_of is a missing key, and null is the explicit skip', async (t) => {
+  test('a missing surname_from is a missing key, and null is the explicit skip', async (t) => {
     const dir = makeTempDir(t);
     const out = path.join(dir, 'out.pdf');
-    // Neither lastname_of nor the legacy is_husband_lastname: a typo in the key
+    // Neither surname_from nor the legacy is_husband_lastname: a typo in the key
     // name must not print a form with both 氏 boxes blank.
     const missing = writeConfig(
       dir,
       'no-lastname.yaml',
       'config.yaml',
       (cfg) => {
-        delete cfg.new_legally_domiciled.lastname_of;
+        delete cfg.new_domicile.surname_from;
       },
     );
     let result = await runMain([missing, '-o', out]);
     assert.equal(result.code, 1);
     assert.match(
       result.stderr,
-      /❌ Config error: no value for "new_legally_domiciled\.lastname_of"/,
+      /❌ Config error: no value for "new_domicile\.surname_from"/,
     );
     assert.ok(!fs.existsSync(out), 'no PDF is written on a config error');
     // null is the documented way to leave both boxes blank (foreign spouse).
@@ -267,7 +332,7 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
       'null-lastname.yaml',
       'config.yaml',
       (cfg) => {
-        cfg.new_legally_domiciled.lastname_of = null;
+        cfg.new_domicile.surname_from = null;
       },
     );
     result = await runMain([skipped, '-o', out]);
@@ -275,14 +340,14 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.ok(fs.existsSync(out));
   });
 
-  test('a lastname_of other than husband, wife, or null is rejected', async (t) => {
+  test('a surname_from other than husband, wife, or null is rejected', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(
       dir,
       'bad-lastname.yaml',
       'config.yaml',
       (cfg) => {
-        cfg.new_legally_domiciled.lastname_of = 'Husband';
+        cfg.new_domicile.surname_from = 'Husband';
       },
     );
     const { code, stderr } = await runMain([
@@ -293,8 +358,25 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.equal(code, 1);
     assert.match(
       stderr,
-      /"new_legally_domiciled\.lastname_of" must be 'husband', 'wife', or null.*got "Husband"/,
+      /"new_domicile\.surname_from" must be 'husband', 'wife', or null.*got "Husband"/,
     );
+  });
+
+  test('a witness section written before address_building existed still renders', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(
+      dir,
+      'witness-no-apartment.yaml',
+      'config.yaml',
+      (cfg) => {
+        delete cfg.witness1.address_building;
+        delete cfg.witness2.address_building;
+      },
+    );
+    const out = path.join(dir, 'out.pdf');
+    const { code, stderr } = await runMain([cfgPath, '-o', out]);
+    assert.equal(code, 0, stderr);
+    assert.ok(fs.existsSync(out), 'the PDF is written');
   });
 
   test('a missing witness key is a missing key, like a spouse key', async (t) => {
@@ -328,14 +410,15 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.equal(code, 0, stderr);
   });
 
-  test('marriage_cat outside 0-2 is rejected, naming the person', async (t) => {
+  test('a marital_history status outside the three names is rejected, naming the person', async (t) => {
     const dir = makeTempDir(t);
+    // 2 is the old marriage_cat number for 離別, which must not pass as a status.
     for (const [who, bad] of [
-      ['husband', 3],
-      ['wife', '0'],
+      ['husband', 2],
+      ['wife', 'first'],
     ]) {
       const cfgPath = writeConfig(dir, `${who}.yaml`, 'config.yaml', (cfg) => {
-        cfg[who].marital_history.marriage_cat = bad;
+        cfg[who].marital_history.status = bad;
       });
       const { code, stderr } = await runMain([
         cfgPath,
@@ -346,7 +429,7 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
       assert.match(
         stderr,
         new RegExp(
-          `"${who}\\.marital_history\\.marriage_cat" must be 0 .*; got ${JSON.stringify(bad)}`,
+          `"${who}\\.marital_history\\.status" must be first_marriage .*; got ${JSON.stringify(bad)}`,
         ),
       );
     }
@@ -454,14 +537,15 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.ok(!stderr.includes('    at '), 'no stack trace');
   });
 
-  test('an is_banchi value outside true, false, and null is rejected in every section', async (t) => {
+  test("a banchi type outside 'banchi', 'ban', and null is rejected in every section", async (t) => {
     const dir = makeTempDir(t);
+    // true and false are the old is_banchi_* values, which must not pass as a type.
     const cases = [
-      ['husband', 'is_banchi_address', 'false'],
-      ['wife', 'is_banchi_legally_domiciled', 1],
-      ['new_legally_domiciled', 'is_banchi_address', 'yes'],
-      ['witness1', 'is_banchi_address', 'null'],
-      ['witness2', 'is_banchi_legally_domiciled', 0],
+      ['husband', 'address_banchi_type', false],
+      ['wife', 'domicile_banchi_type', true],
+      ['new_domicile', 'address_banchi_type', 'yes'],
+      ['witness1', 'address_banchi_type', 'null'],
+      ['witness2', 'domicile_banchi_type', 'Banchi'],
     ];
     for (const [section, key, value] of cases) {
       const cfgPath = writeConfig(dir, 'banchi.yaml', 'config.yaml', (cfg) => {
@@ -473,7 +557,7 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
       assert.match(
         stderr,
         new RegExp(
-          `❌ Config error: "${section}\\.${key}" must be true \\(番地\\), false \\(番\\), or null to draw no mark; got `,
+          `❌ Config error: "${section}\\.${key}" must be 'banchi' \\(番地\\), 'ban' \\(番\\), or null to draw no mark; got `,
         ),
       );
       assert.ok(
@@ -484,11 +568,11 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     }
   });
 
-  test('a missing is_banchi key is an error even when the new 本籍 address is blank', async (t) => {
+  test('a missing banchi type is an error even when the new 本籍 address is blank', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(dir, 'banchi.yaml', 'config.yaml', (cfg) => {
-      cfg.new_legally_domiciled.address = '';
-      delete cfg.new_legally_domiciled.is_banchi_address;
+      cfg.new_domicile.address = '';
+      delete cfg.new_domicile.address_banchi_type;
     });
     const { code, stderr } = await runMain([
       cfgPath,
@@ -498,14 +582,16 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.equal(code, 1);
     assert.match(
       stderr,
-      /"new_legally_domiciled\.is_banchi_address" must be true .* the key is missing\./,
+      /"new_domicile\.address_banchi_type" must be 'banchi' .* the key is missing\./,
     );
   });
 
-  test('a job_type_checks position outside 1-6 is not a known layout key', async (t) => {
+  test('a household_work_type_checks position outside 1-6 is not a known layout key', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(dir, 'layout.yaml', 'config.yaml', (cfg) => {
-      cfg.layout = { wife: { job_type_checks: { positions: { 7: [1, 2] } } } };
+      cfg.layout = {
+        wife: { household_work_type_checks: { positions: { 7: [1, 2] } } },
+      };
     });
     const { code, stderr } = await runMain([
       cfgPath,
@@ -515,7 +601,7 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.equal(code, 1);
     assert.match(
       stderr,
-      /- "wife\.job_type_checks\.positions\.7" is not a job_type; only 1-6 are\./,
+      /- "wife\.household_work_type_checks\.positions\.7" is not a household_work_type; only 1-6 are\./,
     );
   });
 
@@ -528,7 +614,7 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.ok(!stderr.includes('    at '), 'no stack trace');
   });
 
-  test('a job_type outside 1-6 fails like a bad marriage_cat does', async (t) => {
+  test('a household_work_type outside 1-6 fails like a bad marital_history status does', async (t) => {
     const dir = makeTempDir(t);
     for (const [who, bad] of [
       ['husband', 9],
@@ -536,24 +622,24 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
       ['husband', null],
     ]) {
       const cfgPath = writeConfig(dir, `${who}.yaml`, 'config.yaml', (cfg) => {
-        cfg[who].job_type = bad;
+        cfg[who].household_work_type = bad;
       });
       const { code, stderr } = await runMain([
         cfgPath,
         '-o',
         path.join(dir, 'out.pdf'),
       ]);
-      assert.equal(code, 1, `job_type ${JSON.stringify(bad)}`);
+      assert.equal(code, 1, `household_work_type ${JSON.stringify(bad)}`);
       assert.match(
         stderr,
         new RegExp(
-          `"${who}\\.job_type" must be a number from 1 to 6, or 0 or '' to leave the box blank; got ${JSON.stringify(bad)}`,
+          `"${who}\\.household_work_type" must be a number from 1 to 6, or 0 or '' to leave the box blank; got ${JSON.stringify(bad)}`,
         ),
       );
     }
   });
 
-  test("job_type 0 and '' leave the box blank without an error", async (t) => {
+  test("household_work_type 0 and '' leave the box blank without an error", async (t) => {
     const dir = makeTempDir(t);
     for (const blank of [0, '']) {
       const cfgPath = writeConfig(
@@ -561,8 +647,8 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
         'blank-job.yaml',
         'config.yaml',
         (cfg) => {
-          cfg.husband.job_type = blank;
-          cfg.wife.job_type = blank;
+          cfg.husband.household_work_type = blank;
+          cfg.wife.household_work_type = blank;
         },
       );
       const { code, stderr } = await runMain([
@@ -596,11 +682,11 @@ describe('every top-level section is optional', () => {
   // Deleting a section is the documented way to leave that part of the form
   // blank for handwriting, so a missing section is a note, never a crash.
   const SECTIONS = [
-    'notification',
+    'filing',
     'husband',
     'wife',
-    'new_legally_domiciled',
-    'to_live_together',
+    'new_domicile',
+    'living_together_since',
     'national_census',
     'other',
     'witness1',
@@ -782,7 +868,9 @@ describe('scaffolding in a sandbox copy', () => {
       'the existing text is kept byte for byte',
     );
     assert.ok(
-      text.includes('# Witness box. witness1 is the left column'),
+      text.includes(
+        '# witness1 is the left column and witness2 the right one.',
+      ),
       'the sample comments come with the appended sections',
     );
     const sample = readRepoYaml('config.yaml');
@@ -906,7 +994,7 @@ describe('scaffolding in a sandbox copy', () => {
       assert.ok(text.includes(line), 'private header present');
     }
     assert.ok(
-      text.includes('# 0: 初婚 1:死別 2:離別'),
+      text.includes('# first_marriage: 初婚、widowed: 死別、divorced: 離別'),
       'sample comments survive',
     );
     const cfg = YAML.parse(text);
@@ -1042,7 +1130,7 @@ describe('scaffolding in a sandbox copy', () => {
     assert.match(
       text,
       /^ {6}1: \[210, 271\]$/m,
-      'job_type keys are bare numbers',
+      'household_work_type keys are bare numbers',
     );
     // A generate run now finds the file and no longer falls back to red.
     const run = await runMain(['config.yaml', '-t', custom, '-o', 'out.pdf'], {

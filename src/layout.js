@@ -1,7 +1,6 @@
 // Load, merge, and validate per-template layout data.
-// A layout YAML in src/layout/ holds every positioning number for one
-// template: absolute [x, y] positions, font sizes, line steps, and the
-// circle/ellipse geometry. main.js only draws; all numbers come from here.
+// A layout YAML in src/layout/ holds every positioning number for one template: absolute [x, y] positions, font sizes, line steps, and the circle and ellipse geometry.
+// main.js only draws; every position, size, and step comes from here, and only the stroke style of the shapes is set in main.js.
 import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
@@ -10,8 +9,8 @@ import YAML from 'yaml';
 
 const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const LAYOUT_DIR = path.join(baseDir, 'layout');
-// Bundled templates are named "<prefix><variant>.pdf"; the matching layout is
-// "layout/<variant>.yaml". Exported so main.js shares the naming convention.
+// Bundled templates are named "<prefix><variant>.pdf", and the matching layout is "layout/<variant>.yaml".
+// Exported so main.js shares the naming convention.
 export const TEMPLATE_PREFIX = 'jp-marriage-registration-';
 const DEFAULT_LAYOUT = 'red';
 
@@ -21,10 +20,7 @@ function fail(message) {
 }
 
 // --- schema ------------------------------------------------------------------
-// Leaf types: 'text' is { pos: [x, y], size }, 'multiline' adds a `step`
-// (distance between lines), 'ellipse' is two opposite bounding-box corners
-// [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one
-// absolute position per job_type value (1-6).
+// Leaf types: 'text' is { pos: [x, y], size }, 'multiline' adds a `step` (distance between lines), 'ellipse' is two opposite bounding-box corners [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one absolute position per household_work_type value (1-6).
 
 const PERSON_SCHEMA = {
   last_name: 'text',
@@ -34,49 +30,50 @@ const PERSON_SCHEMA = {
   birth_year: 'text',
   birth_month: 'text',
   birth_day: 'text',
-  address_first: 'text',
-  address_second: 'text',
+  address_town: 'text',
+  address_banchi: 'text',
   address_go: 'text',
-  household_person: 'text',
-  address_apartment: 'multiline',
+  head_of_household: 'text',
+  address_building: 'multiline',
   address_banchi_ellipse: 'ellipse',
-  address_go_circle: 'circle',
-  legally_domiciled_first: 'text',
-  legally_domiciled_second: 'text',
-  head_of_person_of_legally_domiciled: 'text',
-  legally_domiciled_banchi_ellipse: 'ellipse',
-  legally_domiciled_go_circle: 'circle',
+  address_ban_circle: 'circle',
+  domicile_town: 'text',
+  domicile_banchi: 'text',
+  head_of_family_register: 'text',
+  domicile_banchi_ellipse: 'ellipse',
+  domicile_ban_circle: 'circle',
   father_name: 'text',
   mother_name: 'text',
-  relationship: 'text',
+  relationship_to_parents: 'text',
   marital_history: {
     first_marriage_check: 'text',
-    remarriage_death_check: 'text',
-    remarriage_divorce_check: 'text',
+    widowed_check: 'text',
+    divorced_check: 'text',
     year: 'text',
     month: 'text',
     day: 'text',
   },
-  job_type_checks: 'checks',
+  household_work_type_checks: 'checks',
 };
 
-// The two witness columns share one schema, like husband and wife do. A
-// witness has no 世帯主/筆頭者 line and no 方書 row on the bundled templates,
-// so the schema is a subset of PERSON_SCHEMA.
+// The two witness columns share one schema, like husband and wife do.
+// A witness has no 世帯主/筆頭者 line on the bundled templates, so the schema is a subset of PERSON_SCHEMA.
+// Only cinnamoroll prints a witness 方書 row; the other layouts put `address_building` in the free space after 号.
 const WITNESS_SCHEMA = {
   name: 'text',
   birth_year: 'text',
   birth_month: 'text',
   birth_day: 'text',
-  address_first: 'text',
-  address_second: 'text',
+  address_town: 'text',
+  address_banchi: 'text',
   address_go: 'text',
+  address_building: 'multiline',
   address_banchi_ellipse: 'ellipse',
-  address_go_circle: 'circle',
-  legally_domiciled_first: 'text',
-  legally_domiciled_second: 'text',
-  legally_domiciled_banchi_ellipse: 'ellipse',
-  legally_domiciled_go_circle: 'circle',
+  address_ban_circle: 'circle',
+  domicile_town: 'text',
+  domicile_banchi: 'text',
+  domicile_banchi_ellipse: 'ellipse',
+  domicile_ban_circle: 'circle',
 };
 
 const LAYOUT_SCHEMA = {
@@ -84,14 +81,14 @@ const LAYOUT_SCHEMA = {
   wife: PERSON_SCHEMA,
   witness1: WITNESS_SCHEMA,
   witness2: WITNESS_SCHEMA,
-  new_legally_domiciled: {
-    husband_lastname_check: 'text',
-    wife_lastname_check: 'text',
+  new_domicile: {
+    husband_surname_check: 'text',
+    wife_surname_check: 'text',
     address: 'text',
     banchi_ellipse: 'ellipse',
-    go_circle: 'circle',
+    ban_circle: 'circle',
   },
-  to_live_together: {
+  living_together_since: {
     year: 'text',
     month: 'text',
   },
@@ -100,59 +97,56 @@ const LAYOUT_SCHEMA = {
     husband_job: 'text',
     wife_job: 'text',
   },
-  notification: {
+  filing: {
     year: 'text',
     month: 'text',
     day: 'text',
-    to: 'text',
+    office: 'text',
   },
   other: {
     text: 'multiline',
   },
 };
 
-// Legacy `*_pos` config keys still override the resolved layout so that old
-// private configs keep rendering unchanged. `shifts` lists the fields the old
-// code placed at a fixed offset from that key - they move by the same delta as
-// the anchor, which reproduces the old derived behavior exactly.
+// Legacy `*_pos` config keys still override the resolved layout so that old private configs keep rendering unchanged.
+// `shifts` lists the fields the old code placed at a fixed offset from that key.
+// They move by the same delta as the anchor, which reproduces the old derived behavior exactly.
 const LEGACY_PERSON_POS_KEYS = {
   last_name_pos: { field: 'last_name', shifts: [] },
   last_name_kana_pos: { field: 'last_name_kana', shifts: [] },
   first_name_pos: { field: 'first_name', shifts: [] },
   first_name_kana_pos: { field: 'first_name_kana', shifts: [] },
-  address_first_pos: {
-    field: 'address_first',
+  address_town_pos: {
+    field: 'address_town',
     shifts: [
-      'address_second',
+      'address_banchi',
       'address_go',
-      'household_person',
-      'address_apartment',
+      'head_of_household',
+      'address_building',
     ],
   },
-  legally_domiciled_first_pos: {
-    field: 'legally_domiciled_first',
-    shifts: ['legally_domiciled_second', 'head_of_person_of_legally_domiciled'],
+  domicile_town_pos: {
+    field: 'domicile_town',
+    shifts: ['domicile_banchi', 'head_of_family_register'],
   },
   father_name_pos: { field: 'father_name', shifts: [] },
   mother_name_pos: { field: 'mother_name', shifts: [] },
 };
 
-// Every legacy `*_pos` key as a [section, key] path. Exported so main.js can
-// drop them when scaffolding a per-template config - the values are red
-// coordinates, and copying them under another template pins red positions
-// over that template's tuned layout.
+// Every legacy `*_pos` key as a [section, key] path.
+// Exported so main.js can drop them when scaffolding a per-template config.
+// The values are red coordinates, and copying them under another template pins red positions over that template's tuned layout.
 export const LEGACY_POS_KEY_PATHS = [
   ...['husband', 'wife'].flatMap((person) =>
     Object.keys(LEGACY_PERSON_POS_KEYS).map((key) => [person, key]),
   ),
-  ['new_legally_domiciled', 'address_pos'],
+  ['new_domicile', 'address_pos'],
 ];
 
 // --- loading -------------------------------------------------------------------
 
 export function layoutNameForTemplate(templateName) {
-  // Reduce whatever the -t flag or the `template:` key resolved to (short
-  // variant, full stem, or a path to a PDF) to the short variant name.
+  // Reduce whatever the -t flag or the `template:` key resolved to (short variant, full stem, or a path to a PDF) to the short variant name.
   let name = templateName;
   if (name.toLowerCase().endsWith('.pdf')) {
     name = path.parse(name).name;
@@ -164,15 +158,13 @@ export function layoutNameForTemplate(templateName) {
 }
 
 function layoutForTemplate(templateName) {
-  // Returns the layout file plus the variant it actually belongs to, so the
-  // caller can tell when the red fallback below was taken.
+  // Returns the layout file plus the variant it actually belongs to, so the caller can tell when the red fallback below was taken.
   const name = layoutNameForTemplate(templateName);
   const candidate = path.join(LAYOUT_DIR, `${name}.yaml`);
   if (fs.existsSync(candidate)) {
     return { path: candidate, base: name };
   }
-  // A custom template PDF has no bundled layout; start from the default grid
-  // and let the config's `layout:` block adjust it.
+  // A custom template PDF has no bundled layout, so start from the default grid and let the config's `layout:` block adjust it.
   console.log(
     `ℹ️  No layout file for template "${name}" - using the "${DEFAULT_LAYOUT}" layout as the base.`,
   );
@@ -215,8 +207,7 @@ function hasLegacyPosKeys(cfg) {
 }
 
 function applyLegacyPosOverrides(layout, cfg) {
-  // (sectionCfg, sectionLayout, legacy key spec) triples for every `*_pos`
-  // key the config format supports.
+  // One [sectionCfg, sectionLayout, key, spec, sectionName] entry for every `*_pos` key the config format supports.
   const overrides = [];
   for (const person of ['husband', 'wife']) {
     for (const [key, spec] of Object.entries(LEGACY_PERSON_POS_KEYS)) {
@@ -224,16 +215,14 @@ function applyLegacyPosOverrides(layout, cfg) {
     }
   }
   overrides.push([
-    cfg.new_legally_domiciled,
-    layout.new_legally_domiciled,
+    cfg.new_domicile,
+    layout.new_domicile,
     'address_pos',
     { field: 'address', shifts: [] },
-    'new_legally_domiciled',
+    'new_domicile',
   ]);
-  // A `layout:` entry that sets a field's `pos` is the explicit, newer
-  // mechanism, so it wins over a legacy `*_pos` key for the same field. The
-  // sample config.yaml ships every `*_pos` key, so without this rule a
-  // `layout:` nudge on a config copied from it would silently do nothing.
+  // A `layout:` entry that sets a field's `pos` is the explicit, newer mechanism, so it wins over a legacy `*_pos` key for the same field.
+  // The sample config.yaml ships every `*_pos` key, so without this rule a `layout:` nudge on a config copied from it would silently do nothing.
   const layoutSetsPos = (sectionName, field) =>
     isPlainObject(cfg.layout?.[sectionName]?.[field]) &&
     cfg.layout[sectionName][field].pos !== undefined;
@@ -250,7 +239,7 @@ function applyLegacyPosOverrides(layout, cfg) {
     }
     const anchor = sectionLayout?.[spec.field];
     if (!isPlainObject(anchor) || !isPos(anchor.pos)) {
-      // The layout itself is broken; validation below reports the details.
+      // The layout itself is broken, and the validation below reports the details.
       continue;
     }
     if (layoutSetsPos(sectionName, spec.field)) {
@@ -319,7 +308,9 @@ function validateLeaf(type, value, keyPath, errors) {
   if (type === 'checks') {
     checkSize(value.size, keyPath, errors);
     if (!isPlainObject(value.positions)) {
-      errors.push(`"${keyPath}.positions" must map job_type 1-6 to [x, y].`);
+      errors.push(
+        `"${keyPath}.positions" must map household_work_type 1-6 to [x, y].`,
+      );
     } else {
       const jobTypes = ['1', '2', '3', '4', '5', '6'];
       for (const jobType of jobTypes) {
@@ -335,13 +326,11 @@ function validateLeaf(type, value, keyPath, errors) {
           );
         }
       }
-      // The schema is closed here too: a stray `7:` or a typo such as `l:`
-      // would otherwise pass validation and never be drawn, because
-      // job_type itself is limited to 1-6 in main.js.
+      // The schema is closed here too: a stray `7:` or a typo such as `l:` would otherwise pass validation and never be drawn, because household_work_type itself is limited to 1-6 in main.js.
       for (const key of Object.keys(value.positions)) {
         if (!jobTypes.includes(key)) {
           errors.push(
-            `"${keyPath}.positions.${key}" is not a job_type; only 1-6 are.`,
+            `"${keyPath}.positions.${key}" is not a household_work_type; only 1-6 are.`,
           );
         }
       }
@@ -371,10 +360,8 @@ function validateLeaf(type, value, keyPath, errors) {
 }
 
 function annotateKeyPaths(schema, node, keyPath) {
-  // Attach each node's dotted key path (e.g. "husband.last_name") as a
-  // non-enumerable property, so main.js can name the exact config key in an
-  // error message. Non-enumerable keeps it out of Object.keys and out of any
-  // YAML round trip of the layout.
+  // Attach each node's dotted key path (for example "husband.last_name") as a non-enumerable property, so main.js can name the exact config key in an error message.
+  // Non-enumerable keeps it out of Object.keys and out of any YAML round trip of the layout.
   if (!isPlainObject(node)) {
     return;
   }
@@ -437,14 +424,10 @@ export function resolveLayout(templateName, cfg) {
   if (cfg.layout !== undefined && !isPlainObject(cfg.layout)) {
     fail('❌ Config error: "layout" must be a mapping of layout overrides.');
   }
-  // Clone so the override steps below never mutate objects shared with the
-  // parsed base when no `layout:` block is present.
+  // Clone so the override steps below never mutate objects shared with the parsed base when no `layout:` block is present.
   const merged = structuredClone(deepMerge(parsed, cfg.layout ?? {}));
-  // The legacy `*_pos` keys are red coordinates by definition (they predate
-  // per-template layouts), so they only apply when the base layout is the red
-  // grid - either the red template itself or a custom PDF using the fallback
-  // above. On any other tuned layout they would drag whole field blocks onto
-  // the wrong printed rows, so they are ignored with a warning instead.
+  // The legacy `*_pos` keys are red coordinates by definition (they predate per-template layouts), so they only apply when the base layout is the red grid: either the red template itself or a custom PDF using the fallback above.
+  // On any other tuned layout they would drag whole field blocks onto the wrong printed rows, so they are ignored with a warning instead.
   if (baseLayout === DEFAULT_LAYOUT) {
     applyLegacyPosOverrides(merged, cfg);
   } else if (hasLegacyPosKeys(cfg)) {
@@ -467,9 +450,8 @@ export function resolveLayout(templateName, cfg) {
   return merged;
 }
 
-// The keys that make up one positional entry. A mapping holding only these is
-// written inline (`{ pos: [235, 623], size: 24 }`) to match the hand-tuned
-// files; anything wider (job_type_checks.positions) stays in block style.
+// The keys that make up one positional entry.
+// A mapping holding only these is written inline (`{ pos: [235, 623], size: 24 }`) to match the hand-tuned files; anything wider (household_work_type_checks.positions) stays in block style.
 const LEAF_KEYS = new Set(['pos', 'size', 'step']);
 
 function scaffoldHeader(variant) {
@@ -500,10 +482,8 @@ function toYaml(layout) {
       if (keys.length > 0 && keys.every((key) => LEAF_KEYS.has(key))) {
         node.flow = true;
       }
-      // job_type values are numbers on the form; write them as bare 1-6 rather
-      // than quoted "1"-"6", matching the hand-tuned files. The stringifier
-      // quotes any string that would re-parse as a number, so the key has to
-      // become an actual number, not just a plain-style string.
+      // household_work_type values are numbers on the form, so write them as bare 1-6 rather than quoted "1"-"6", matching the hand-tuned files.
+      // The stringifier quotes any string that would re-parse as a number, so the key has to become an actual number, not just a plain-style string.
       for (const item of node.items) {
         if (/^\d+$/.test(String(item.key?.value))) {
           item.key.value = Number(item.key.value);
@@ -515,30 +495,24 @@ function toYaml(layout) {
   for (const item of doc.contents.items.slice(1)) {
     item.key.spaceBefore = true;
   }
-  // Prettier's flow style is padded braces with unpadded brackets
-  // ({ pos: [220, 590], size: 24 }), but flowCollectionPadding pads both, so
-  // strip the bracket padding afterwards - every flow seq here holds only
-  // numbers, so the replace cannot touch string content. A freshly scaffolded
-  // file then already passes `prettier --check`.
+  // Prettier's flow style is padded braces with unpadded brackets ({ pos: [220, 590], size: 24 }), but flowCollectionPadding pads both, so strip the bracket padding afterwards.
+  // Every flow sequence here holds only numbers, so the replace cannot touch string content.
+  // A freshly scaffolded file then already passes `prettier --check`.
   return doc
     .toString({ lineWidth: 0, flowCollectionPadding: true })
     .replaceAll('[ ', '[')
     .replaceAll(' ]', ']');
 }
 
-// Create src/layout/<variant>.yaml for a template that does not have one yet,
-// seeded with the default grid so every schema key is present and the file
-// validates. Never rewrites an existing layout - those are hand-tuned, and the
-// comments explaining each coordinate would not survive a round trip.
+// Create src/layout/<variant>.yaml for a template that does not have one yet, seeded with the default grid so every schema key is present and the file validates.
+// Never rewrites an existing layout, because those are hand-tuned and the comments explaining each coordinate would not survive a round trip.
 export function initLayout(templateName) {
   const variant = layoutNameForTemplate(templateName);
   const target = path.join(LAYOUT_DIR, `${variant}.yaml`);
   const existed = fs.existsSync(target);
-  // Resolves the existing file when there is one (which also validates it, so
-  // this doubles as a check of the layout file itself - the empty config here
-  // means a `layout:` override block in a private config is NOT validated;
-  // only a generate run with that config catches those) and the default grid
-  // when there is not.
+  // Resolves the existing file when there is one, and the default grid when there is not.
+  // Resolving also validates the file, so this doubles as a check of the layout file itself.
+  // The empty config here means a `layout:` override block in a private config is NOT validated; only a generate run with that config catches those.
   const layout = resolveLayout(templateName, {});
   if (existed) {
     return { path: target, variant, created: false };

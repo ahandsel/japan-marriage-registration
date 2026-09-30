@@ -3,6 +3,7 @@
 > **Status: done.**
 > Everything below describes the repository as it was when the ticket was written, and it is kept as the record of that work.
 > Names have moved since: the `layoutPathForTemplate` function is now `layoutForTemplate` in `src/layout.js`, `config-cute.yaml` is now `config-cinnamoroll.yaml`, the `cute` script is gone, and `pnpm test` now exists (see `test/README.md`), so the "no test suite" statements below are historical.
+> The config and layout keys were renamed on 2026-10-01, so the key names below are the old ones: `src/renamed-keys.js` maps each to its current name (for example `notification` is now `filing`, `household_person` is now `head_of_household`, and `job_type_checks` is now `household_work_type_checks`).
 
 
 ## Summary

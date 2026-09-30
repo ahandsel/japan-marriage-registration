@@ -73,7 +73,7 @@ export function makeTempDir(t, prefix = 'jmr-test-') {
 export function makeSandbox(t) {
   const dir = makeTempDir(t, 'jmr-sandbox-');
   fs.mkdirSync(path.join(dir, 'src'));
-  for (const file of ['main.js', 'layout.js']) {
+  for (const file of ['main.js', 'layout.js', 'renamed-keys.js']) {
     fs.copyFileSync(
       path.join(REPO_ROOT, 'src', file),
       path.join(dir, 'src', file),
@@ -217,17 +217,17 @@ export function expectedMarks(cfg, lay) {
     'birth_year',
     'birth_month',
     'birth_day',
-    'address_first',
-    'address_second',
+    'address_town',
+    'address_banchi',
     'address_go',
-    'household_person',
-    'address_apartment',
-    'legally_domiciled_first',
-    'legally_domiciled_second',
-    'head_of_person_of_legally_domiciled',
+    'head_of_household',
+    'address_building',
+    'domicile_town',
+    'domicile_banchi',
+    'head_of_family_register',
     'father_name',
     'mother_name',
-    'relationship',
+    'relationship_to_parents',
   ];
   // Every top-level section is optional in main.js; a missing one draws nothing.
   const has = (name) => cfg[name] !== undefined && cfg[name] !== null;
@@ -242,56 +242,49 @@ export function expectedMarks(cfg, lay) {
     }
     const mh = c.marital_history;
     const ml = l.marital_history;
-    if (mh.marriage_cat === 0) {
+    if (mh.status === 'first_marriage') {
       check(ml.first_marriage_check);
     } else {
-      check(
-        mh.marriage_cat === 1
-          ? ml.remarriage_death_check
-          : ml.remarriage_divorce_check,
-      );
+      check(mh.status === 'widowed' ? ml.widowed_check : ml.divorced_check);
       for (const key of ['year', 'month', 'day']) {
         add(ml[key], mh[key]);
       }
     }
     // 1-6 tick a box; 0 and '' leave it blank (main.js rejects anything else).
-    const jobPos = l.job_type_checks.positions[c.job_type];
-    if (c.job_type !== 0 && c.job_type !== '' && jobPos !== undefined) {
-      add({ pos: jobPos, size: l.job_type_checks.size }, '✓');
+    const jobPos =
+      l.household_work_type_checks.positions[c.household_work_type];
+    if (
+      c.household_work_type !== 0 &&
+      c.household_work_type !== '' &&
+      jobPos !== undefined
+    ) {
+      add({ pos: jobPos, size: l.household_work_type_checks.size }, '✓');
     }
   }
-  if (has('new_legally_domiciled')) {
-    const nl = cfg.new_legally_domiciled;
-    const nll = lay.new_legally_domiciled;
-    let lastnameOf = nl.lastname_of;
-    if (lastnameOf === undefined) {
-      if (nl.is_husband_lastname === true) {
-        lastnameOf = 'husband';
-      } else if (nl.is_husband_lastname === false) {
-        lastnameOf = 'wife';
-      }
-    }
-    if (lastnameOf === 'husband') {
-      check(nll.husband_lastname_check);
-    } else if (lastnameOf === 'wife') {
-      check(nll.wife_lastname_check);
+  if (has('new_domicile')) {
+    const nl = cfg.new_domicile;
+    const nll = lay.new_domicile;
+    if (nl.surname_from === 'husband') {
+      check(nll.husband_surname_check);
+    } else if (nl.surname_from === 'wife') {
+      check(nll.wife_surname_check);
     }
     if (nl.address !== '') {
       add(nll.address, nl.address);
     }
   }
-  if (has('to_live_together')) {
-    add(lay.to_live_together.year, cfg.to_live_together.year);
-    add(lay.to_live_together.month, cfg.to_live_together.month);
+  if (has('living_together_since')) {
+    add(lay.living_together_since.year, cfg.living_together_since.year);
+    add(lay.living_together_since.month, cfg.living_together_since.month);
   }
   if (has('national_census') && cfg.national_census.year !== '') {
     for (const key of ['year', 'husband_job', 'wife_job']) {
       add(lay.national_census[key], cfg.national_census[key]);
     }
   }
-  if (has('notification')) {
-    for (const key of ['year', 'month', 'day', 'to']) {
-      add(lay.notification[key], cfg.notification[key]);
+  if (has('filing')) {
+    for (const key of ['year', 'month', 'day', 'office']) {
+      add(lay.filing[key], cfg.filing[key]);
     }
   }
   if (has('other')) {

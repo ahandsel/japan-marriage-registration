@@ -180,19 +180,19 @@ describe('text placement', { skip: skipPlacement }, () => {
     assert.ok(
       findWord(words, {
         text: '✓',
-        x: husband.remarriage_divorce_check.pos[0],
-        baseline: husband.remarriage_divorce_check.pos[1],
-        size: husband.remarriage_divorce_check.size,
+        x: husband.divorced_check.pos[0],
+        baseline: husband.divorced_check.pos[1],
+        size: husband.divorced_check.size,
       }),
     );
   });
 
-  test('a legacy address_first_pos shifts the whole 住所 block in the output', async (t) => {
+  test('a legacy address_town_pos shifts the whole 住所 block in the output', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(dir, 'shift.yaml', 'config.yaml', (cfg) => {
-      cfg.husband.address_first_pos = [
-        cfg.husband.address_first_pos[0] + 10,
-        cfg.husband.address_first_pos[1] - 5,
+      cfg.husband.address_town_pos = [
+        cfg.husband.address_town_pos[0] + 10,
+        cfg.husband.address_town_pos[1] - 5,
       ];
     });
     const out = path.join(dir, 'out.pdf');
@@ -202,8 +202,8 @@ describe('text placement', { skip: skipPlacement }, () => {
     const layout = resolveLayout('red', cfg);
     const base = resolveLayout('red', readRepoYaml('config.yaml'));
     assert.equal(
-      layout.husband.household_person.pos[0],
-      base.husband.household_person.pos[0] + 10,
+      layout.husband.head_of_household.pos[0],
+      base.husband.head_of_household.pos[0] + 10,
     );
     const { words } = extractWords(out);
     assertMarksPresent(words, expectedMarks(cfg, layout), 'shifted');
@@ -240,7 +240,7 @@ describe('text placement', { skip: skipPlacement }, () => {
     );
   });
 
-  test('blank values draw nothing, and every job_type 1-6 ticks its own box', async (t) => {
+  test('blank values draw nothing, and every household_work_type 1-6 ticks its own box', async (t) => {
     const dir = makeTempDir(t);
     for (const jobType of [1, 2, 3, 4, 5, 6]) {
       const cfgPath = writeConfig(
@@ -248,11 +248,11 @@ describe('text placement', { skip: skipPlacement }, () => {
         `job${jobType}.yaml`,
         'config-cinnamoroll.yaml',
         (cfg) => {
-          cfg.husband.job_type = jobType;
-          cfg.wife.job_type = jobType;
-          cfg.husband.address_apartment = '';
+          cfg.husband.household_work_type = jobType;
+          cfg.wife.household_work_type = jobType;
+          cfg.husband.address_building = '';
           cfg.national_census.year = '';
-          cfg.new_legally_domiciled.lastname_of = null;
+          cfg.new_domicile.surname_from = null;
         },
       );
       const out = path.join(dir, `job${jobType}.pdf`);
@@ -262,14 +262,14 @@ describe('text placement', { skip: skipPlacement }, () => {
       const layout = resolveLayout('cinnamoroll', cfg);
       const { words } = extractWords(out);
       const marks = expectedMarks(cfg, layout);
-      assertMarksPresent(words, marks, `job_type ${jobType}`);
+      assertMarksPresent(words, marks, `household_work_type ${jobType}`);
       // No surname ✓ (separate surnames), so only the two marital and two job ticks remain.
       assert.equal(marks.filter((m) => m.text === '✓').length, 4);
       const ticks = words.filter((w) => w.text === '✓');
       assert.equal(
         ticks.length,
         4,
-        `exactly four ✓ on the page for job_type ${jobType}`,
+        `exactly four ✓ on the page for household_work_type ${jobType}`,
       );
       const census = layout.national_census.year;
       assert.equal(

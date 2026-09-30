@@ -146,7 +146,8 @@ Apply these when writing or editing files rather than reviewing them:
 
 * Make the matching change to the counterpart README, `README.md` or `README.en.md`.
 * Use the `.yaml` extension for YAML files unless an external platform requires another name, as `.github/workflows/*.yml` and `.github/dependabot.yml` do.
-* Use ASCII, lowercase, kebab-case for filenames, variables, and function names, and camelCase for object keys.
+* Use ASCII, lowercase, kebab-case for filenames, variables, and function names, and camelCase for object keys in JavaScript code.
+  Config and layout YAML keys are the exception and use snake_case.
 * Keep the `scripts` block in `package.json` sorted alphabetically.
 * Do not bump the `packageManager` pin in `package.json` as a side effect of another change.
 * Write throwaway PDF output somewhere outside the repository with `-o`, rather than letting it pile up in the repository root.

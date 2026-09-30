@@ -1,19 +1,18 @@
-# 品川区のシナモロール様式（jp-marriage-registration-cinnamoroll.pdf）向けの
-# サンプル設定です。 Sample configuration for the cinnamoroll template. Every
-# drawing position lives in src/layout/cinnamoroll.yaml, so this file only
-# holds the information itself - there are no `*_pos` keys, unlike
-# config.yaml, whose values are tuned for the red template and would move the
-# fields off this form's grid.
+# 品川区のシナモロール様式（jp-marriage-registration-cinnamoroll.pdf）向けのサンプル設定です。
+# 描画位置はすべて src/layout/cinnamoroll.yaml にあるため、このファイルには記入内容のみを書きます。
+# config.yaml の `*_pos` キーは赤刷り様式に合わせた値で、この様式の枠からずれるため、ここには含めません。
+# Sample configuration for the cinnamoroll template (jp-marriage-registration-cinnamoroll.pdf).
+# Every drawing position lives in src/layout/cinnamoroll.yaml, so this file holds only the information itself.
+# Unlike config.yaml, it has no `*_pos` keys, because those values are tuned for the red template and would move the fields off this form's grid.
 template: cinnamoroll
 
-notification:
+filing:
   year: 3
   month: 5
   day: 5
-  # この様式は宛先が「品川区長殿」と印刷済みのため、届出先は空欄のままに
-  # してください。 The recipient is pre-printed as 品川区長殿 on this form,
-  # so leave the destination empty.
-  to: ''
+  # この様式は宛先が「品川区長殿」と印刷済みのため、届出先は空欄のままにしてください。
+  # The recipient is pre-printed as 品川区長殿 on this form, so leave the destination empty.
+  office: ''
 
 husband:
   last_name: 山田
@@ -23,34 +22,38 @@ husband:
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
-  address_first: 東京都千代田区神田
-  # この様式は住所欄と本籍欄に「丁目」が印字済みです。値には丁目を書かず、
-  # 印字の幅ぶんの全角スペース2つを入れてください（「３丁目　４」ではなく
-  # 「３　　４」）。The 住所 and 本籍 rows pre-print 丁目 on this form, so
-  # leave 丁目 out and put two full-width spaces where it is printed.
-  address_second: ３　　４
-  is_banchi_address: false
+  address_town: 東京都千代田区神田
+  # この様式は住所欄と本籍欄に「丁目」が印字済みです。
+  # 値には丁目を書かず、印字の幅ぶんの全角スペース2つを入れてください（「３丁目　４」ではなく「３　　４」）。
+  # The 住所 and 本籍 rows pre-print 丁目 on this form.
+  # Leave 丁目 out and put two full-width spaces where it is printed (３　　４, not ３丁目　４).
+  address_banchi: ３　　４
+  address_banchi_type: ban
   address_go: １０
-  address_apartment: | # 3行までであれば崩れず表現できます
+  # 3行までであれば崩れず表現できます。
+  # Up to three lines render without overlapping.
+  address_building: |
     インチキタワー
     マンション
     ３６１０号室
   # この様式の住所欄には世帯主の氏名の行がないため、空欄のままにしてください。
   # This form's 住所 box has no 世帯主の氏名 row, so leave this empty.
-  household_person: ''
-  legally_domiciled_first: 東京都千代田区飯田橋
-  legally_domiciled_second: ３　　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  head_of_household: ''
+  domicile_town: 東京都千代田区飯田橋
+  domicile_banchi: ３　　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 山田　太郎兵衛
   father_name: 山田　権左衛門
   mother_name: 山田　としこ
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    marriage_cat: 2 # 0: 初婚 1:死別 2:離別
+    # first_marriage: 初婚、widowed: 死別、divorced: 離別
+    # first_marriage, widowed (ended by death), or divorced
+    status: divorced
     year: 令和3
     month: 6
     day: 1
-  job_type: 6
+  household_work_type: 6
 
 wife:
   last_name: 貫井
@@ -60,80 +63,102 @@ wife:
   birth_year: 平成7
   birth_month: 6
   birth_day: 6
-  address_first: 東京都小金井市貫井北町
+  address_town: 東京都小金井市貫井北町
   # 夫側と同じく、丁目は印字済みなので全角スペース2つで空けます。
-  # Like the husband column, 丁目 is pre-printed, so two full-width spaces.
-  address_second: ３　　４
-  is_banchi_address: false
+  # As in the husband column, 丁目 is pre-printed, so two full-width spaces take its place.
+  address_banchi: ３　　４
+  address_banchi_type: ban
   address_go: １０
-  address_apartment: '' # 空欄のまま印刷する場合は '' を使用
+  # 空欄のまま印刷する場合は '' を使用します。
+  # Use '' to leave the box blank on the printout.
+  address_building: ''
   # 夫側と同じく、この様式には世帯主の氏名の行がありません。
-  # Like the husband column, this form has no 世帯主の氏名 row.
-  household_person: ''
-  legally_domiciled_first: 神奈川県横浜市
-  legally_domiciled_second: ３　　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 貫井　パッパ
+  # As in the husband column, this form has no 世帯主の氏名 row.
+  head_of_household: ''
+  domicile_town: 神奈川県横浜市
+  domicile_banchi: ３　　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 貫井　パッパ
   father_name: 貫井　パッパ
   mother_name: 貫井　はよ
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    marriage_cat: 0 # 0: 初婚 1:死別 2:離別
+    # first_marriage: 初婚、widowed: 死別、divorced: 離別
+    # first_marriage, widowed (ended by death), or divorced
+    status: first_marriage
     year: 令和３
     month: ６
     day: １
-  job_type: 4
+  household_work_type: 4
 
-new_legally_domiciled:
-  lastname_of: husband # husband / wife。外国人との婚姻の場合はnullで空欄に
+new_domicile:
+  # husband または wife を指定します。
+  # 外国人との婚姻の場合は、null にすると氏の選択欄が空欄になります。
+  # Set husband or wife.
+  # In a marriage with a foreign national, set null to leave the surname choice blank.
+  surname_from: husband
   address: 東京都小金井市貫井北町１丁目１
-  is_banchi_address: false
+  address_banchi_type: ban
 
-to_live_together:
+living_together_since:
   year: 令和3
   month: 6
 
-national_census: # 国勢調査の年4/1-翌3/31に該当しない場合は記載不要。yearを空白文字""に
+# 国勢調査の年の4月1日から翌年3月31日までに届け出る場合のみ記入します。
+# それ以外の場合は year を空文字 '' にすると、この欄全体が空欄になります。
+# Fill this in only when filing between April 1 of a national census year and March 31 of the following year.
+# Otherwise, set year to an empty string '' to leave the whole section blank.
+national_census:
   year: 令和3
   husband_job: '03'
   wife_job: '02'
 
-other: # 旧字体<=>新字体の変更などで使用。未成年婚姻のような同意欄の場合は直筆推奨で、必ず捺印を行うこと
+# 旧字体と新字体の変更などに使用します。
+# Use this for notes such as a change between old and new kanji forms.
+other:
   text: ''
 
-# 証人欄。witness1 が左、witness2 が右の列です。証人に手書きしてもらう場合は
-# セクションごと削除（またはコメントアウト）すると欄全体が空白になります。
+# 証人欄です。
+# witness1 が左、witness2 が右の列です。
+# 証人に手書きしてもらう場合は、セクションごと削除（またはコメントアウト）するとその列全体が空欄になります。
 # 証人欄は「☐番地」の行に書くため、値には他の様式と同じく丁目を含めます。
-# Witness box. witness1 is the left column and witness2 the right one. Remove
-# (or comment out) a whole section to leave that column blank for handwriting.
-# The witness rows are written on the ☐番地 line, so a witness value keeps its
-# own 丁目, as on the other templates.
+# Witness box.
+# witness1 is the left column and witness2 the right one.
+# Remove (or comment out) a whole section to leave that column blank for handwriting.
+# The witness rows are written on the ☐番地 line, so a witness value keeps its own 丁目, as on the other templates.
 witness1:
-  # 署名は必ず証人本人の自署が必要です。通常は '' のままにして、印刷後に
-  # 署名してもらってください。The signature must be handwritten by the
-  # witness, so leave name as '' and have them sign the printout.
+  # 署名は必ず証人本人の自署が必要です。
+  # 通常は '' のままにして、印刷後に署名してもらってください。
+  # The signature must be handwritten by the witness, so leave name as '' and have them sign the printout.
   name: ''
   birth_year: 昭和６０
   birth_month: １
   birth_day: ２３
-  address_first: 東京都新宿区西新宿
-  address_second: ２丁目　８
-  is_banchi_address: false
+  address_town: 東京都新宿区西新宿
+  address_banchi: ２丁目　８
+  address_banchi_type: ban
   address_go: １
-  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null に
-  legally_domiciled_first: 東京都新宿区西新宿
-  legally_domiciled_second: ２丁目　８
-  is_banchi_legally_domiciled: true
+  # 方書（建物名・部屋番号）です。
+  # この様式の方書欄は1行です。
+  # This is the building and room (方書).
+  # The 方書 row on this form holds one line.
+  address_building: ''
+  # 外国籍の証人は国籍のみを記入し、domicile_banchi_type を null にします。
+  # A foreign witness writes only their nationality here, with domicile_banchi_type set to null.
+  domicile_town: 東京都新宿区西新宿
+  domicile_banchi: ２丁目　８
+  domicile_banchi_type: banchi
 
 witness2:
   name: ''
   birth_year: 平成２
   birth_month: １１
   birth_day: ３
-  address_first: 神奈川県横浜市中区日本大通
-  address_second: １丁目　１
-  is_banchi_address: false
+  address_town: 神奈川県横浜市中区日本大通
+  address_banchi: １丁目　１
+  address_banchi_type: ban
   address_go: ２
-  legally_domiciled_first: 神奈川県横浜市中区日本大通
-  legally_domiciled_second: １丁目　１
-  is_banchi_legally_domiciled: true
+  address_building: サンプルハイツ２０１
+  domicile_town: 神奈川県横浜市中区日本大通
+  domicile_banchi: １丁目　１
+  domicile_banchi_type: banchi

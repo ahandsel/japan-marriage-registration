@@ -19,6 +19,7 @@
     "lint": "pnpm run lint-code && pnpm run lint-md",
     "lint-code": "prettier --write .",
     "lint-md": "markdownlint-cli2 --fix",
+    "migrate-config": "node scripts/migrate-config-keys.mjs",
     "red:config": "node src/main.js --init-config --template red",
     "red:layout": "node src/main.js --init-layout --template red",
     "red:pdf": "node src/main.js --template red",
