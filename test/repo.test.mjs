@@ -160,9 +160,9 @@ describe('tracked configs', () => {
 
   test('the cinnamoroll sample leaves its two pre-printed fields blank', () => {
     const cfg = readRepoYaml('config-cinnamoroll.yaml');
-    assert.equal(cfg.notification.to, '');
-    assert.equal(cfg.husband.household_person, '');
-    assert.equal(cfg.wife.household_person, '');
+    assert.equal(cfg.filing.office, '');
+    assert.equal(cfg.husband.head_of_household, '');
+    assert.equal(cfg.wife.head_of_household, '');
   });
 
   test('the cinnamoroll sample leaves 丁目 out of the spouse address rows, where the form prints it', () => {
@@ -171,7 +171,7 @@ describe('tracked configs', () => {
     // the usual "２丁目　８" shape (see the layout header).
     const cfg = readRepoYaml('config-cinnamoroll.yaml');
     for (const who of ['husband', 'wife']) {
-      for (const key of ['address_second', 'legally_domiciled_second']) {
+      for (const key of ['address_banchi', 'domicile_banchi']) {
         const value = String(cfg[who][key]);
         assert.ok(!value.includes('丁目'), `${who}.${key} = ${value}`);
         assert.match(
@@ -183,9 +183,9 @@ describe('tracked configs', () => {
     }
     for (const who of ['witness1', 'witness2']) {
       assert.match(
-        String(cfg[who].address_second),
+        String(cfg[who].address_banchi),
         /丁目/,
-        `${who}.address_second`,
+        `${who}.address_banchi`,
       );
     }
   });
@@ -194,9 +194,9 @@ describe('tracked configs', () => {
     const cfg = readRepoYaml('config-black.yaml');
     for (const who of ['witness1', 'witness2']) {
       assert.equal(
-        cfg[who].is_banchi_address,
+        cfg[who].address_banchi_type,
         null,
-        `${who}.is_banchi_address`,
+        `${who}.address_banchi_type`,
       );
     }
   });

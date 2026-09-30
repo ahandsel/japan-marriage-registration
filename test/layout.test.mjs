@@ -70,15 +70,18 @@ describe('bundled templates and layouts', () => {
         'wife',
         'witness1',
         'witness2',
-        'new_legally_domiciled',
-        'to_live_together',
+        'new_domicile',
+        'living_together_since',
         'national_census',
-        'notification',
+        'filing',
         'other',
       ]) {
         assert.ok(section in layout, `${variant}.${section}`);
       }
-      assert.equal(layout.husband.job_type_checks.positions[6].length, 2);
+      assert.equal(
+        layout.husband.household_work_type_checks.positions[6].length,
+        2,
+      );
     }
   });
 
@@ -214,9 +217,9 @@ describe('layout: overrides', () => {
   test('a layout: block applies on top of a custom PDF using the red fallback', (t) => {
     const log = silence(t);
     const merged = resolveLayout('/tmp/custom.pdf', {
-      layout: { notification: { to: { pos: [1, 2] } } },
+      layout: { filing: { office: { pos: [1, 2] } } },
     });
-    assert.deepEqual(merged.notification.to.pos, [1, 2]);
+    assert.deepEqual(merged.filing.office.pos, [1, 2]);
     assert.equal(
       merged.husband.last_name.size,
       resolveLayout('red', {}).husband.last_name.size,
@@ -236,8 +239,8 @@ describe('legacy *_pos overrides', () => {
     'last_name_kana_pos',
     'first_name_pos',
     'first_name_kana_pos',
-    'address_first_pos',
-    'legally_domiciled_first_pos',
+    'address_town_pos',
+    'domicile_town_pos',
     'father_name_pos',
     'mother_name_pos',
   ];
@@ -247,27 +250,27 @@ describe('legacy *_pos overrides', () => {
       ...['husband', 'wife'].flatMap((who) =>
         LEGACY_PERSON_KEYS.map((key) => [who, key]),
       ),
-      ['new_legally_domiciled', 'address_pos'],
+      ['new_domicile', 'address_pos'],
     ];
     assert.deepEqual(LEGACY_POS_KEY_PATHS, expected);
   });
 
-  test('address_first_pos moves the whole 住所 block by the same delta on red', () => {
+  test('address_town_pos moves the whole 住所 block by the same delta on red', () => {
     const base = resolveLayout('red', {});
-    const [x, y] = base.husband.address_first.pos;
+    const [x, y] = base.husband.address_town.pos;
     const merged = resolveLayout('red', {
-      husband: { address_first_pos: [x + 10, y - 5] },
+      husband: { address_town_pos: [x + 10, y - 5] },
     });
     const shifted = (key) => [
       base.husband[key].pos[0] + 10,
       base.husband[key].pos[1] - 5,
     ];
-    assert.deepEqual(merged.husband.address_first.pos, [x + 10, y - 5]);
+    assert.deepEqual(merged.husband.address_town.pos, [x + 10, y - 5]);
     for (const key of [
-      'address_second',
+      'address_banchi',
       'address_go',
-      'household_person',
-      'address_apartment',
+      'head_of_household',
+      'address_building',
     ]) {
       assert.deepEqual(merged.husband[key].pos, shifted(key), key);
     }
@@ -276,29 +279,23 @@ describe('legacy *_pos overrides', () => {
       merged.husband.address_banchi_ellipse,
       base.husband.address_banchi_ellipse,
     );
-    assert.deepEqual(
-      merged.husband.legally_domiciled_first,
-      base.husband.legally_domiciled_first,
-    );
+    assert.deepEqual(merged.husband.domicile_town, base.husband.domicile_town);
     assert.deepEqual(merged.wife, base.wife);
   });
 
-  test('legally_domiciled_first_pos moves the 本籍 block, and the name keys move only themselves', () => {
+  test('domicile_town_pos moves the 本籍 block, and the name keys move only themselves', () => {
     const base = resolveLayout('red', {});
     const merged = resolveLayout('red', {
       wife: {
-        legally_domiciled_first_pos: [0, 0],
+        domicile_town_pos: [0, 0],
         last_name_pos: [1, 1],
         father_name_pos: [2, 2],
       },
-      new_legally_domiciled: { address_pos: [3, 3] },
+      new_domicile: { address_pos: [3, 3] },
     });
-    const [bx, by] = base.wife.legally_domiciled_first.pos;
-    assert.deepEqual(merged.wife.legally_domiciled_first.pos, [0, 0]);
-    for (const key of [
-      'legally_domiciled_second',
-      'head_of_person_of_legally_domiciled',
-    ]) {
+    const [bx, by] = base.wife.domicile_town.pos;
+    assert.deepEqual(merged.wife.domicile_town.pos, [0, 0]);
+    for (const key of ['domicile_banchi', 'head_of_family_register']) {
       assert.deepEqual(
         merged.wife[key].pos,
         [base.wife[key].pos[0] - bx, base.wife[key].pos[1] - by],
@@ -309,10 +306,10 @@ describe('legacy *_pos overrides', () => {
     assert.deepEqual(merged.wife.last_name_kana, base.wife.last_name_kana);
     assert.deepEqual(merged.wife.father_name.pos, [2, 2]);
     assert.deepEqual(merged.wife.mother_name, base.wife.mother_name);
-    assert.deepEqual(merged.new_legally_domiciled.address.pos, [3, 3]);
+    assert.deepEqual(merged.new_domicile.address.pos, [3, 3]);
     assert.deepEqual(
-      merged.new_legally_domiciled.banchi_ellipse,
-      base.new_legally_domiciled.banchi_ellipse,
+      merged.new_domicile.banchi_ellipse,
+      base.new_domicile.banchi_ellipse,
     );
   });
 
@@ -388,31 +385,31 @@ describe('legacy *_pos overrides', () => {
   test('a layout: entry for a dependent field is not dragged along by the anchor *_pos shift', (t) => {
     const log = silence(t);
     const base = resolveLayout('red', {});
-    const [x, y] = base.husband.address_first.pos;
+    const [x, y] = base.husband.address_town.pos;
     const merged = resolveLayout('red', {
-      husband: { address_first_pos: [x + 10, y - 5] },
-      layout: { husband: { address_second: { pos: [300, 500] } } },
+      husband: { address_town_pos: [x + 10, y - 5] },
+      layout: { husband: { address_banchi: { pos: [300, 500] } } },
     });
-    assert.deepEqual(merged.husband.address_first.pos, [x + 10, y - 5]);
-    assert.deepEqual(merged.husband.address_second.pos, [300, 500]);
+    assert.deepEqual(merged.husband.address_town.pos, [x + 10, y - 5]);
+    assert.deepEqual(merged.husband.address_banchi.pos, [300, 500]);
     // The dependents without their own entry still move with the anchor.
-    assert.deepEqual(merged.husband.household_person.pos, [
-      base.husband.household_person.pos[0] + 10,
-      base.husband.household_person.pos[1] - 5,
+    assert.deepEqual(merged.husband.head_of_household.pos, [
+      base.husband.head_of_household.pos[0] + 10,
+      base.husband.head_of_household.pos[1] - 5,
     ]);
     const warning = log.mock.calls
       .map((c) => String(c.arguments[0]))
       .find((line) => line.includes('"layout:" entry wins'));
     assert.match(
       warning,
-      /- the husband\.address_first_pos shift of address_second \(layout\.husband\.address_second sets pos\)/,
+      /- the husband\.address_town_pos shift of address_banchi \(layout\.husband\.address_banchi sets pos\)/,
     );
   });
 
   test('no precedence warning when a layout: entry and the *_pos keys name different fields', (t) => {
     const log = silence(t);
     const cfg = readRepoYaml('config.yaml');
-    cfg.layout = { notification: { to: { pos: [1, 2] } } };
+    cfg.layout = { filing: { office: { pos: [1, 2] } } };
     resolveLayout('red', cfg);
     assert.ok(
       !log.mock.calls.some((c) =>

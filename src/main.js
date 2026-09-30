@@ -16,6 +16,7 @@ import {
   resolveLayout,
   TEMPLATE_PREFIX,
 } from './layout.js';
+import { findRenamedKeys } from './renamed-keys.js';
 
 const baseDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(baseDir, '..');
@@ -391,6 +392,22 @@ function loadConfig(configPath) {
   return cfg;
 }
 
+function rejectRenamedKeys(cfg, configPath) {
+  // Every top-level section is optional, so an old section name such as `notification:` would be skipped without a word and its part of the form would print blank.
+  // An old key inside a section would fail later as a missing key, but without saying what it is called now.
+  // Either way, stop before drawing and name every old key with its new name.
+  const renamed = findRenamedKeys(cfg);
+  if (renamed.length === 0) {
+    return;
+  }
+  const name = path.relative(repoRoot, configPath) || configPath;
+  fail(
+    `❌ Config error: ${name} uses ${renamed.length} old key ${renamed.length > 1 ? 'names' : 'name'}:\n` +
+      renamed.map(({ from, to }) => `   - ${from} is now ${to}`).join('\n') +
+      `\n🛠️  Run \`pnpm run migrate-config ${name}\` to rename them in place; comments and values are kept.`,
+  );
+}
+
 async function setup(templatePath, font) {
   // Draw the template as a form XObject on a page matched to its size, so templates of differing sizes all line up with the layout coordinates, which are measured from the bottom left.
   const doc = await PDFDocument.create();
@@ -449,19 +466,28 @@ function requireValue(spec, text) {
   }
 }
 
-function requireTriState(lay, key, value) {
-  // is_banchi_address / is_banchi_legally_domiciled: true draws the 番地 ellipse, false the 番 circle, and null draws nothing on purpose.
-  // Anything else - the key missing, or a quoted 'false' - must stop the run like every other bad config value, or a required mark silently goes missing.
-  if (value === true || value === false || value === null) {
+function requireBanchiType(lay, key, value) {
+  // address_banchi_type / domicile_banchi_type: 'banchi' draws the 番地 ellipse, 'ban' the 番 circle, and null draws nothing on purpose.
+  // Anything else - the key missing, or a typo such as 'banch' - must stop the run like every other bad config value, or a required mark silently goes missing.
+  if (value === 'banchi' || value === 'ban' || value === null) {
     return;
   }
   const section = lay.keyPath ?? 'a section';
   fail(
-    `❌ Config error: "${section}.${key}" must be true (番地), false (番), or null to draw no mark; ` +
+    `❌ Config error: "${section}.${key}" must be 'banchi' (番地), 'ban' (番), or null to draw no mark; ` +
       (value === undefined
         ? 'the key is missing.'
         : `got ${JSON.stringify(value)}.`),
   );
+}
+
+function drawBanchiMark(cc, lay, key, value, ellipse, circle) {
+  requireBanchiType(lay, key, value);
+  if (value === 'banchi') {
+    cc.ellipse(...ellipse);
+  } else if (value === 'ban') {
+    cc.circle(...circle);
+  }
 }
 
 function drawText(cc, spec, text) {
@@ -491,118 +517,106 @@ function nameInfo(cfg, lay, cc) {
 }
 
 function addressInfo(cfg, lay, cc) {
-  drawText(cc, lay.address_first, cfg.address_first);
-  drawText(cc, lay.address_second, cfg.address_second);
-  // `null` skips the 番地/番 mark, as it does for 本籍 and for the witnesses, so the same key means the same thing in every section.
-  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
-  if (cfg.is_banchi_address === true) {
-    cc.ellipse(...lay.address_banchi_ellipse);
-  } else if (cfg.is_banchi_address === false) {
-    cc.circle(...lay.address_go_circle);
-  }
+  drawText(cc, lay.address_town, cfg.address_town);
+  drawText(cc, lay.address_banchi, cfg.address_banchi);
+  // `null` skips the 番地/番 mark, as it does for 本籍 and for the witnesses, so the same value means the same thing in every section.
+  drawBanchiMark(
+    cc,
+    lay,
+    'address_banchi_type',
+    cfg.address_banchi_type,
+    lay.address_banchi_ellipse,
+    lay.address_ban_circle,
+  );
   drawText(cc, lay.address_go, cfg.address_go);
-  drawText(cc, lay.household_person, cfg.household_person);
-  drawMultiline(cc, lay.address_apartment, cfg.address_apartment);
+  drawText(cc, lay.head_of_household, cfg.head_of_household);
+  drawMultiline(cc, lay.address_building, cfg.address_building);
 }
 
-function legallyDomiciledInfo(cfg, lay, cc) {
-  drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
-  drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
+function domicileInfo(cfg, lay, cc) {
+  drawText(cc, lay.domicile_town, cfg.domicile_town);
+  drawText(cc, lay.domicile_banchi, cfg.domicile_banchi);
   // A foreign national has no 本籍 - the column holds a nationality instead, so neither 番地 nor 番 applies.
   // `null` in the config skips the marking.
-  requireTriState(
-    lay,
-    'is_banchi_legally_domiciled',
-    cfg.is_banchi_legally_domiciled,
-  );
-  if (cfg.is_banchi_legally_domiciled === true) {
-    cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
-  } else if (cfg.is_banchi_legally_domiciled === false) {
-    cc.circle(...lay.legally_domiciled_go_circle);
-  }
-  drawText(
+  drawBanchiMark(
     cc,
-    lay.head_of_person_of_legally_domiciled,
-    cfg.head_of_person_of_legally_domiciled,
+    lay,
+    'domicile_banchi_type',
+    cfg.domicile_banchi_type,
+    lay.domicile_banchi_ellipse,
+    lay.domicile_ban_circle,
   );
+  drawText(cc, lay.head_of_family_register, cfg.head_of_family_register);
 }
 
 function familyInfo(cfg, lay, cc) {
   drawText(cc, lay.father_name, cfg.father_name);
   drawText(cc, lay.mother_name, cfg.mother_name);
-  drawText(cc, lay.relationship, cfg.relationship);
+  drawText(cc, lay.relationship_to_parents, cfg.relationship_to_parents);
 }
 
-function newLegallyDomiciled(cfg, lay, cc) {
-  // `lastname_of` names the spouse whose surname the couple takes ('husband' or 'wife').
+function newDomicileInfo(cfg, lay, cc) {
+  // `surname_from` names the spouse whose surname the couple takes ('husband' or 'wife').
   // In a marriage with a foreign national the couple keeps separate surnames, so neither box applies; `null` skips the ✓.
-  // The legacy boolean `is_husband_lastname` is still honored.
-  let lastnameOf = cfg.lastname_of;
-  if (lastnameOf === undefined) {
-    if (cfg.is_husband_lastname === true) {
-      lastnameOf = 'husband';
-    } else if (cfg.is_husband_lastname === false) {
-      lastnameOf = 'wife';
-    } else {
-      // null skips below; undefined means neither key exists.
-      lastnameOf = cfg.is_husband_lastname;
-    }
-  }
-  // Exactly one 氏 box has to be ticked on a valid form, so a key that is missing (a typo such as lastname_off) or holds a value other than husband/wife must not print a blank pair; only null does that, on purpose.
-  if (lastnameOf === undefined) {
+  const surnameFrom = cfg.surname_from;
+  // Exactly one 氏 box has to be ticked on a valid form, so a key that is missing (a typo such as surname_form) or holds a value other than husband/wife must not print a blank pair; only null does that, on purpose.
+  if (surnameFrom === undefined) {
     fail(
-      `❌ Config error: no value for "${lay.keyPath ?? 'new_legally_domiciled'}.lastname_of" - the key is missing.\n` +
+      `❌ Config error: no value for "${lay.keyPath ?? 'new_domicile'}.surname_from" - the key is missing.\n` +
         "   Set it to 'husband' or 'wife', or to null to leave both 氏 boxes blank.",
     );
   }
-  if (lastnameOf === 'husband') {
-    drawText(cc, lay.husband_lastname_check, '✓');
-  } else if (lastnameOf === 'wife') {
-    drawText(cc, lay.wife_lastname_check, '✓');
-  } else if (lastnameOf !== null) {
+  if (surnameFrom === 'husband') {
+    drawText(cc, lay.husband_surname_check, '✓');
+  } else if (surnameFrom === 'wife') {
+    drawText(cc, lay.wife_surname_check, '✓');
+  } else if (surnameFrom !== null) {
     fail(
-      `❌ Config error: "${lay.keyPath ?? 'new_legally_domiciled'}.lastname_of" must be 'husband', 'wife', ` +
-        `or null to leave both 氏 boxes blank; got ${JSON.stringify(lastnameOf)}.`,
+      `❌ Config error: "${lay.keyPath ?? 'new_domicile'}.surname_from" must be 'husband', 'wife', ` +
+        `or null to leave both 氏 boxes blank; got ${JSON.stringify(surnameFrom)}.`,
     );
   }
   // Checked even when the address is blank: a present section must hold every key the sample has, and a blank address is not a reason to skip that rule.
-  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
+  requireBanchiType(lay, 'address_banchi_type', cfg.address_banchi_type);
   if (cfg.address !== '') {
     drawText(cc, lay.address, cfg.address);
-    if (cfg.is_banchi_address === true) {
-      cc.ellipse(...lay.banchi_ellipse);
-    } else if (cfg.is_banchi_address === false) {
-      cc.circle(...lay.go_circle);
-    }
+    drawBanchiMark(
+      cc,
+      lay,
+      'address_banchi_type',
+      cfg.address_banchi_type,
+      lay.banchi_ellipse,
+      lay.ban_circle,
+    );
   }
 }
 
-function toLiveTogetherInfo(cfg, lay, cc) {
+function livingTogetherSinceInfo(cfg, lay, cc) {
   drawText(cc, lay.year, cfg.year);
   drawText(cc, lay.month, cfg.month);
 }
 
 function maritalHistoryInfo(cfg, lay, cc) {
-  // A person section without its marital_history mapping is a missing key, not an optional section, so name it instead of dying on cfg.marriage_cat.
+  // A person section without its marital_history mapping is a missing key, not an optional section, so name it instead of dying on cfg.status.
   if (cfg === undefined || cfg === null) {
     fail(
       `❌ Config error: no value for "${lay.keyPath ?? 'marital_history'}" - the mapping is missing or null.\n` +
         '   Every key in the sample config.yaml must also exist in the config.',
     );
   }
-  if (cfg.marriage_cat === 0) {
+  if (cfg.status === 'first_marriage') {
     drawText(cc, lay.first_marriage_check, '✓');
     return;
   }
-  // Anything outside 0/1/2 must fail: a typo silently checking 離別 (divorce) would put wrong legal content on the form.
-  if (cfg.marriage_cat === 1) {
-    drawText(cc, lay.remarriage_death_check, '✓');
-  } else if (cfg.marriage_cat === 2) {
-    drawText(cc, lay.remarriage_divorce_check, '✓');
+  // Anything else must fail: a typo silently checking 離別 (divorce) would put wrong legal content on the form.
+  if (cfg.status === 'widowed') {
+    drawText(cc, lay.widowed_check, '✓');
+  } else if (cfg.status === 'divorced') {
+    drawText(cc, lay.divorced_check, '✓');
   } else {
     fail(
-      `❌ Config error: "${lay.keyPath ?? 'marital_history'}.marriage_cat" must be ` +
-        `0 (初婚), 1 (死別), or 2 (離別); got ${JSON.stringify(cfg.marriage_cat)}.`,
+      `❌ Config error: "${lay.keyPath ?? 'marital_history'}.status" must be ` +
+        `first_marriage (初婚), widowed (死別), or divorced (離別); got ${JSON.stringify(cfg.status)}.`,
     );
   }
   drawText(cc, lay.year, cfg.year);
@@ -610,21 +624,22 @@ function maritalHistoryInfo(cfg, lay, cc) {
   drawText(cc, lay.day, cfg.day);
 }
 
-function jobTypeInfo(cfg, lay, cc) {
+function householdWorkTypeInfo(cfg, lay, cc) {
   // 1-6 tick the matching box.
   // 0 (the value the original Python config used) and '' leave the box blank for handwriting.
   // Anything else must fail: a typo such as 7 would otherwise silently leave a required box unmarked.
-  if (cfg.job_type === 0 || cfg.job_type === '') {
+  const workType = cfg.household_work_type;
+  if (workType === 0 || workType === '') {
     return;
   }
-  const pos = lay.job_type_checks.positions[cfg.job_type];
-  if (typeof cfg.job_type !== 'number' || pos === undefined) {
+  const pos = lay.household_work_type_checks.positions[workType];
+  if (typeof workType !== 'number' || pos === undefined) {
     fail(
-      `❌ Config error: "${lay.keyPath ?? 'person'}.job_type" must be a number from 1 to 6, ` +
-        `or 0 or '' to leave the box blank; got ${JSON.stringify(cfg.job_type)}.`,
+      `❌ Config error: "${lay.keyPath ?? 'person'}.household_work_type" must be a number from 1 to 6, ` +
+        `or 0 or '' to leave the box blank; got ${JSON.stringify(workType)}.`,
     );
   }
-  cc.setFont(lay.job_type_checks.size);
+  cc.setFont(lay.household_work_type_checks.size);
   cc.drawString(pos[0], pos[1], '✓');
 }
 
@@ -636,11 +651,11 @@ function nationalCensusInfo(cfg, lay, cc) {
   }
 }
 
-function notificationInfo(cfg, lay, cc) {
+function filingInfo(cfg, lay, cc) {
   drawText(cc, lay.year, cfg.year);
   drawText(cc, lay.month, cfg.month);
   drawText(cc, lay.day, cfg.day);
-  drawText(cc, lay.to, cfg.to);
+  drawText(cc, lay.office, cfg.office);
 }
 
 function otherInfo(cfg, lay, cc) {
@@ -650,8 +665,8 @@ function otherInfo(cfg, lay, cc) {
 function witnessInfo(cfg, lay, cc) {
   // The whole witness section is optional: configs written before it existed do not have it, and many couples have the witnesses fill the box in by hand.
   // A key missing inside a present section is an error here, as in every other section (see requireValue).
-  // The one exception is address_apartment, which was added after the witness box shipped.
-  // A witness section written before it has no such key, and the init-config top-up adds only whole sections, so a missing (or null) address_apartment prints nothing, like ''.
+  // The one exception is address_building, which was added after the witness box shipped.
+  // A witness section written before it has no such key, and the init-config top-up adds only whole sections, so a missing (or null) address_building prints nothing, like ''.
   if (cfg === undefined || cfg === null) {
     return;
   }
@@ -660,30 +675,30 @@ function witnessInfo(cfg, lay, cc) {
   drawText(cc, lay.birth_year, cfg.birth_year);
   drawText(cc, lay.birth_month, cfg.birth_month);
   drawText(cc, lay.birth_day, cfg.birth_day);
-  drawText(cc, lay.address_first, cfg.address_first);
-  drawText(cc, lay.address_second, cfg.address_second);
+  drawText(cc, lay.address_town, cfg.address_town);
+  drawText(cc, lay.address_banchi, cfg.address_banchi);
   drawText(cc, lay.address_go, cfg.address_go);
-  // `null` skips the 番地/番 marking, as in legallyDomiciledInfo.
-  requireTriState(lay, 'is_banchi_address', cfg.is_banchi_address);
-  if (cfg.is_banchi_address === true) {
-    cc.ellipse(...lay.address_banchi_ellipse);
-  } else if (cfg.is_banchi_address === false) {
-    cc.circle(...lay.address_go_circle);
-  }
-  // 方書 (building and room) has its own slot after 号: written into address_second, it runs over the 番 mark and the 号 value on the red form.
-  drawMultiline(cc, lay.address_apartment, cfg.address_apartment ?? '');
-  drawText(cc, lay.legally_domiciled_first, cfg.legally_domiciled_first);
-  drawText(cc, lay.legally_domiciled_second, cfg.legally_domiciled_second);
-  requireTriState(
+  // `null` skips the 番地/番 marking, as in domicileInfo.
+  drawBanchiMark(
+    cc,
     lay,
-    'is_banchi_legally_domiciled',
-    cfg.is_banchi_legally_domiciled,
+    'address_banchi_type',
+    cfg.address_banchi_type,
+    lay.address_banchi_ellipse,
+    lay.address_ban_circle,
   );
-  if (cfg.is_banchi_legally_domiciled === true) {
-    cc.ellipse(...lay.legally_domiciled_banchi_ellipse);
-  } else if (cfg.is_banchi_legally_domiciled === false) {
-    cc.circle(...lay.legally_domiciled_go_circle);
-  }
+  // 方書 (building and room) has its own slot after 号: written into address_banchi, it runs over the 番 mark and the 号 value on the red form.
+  drawMultiline(cc, lay.address_building, cfg.address_building ?? '');
+  drawText(cc, lay.domicile_town, cfg.domicile_town);
+  drawText(cc, lay.domicile_banchi, cfg.domicile_banchi);
+  drawBanchiMark(
+    cc,
+    lay,
+    'domicile_banchi_type',
+    cfg.domicile_banchi_type,
+    lay.domicile_banchi_ellipse,
+    lay.domicile_ban_circle,
+  );
 }
 
 async function main() {
@@ -738,6 +753,8 @@ async function main() {
       } else {
         // An existing per-template config is topped up the same way the shared one is below: it was seeded once and never refreshed since.
         const variant = layoutNameForTemplate(args.template);
+        // An old section name looks like a missing section, and the top-up would append a second copy full of placeholders next to it.
+        rejectRenamedKeys(loadConfig(target), target);
         const headerAdded = addPrivateConfigHeader(target);
         const templateKey = pinTemplateKey(target, variant);
         const missing = missingSampleSections(target);
@@ -781,6 +798,8 @@ async function main() {
       console.log(`✅ Created ${path.relative(repoRoot, configPath)}.`);
       return;
     }
+    // An old section name looks like a missing section, and the top-up would append a second copy full of placeholders next to it.
+    rejectRenamedKeys(loadConfig(configPath), configPath);
     const name = path.relative(repoRoot, configPath);
     // If the file predates this header (or was written by hand), prepend it without touching the rest, so an existing config keeps its details.
     if (addPrivateConfigHeader(configPath)) {
@@ -811,6 +830,7 @@ async function main() {
   }
   const configPath = resolveConfigPath(args.config, args.template);
   const cfg = loadConfig(configPath);
+  rejectRenamedKeys(cfg, configPath);
   const templateName = resolveTemplateName(args.template, cfg);
   const templatePath = resolveTemplatePath(templateName);
   const layout = resolveLayout(templateName, cfg);
@@ -855,16 +875,16 @@ async function main() {
     }
     nameInfo(person, layout[who], cc);
     addressInfo(person, layout[who], cc);
-    legallyDomiciledInfo(person, layout[who], cc);
+    domicileInfo(person, layout[who], cc);
     familyInfo(person, layout[who], cc);
     maritalHistoryInfo(person.marital_history, layout[who].marital_history, cc);
-    jobTypeInfo(person, layout[who], cc);
+    householdWorkTypeInfo(person, layout[who], cc);
   }
   const optional = [
-    [newLegallyDomiciled, 'new_legally_domiciled'],
-    [toLiveTogetherInfo, 'to_live_together'],
+    [newDomicileInfo, 'new_domicile'],
+    [livingTogetherSinceInfo, 'living_together_since'],
     [nationalCensusInfo, 'national_census'],
-    [notificationInfo, 'notification'],
+    [filingInfo, 'filing'],
     [otherInfo, 'other'],
     [witnessInfo, 'witness1'],
     [witnessInfo, 'witness2'],

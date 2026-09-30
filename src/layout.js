@@ -20,7 +20,7 @@ function fail(message) {
 }
 
 // --- schema ------------------------------------------------------------------
-// Leaf types: 'text' is { pos: [x, y], size }, 'multiline' adds a `step` (distance between lines), 'ellipse' is two opposite bounding-box corners [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one absolute position per job_type value (1-6).
+// Leaf types: 'text' is { pos: [x, y], size }, 'multiline' adds a `step` (distance between lines), 'ellipse' is two opposite bounding-box corners [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one absolute position per household_work_type value (1-6).
 
 const PERSON_SCHEMA = {
   last_name: 'text',
@@ -30,50 +30,50 @@ const PERSON_SCHEMA = {
   birth_year: 'text',
   birth_month: 'text',
   birth_day: 'text',
-  address_first: 'text',
-  address_second: 'text',
+  address_town: 'text',
+  address_banchi: 'text',
   address_go: 'text',
-  household_person: 'text',
-  address_apartment: 'multiline',
+  head_of_household: 'text',
+  address_building: 'multiline',
   address_banchi_ellipse: 'ellipse',
-  address_go_circle: 'circle',
-  legally_domiciled_first: 'text',
-  legally_domiciled_second: 'text',
-  head_of_person_of_legally_domiciled: 'text',
-  legally_domiciled_banchi_ellipse: 'ellipse',
-  legally_domiciled_go_circle: 'circle',
+  address_ban_circle: 'circle',
+  domicile_town: 'text',
+  domicile_banchi: 'text',
+  head_of_family_register: 'text',
+  domicile_banchi_ellipse: 'ellipse',
+  domicile_ban_circle: 'circle',
   father_name: 'text',
   mother_name: 'text',
-  relationship: 'text',
+  relationship_to_parents: 'text',
   marital_history: {
     first_marriage_check: 'text',
-    remarriage_death_check: 'text',
-    remarriage_divorce_check: 'text',
+    widowed_check: 'text',
+    divorced_check: 'text',
     year: 'text',
     month: 'text',
     day: 'text',
   },
-  job_type_checks: 'checks',
+  household_work_type_checks: 'checks',
 };
 
 // The two witness columns share one schema, like husband and wife do.
 // A witness has no 世帯主/筆頭者 line on the bundled templates, so the schema is a subset of PERSON_SCHEMA.
-// Only cinnamoroll prints a witness 方書 row; the other layouts put `address_apartment` in the free space after 号.
+// Only cinnamoroll prints a witness 方書 row; the other layouts put `address_building` in the free space after 号.
 const WITNESS_SCHEMA = {
   name: 'text',
   birth_year: 'text',
   birth_month: 'text',
   birth_day: 'text',
-  address_first: 'text',
-  address_second: 'text',
+  address_town: 'text',
+  address_banchi: 'text',
   address_go: 'text',
-  address_apartment: 'multiline',
+  address_building: 'multiline',
   address_banchi_ellipse: 'ellipse',
-  address_go_circle: 'circle',
-  legally_domiciled_first: 'text',
-  legally_domiciled_second: 'text',
-  legally_domiciled_banchi_ellipse: 'ellipse',
-  legally_domiciled_go_circle: 'circle',
+  address_ban_circle: 'circle',
+  domicile_town: 'text',
+  domicile_banchi: 'text',
+  domicile_banchi_ellipse: 'ellipse',
+  domicile_ban_circle: 'circle',
 };
 
 const LAYOUT_SCHEMA = {
@@ -81,14 +81,14 @@ const LAYOUT_SCHEMA = {
   wife: PERSON_SCHEMA,
   witness1: WITNESS_SCHEMA,
   witness2: WITNESS_SCHEMA,
-  new_legally_domiciled: {
-    husband_lastname_check: 'text',
-    wife_lastname_check: 'text',
+  new_domicile: {
+    husband_surname_check: 'text',
+    wife_surname_check: 'text',
     address: 'text',
     banchi_ellipse: 'ellipse',
-    go_circle: 'circle',
+    ban_circle: 'circle',
   },
-  to_live_together: {
+  living_together_since: {
     year: 'text',
     month: 'text',
   },
@@ -97,11 +97,11 @@ const LAYOUT_SCHEMA = {
     husband_job: 'text',
     wife_job: 'text',
   },
-  notification: {
+  filing: {
     year: 'text',
     month: 'text',
     day: 'text',
-    to: 'text',
+    office: 'text',
   },
   other: {
     text: 'multiline',
@@ -116,18 +116,18 @@ const LEGACY_PERSON_POS_KEYS = {
   last_name_kana_pos: { field: 'last_name_kana', shifts: [] },
   first_name_pos: { field: 'first_name', shifts: [] },
   first_name_kana_pos: { field: 'first_name_kana', shifts: [] },
-  address_first_pos: {
-    field: 'address_first',
+  address_town_pos: {
+    field: 'address_town',
     shifts: [
-      'address_second',
+      'address_banchi',
       'address_go',
-      'household_person',
-      'address_apartment',
+      'head_of_household',
+      'address_building',
     ],
   },
-  legally_domiciled_first_pos: {
-    field: 'legally_domiciled_first',
-    shifts: ['legally_domiciled_second', 'head_of_person_of_legally_domiciled'],
+  domicile_town_pos: {
+    field: 'domicile_town',
+    shifts: ['domicile_banchi', 'head_of_family_register'],
   },
   father_name_pos: { field: 'father_name', shifts: [] },
   mother_name_pos: { field: 'mother_name', shifts: [] },
@@ -140,7 +140,7 @@ export const LEGACY_POS_KEY_PATHS = [
   ...['husband', 'wife'].flatMap((person) =>
     Object.keys(LEGACY_PERSON_POS_KEYS).map((key) => [person, key]),
   ),
-  ['new_legally_domiciled', 'address_pos'],
+  ['new_domicile', 'address_pos'],
 ];
 
 // --- loading -------------------------------------------------------------------
@@ -215,11 +215,11 @@ function applyLegacyPosOverrides(layout, cfg) {
     }
   }
   overrides.push([
-    cfg.new_legally_domiciled,
-    layout.new_legally_domiciled,
+    cfg.new_domicile,
+    layout.new_domicile,
     'address_pos',
     { field: 'address', shifts: [] },
-    'new_legally_domiciled',
+    'new_domicile',
   ]);
   // A `layout:` entry that sets a field's `pos` is the explicit, newer mechanism, so it wins over a legacy `*_pos` key for the same field.
   // The sample config.yaml ships every `*_pos` key, so without this rule a `layout:` nudge on a config copied from it would silently do nothing.
@@ -308,7 +308,9 @@ function validateLeaf(type, value, keyPath, errors) {
   if (type === 'checks') {
     checkSize(value.size, keyPath, errors);
     if (!isPlainObject(value.positions)) {
-      errors.push(`"${keyPath}.positions" must map job_type 1-6 to [x, y].`);
+      errors.push(
+        `"${keyPath}.positions" must map household_work_type 1-6 to [x, y].`,
+      );
     } else {
       const jobTypes = ['1', '2', '3', '4', '5', '6'];
       for (const jobType of jobTypes) {
@@ -324,11 +326,11 @@ function validateLeaf(type, value, keyPath, errors) {
           );
         }
       }
-      // The schema is closed here too: a stray `7:` or a typo such as `l:` would otherwise pass validation and never be drawn, because job_type itself is limited to 1-6 in main.js.
+      // The schema is closed here too: a stray `7:` or a typo such as `l:` would otherwise pass validation and never be drawn, because household_work_type itself is limited to 1-6 in main.js.
       for (const key of Object.keys(value.positions)) {
         if (!jobTypes.includes(key)) {
           errors.push(
-            `"${keyPath}.positions.${key}" is not a job_type; only 1-6 are.`,
+            `"${keyPath}.positions.${key}" is not a household_work_type; only 1-6 are.`,
           );
         }
       }
@@ -449,7 +451,7 @@ export function resolveLayout(templateName, cfg) {
 }
 
 // The keys that make up one positional entry.
-// A mapping holding only these is written inline (`{ pos: [235, 623], size: 24 }`) to match the hand-tuned files; anything wider (job_type_checks.positions) stays in block style.
+// A mapping holding only these is written inline (`{ pos: [235, 623], size: 24 }`) to match the hand-tuned files; anything wider (household_work_type_checks.positions) stays in block style.
 const LEAF_KEYS = new Set(['pos', 'size', 'step']);
 
 function scaffoldHeader(variant) {
@@ -480,7 +482,7 @@ function toYaml(layout) {
       if (keys.length > 0 && keys.every((key) => LEAF_KEYS.has(key))) {
         node.flow = true;
       }
-      // job_type values are numbers on the form, so write them as bare 1-6 rather than quoted "1"-"6", matching the hand-tuned files.
+      // household_work_type values are numbers on the form, so write them as bare 1-6 rather than quoted "1"-"6", matching the hand-tuned files.
       // The stringifier quotes any string that would re-parse as a number, so the key has to become an actual number, not just a plain-style string.
       for (const item of node.items) {
         if (/^\d+$/.test(String(item.key?.value))) {

@@ -17,33 +17,33 @@ husband:
   birth_year: { pos: [221, 569], size: 12 }
   birth_month: { pos: [300, 569], size: 12 }
   birth_day: { pos: [345, 569], size: 12 }
-  address_first: { pos: [221, 545], size: 12 }
-  address_second: { pos: [209, 524], size: 12 }
+  address_town: { pos: [221, 545], size: 12 }
+  address_banchi: { pos: [209, 524], size: 12 }
   address_go: { pos: [301, 524], size: 12 }
-  household_person: { pos: [231, 501], size: 12 }
-  address_apartment: { pos: [351, 532], size: 5, step: 5 }
-  # is_banchi_address が true のときは番地を楕円で、false のときは番を円で囲みます。
-  # Drawn when is_banchi_address is true (ellipse around 番地) or false (circle around 番).
+  head_of_household: { pos: [231, 501], size: 12 }
+  address_building: { pos: [351, 532], size: 5, step: 5 }
+  # address_banchi_type が banchi のときは番地を楕円で、ban のときは番を円で囲みます。
+  # Drawn when address_banchi_type is banchi (ellipse around 番地) or ban (circle around 番).
   address_banchi_ellipse: [300, 539, 270, 528]
-  address_go_circle: [279.5, 523, 6]
-  legally_domiciled_first: { pos: [221, 480], size: 12 }
-  legally_domiciled_second: { pos: [221, 459], size: 12 }
-  head_of_person_of_legally_domiciled: { pos: [231, 436], size: 12 }
-  legally_domiciled_banchi_ellipse: [346, 473, 316, 462]
-  legally_domiciled_go_circle: [327, 457, 6]
+  address_ban_circle: [279.5, 523, 6]
+  domicile_town: { pos: [221, 480], size: 12 }
+  domicile_banchi: { pos: [221, 459], size: 12 }
+  head_of_family_register: { pos: [231, 436], size: 12 }
+  domicile_banchi_ellipse: [346, 473, 316, 462]
+  domicile_ban_circle: [327, 457, 6]
   father_name: { pos: [221, 410], size: 12 }
   mother_name: { pos: [221, 380], size: 12 }
-  relationship: { pos: [351, 385], size: 12 }
+  relationship_to_parents: { pos: [351, 385], size: 12 }
   marital_history:
     first_marriage_check: { pos: [196, 290], size: 12 }
-    remarriage_death_check: { pos: [273, 295], size: 12 }
-    remarriage_divorce_check: { pos: [273, 285], size: 12 }
+    widowed_check: { pos: [273, 295], size: 12 }
+    divorced_check: { pos: [273, 285], size: 12 }
     year: { pos: [301, 289], size: 6 }
     month: { pos: [338, 289], size: 6 }
     day: { pos: [365, 289], size: 6 }
-  # job_type の値（1-6）ごとに ✓ の位置を1つ持ちます。
-  # One ✓ position per job_type value (1-6).
-  job_type_checks:
+  # household_work_type の値（1-6）ごとに ✓ の位置を1つ持ちます。
+  # One ✓ position per household_work_type value (1-6).
+  household_work_type_checks:
     size: 12
     positions:
       1: [210, 271]
@@ -61,29 +61,29 @@ wife:
   birth_year: { pos: [421, 569], size: 12 }
   birth_month: { pos: [500, 569], size: 12 }
   birth_day: { pos: [545, 569], size: 12 }
-  address_first: { pos: [422, 545], size: 12 }
-  address_second: { pos: [410, 524], size: 12 }
+  address_town: { pos: [422, 545], size: 12 }
+  address_banchi: { pos: [410, 524], size: 12 }
   address_go: { pos: [502, 524], size: 12 }
-  household_person: { pos: [432, 501], size: 12 }
-  address_apartment: { pos: [552, 532], size: 5, step: 5 }
+  head_of_household: { pos: [432, 501], size: 12 }
+  address_building: { pos: [552, 532], size: 5, step: 5 }
   address_banchi_ellipse: [502, 539, 472, 528]
-  address_go_circle: [481, 523, 6]
-  legally_domiciled_first: { pos: [421, 480], size: 12 }
-  legally_domiciled_second: { pos: [421, 459], size: 12 }
-  head_of_person_of_legally_domiciled: { pos: [431, 436], size: 12 }
-  legally_domiciled_banchi_ellipse: [549, 473, 519, 462]
-  legally_domiciled_go_circle: [530, 457, 6]
+  address_ban_circle: [481, 523, 6]
+  domicile_town: { pos: [421, 480], size: 12 }
+  domicile_banchi: { pos: [421, 459], size: 12 }
+  head_of_family_register: { pos: [431, 436], size: 12 }
+  domicile_banchi_ellipse: [549, 473, 519, 462]
+  domicile_ban_circle: [530, 457, 6]
   father_name: { pos: [421, 410], size: 12 }
   mother_name: { pos: [421, 380], size: 12 }
-  relationship: { pos: [551, 385], size: 12 }
+  relationship_to_parents: { pos: [551, 385], size: 12 }
   marital_history:
     first_marriage_check: { pos: [398, 290], size: 12 }
-    remarriage_death_check: { pos: [476, 295], size: 12 }
-    remarriage_divorce_check: { pos: [476, 285], size: 12 }
+    widowed_check: { pos: [476, 295], size: 12 }
+    divorced_check: { pos: [476, 285], size: 12 }
     year: { pos: [504, 289], size: 6 }
     month: { pos: [542, 289], size: 6 }
     day: { pos: [569, 289], size: 6 }
-  job_type_checks:
+  household_work_type_checks:
     size: 12
     positions:
       1: [249, 271]
@@ -106,45 +106,45 @@ witness1:
   birth_year: { pos: [744, 581], size: 12 }
   birth_month: { pos: [830, 581], size: 12 }
   birth_day: { pos: [886, 581], size: 12 }
-  address_first: { pos: [730, 546], size: 12 }
-  address_second: { pos: [730, 516], size: 12 }
+  address_town: { pos: [730, 546], size: 12 }
+  address_banchi: { pos: [730, 516], size: 12 }
   address_go: { pos: [854, 516], size: 12 }
   # 方書は印字の号の右の空き（x 902-936、y 509-539）に書きます。
   # 5文字の行を3行まで書けます。
   # 方書 goes in the free cell right of the printed 号 (x 902-936, y 509-539).
   # It holds up to three lines of five characters.
-  address_apartment: { pos: [903, 530], size: 6, step: 7 }
+  address_building: { pos: [903, 530], size: 6, step: 7 }
   address_banchi_ellipse: [850, 536.5, 825, 523.5]
-  address_go_circle: [832.5, 519, 6]
-  legally_domiciled_first: { pos: [730, 487], size: 12 }
-  legally_domiciled_second: { pos: [730, 457], size: 12 }
-  legally_domiciled_banchi_ellipse: [887, 478, 862, 464]
-  legally_domiciled_go_circle: [869.5, 460, 6]
+  address_ban_circle: [832.5, 519, 6]
+  domicile_town: { pos: [730, 487], size: 12 }
+  domicile_banchi: { pos: [730, 457], size: 12 }
+  domicile_banchi_ellipse: [887, 478, 862, 464]
+  domicile_ban_circle: [869.5, 460, 6]
 
 witness2:
   name: { pos: [946, 610], size: 14 }
   birth_year: { pos: [956, 581], size: 12 }
   birth_month: { pos: [1042, 581], size: 12 }
   birth_day: { pos: [1098, 581], size: 12 }
-  address_first: { pos: [942, 546], size: 12 }
-  address_second: { pos: [942, 516], size: 12 }
+  address_town: { pos: [942, 546], size: 12 }
+  address_banchi: { pos: [942, 516], size: 12 }
   address_go: { pos: [1066, 516], size: 12 }
-  address_apartment: { pos: [1115, 530], size: 6, step: 7 }
+  address_building: { pos: [1115, 530], size: 6, step: 7 }
   address_banchi_ellipse: [1062, 536.5, 1037, 523.5]
-  address_go_circle: [1044.5, 519, 6]
-  legally_domiciled_first: { pos: [942, 487], size: 12 }
-  legally_domiciled_second: { pos: [942, 457], size: 12 }
-  legally_domiciled_banchi_ellipse: [1099, 478, 1074, 464]
-  legally_domiciled_go_circle: [1081.5, 460, 6]
+  address_ban_circle: [1044.5, 519, 6]
+  domicile_town: { pos: [942, 487], size: 12 }
+  domicile_banchi: { pos: [942, 457], size: 12 }
+  domicile_banchi_ellipse: [1099, 478, 1074, 464]
+  domicile_ban_circle: [1081.5, 460, 6]
 
-new_legally_domiciled:
-  husband_lastname_check: { pos: [194, 351], size: 12 }
-  wife_lastname_check: { pos: [194, 340], size: 12 }
+new_domicile:
+  husband_surname_check: { pos: [194, 351], size: 12 }
+  wife_surname_check: { pos: [194, 340], size: 12 }
   address: { pos: [251, 335], size: 16 }
   banchi_ellipse: [547, 352, 520, 341]
-  go_circle: [529, 334, 6]
+  ban_circle: [529, 334, 6]
 
-to_live_together:
+living_together_since:
   year: { pos: [220, 310], size: 15 }
   month: { pos: [300, 310], size: 15 }
 
@@ -153,11 +153,11 @@ national_census:
   husband_job: { pos: [258, 168], size: 16 }
   wife_job: { pos: [458, 168], size: 16 }
 
-notification:
+filing:
   year: { pos: [141, 716], size: 12 }
   month: { pos: [181, 716], size: 12 }
   day: { pos: [210, 716], size: 12 }
-  to: { pos: [141, 680], size: 12 }
+  office: { pos: [141, 680], size: 12 }
 
 other:
   text: { pos: [170, 145], size: 12, step: 15 }

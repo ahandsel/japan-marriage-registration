@@ -1,8 +1,8 @@
-notification:
+filing:
   year: 3
   month: 5
   day: 5
-  to: 東京都小金井市
+  office: 東京都小金井市
 
 husband:
   last_name: 山田
@@ -16,36 +16,36 @@ husband:
   birth_year: 平成５
   birth_month: ５
   birth_day: ２１
-  address_first: 東京都千代田区神田
-  address_first_pos: [221, 545]
-  address_second: ３丁目　４
-  is_banchi_address: false
+  address_town: 東京都千代田区神田
+  address_town_pos: [221, 545]
+  address_banchi: ３丁目　４
+  address_banchi_type: ban
   address_go: １０
   # 3行までであれば崩れず表現できます。
   # Up to three lines render without overlapping.
-  address_apartment: |
+  address_building: |
     インチキタワー
     マンション
     ３６１０号室
-  household_person: 山田　太郎
-  legally_domiciled_first: 東京都千代田区飯田橋
-  legally_domiciled_first_pos: [221, 480]
-  legally_domiciled_second: ３丁目　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 山田　太郎兵衛
+  head_of_household: 山田　太郎
+  domicile_town: 東京都千代田区飯田橋
+  domicile_town_pos: [221, 480]
+  domicile_banchi: ３丁目　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 山田　太郎兵衛
   father_name: 山田　権左衛門
   father_name_pos: [221, 410]
   mother_name: 山田　としこ
   mother_name_pos: [221, 380]
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    # 0: 初婚、1: 死別、2: 離別
-    # 0: first marriage, 1: widowed, 2: divorced
-    marriage_cat: 2
+    # first_marriage: 初婚、widowed: 死別、divorced: 離別
+    # first_marriage, widowed (ended by death), or divorced
+    status: divorced
     year: 令和3
     month: 6
     day: 1
-  job_type: 6
+  household_work_type: 6
 
 wife:
   last_name: 貫井
@@ -59,46 +59,46 @@ wife:
   birth_year: 平成7
   birth_month: 6
   birth_day: 6
-  address_first: 東京都小金井市貫井北町
-  address_first_pos: [422, 545]
-  address_second: ３丁目　４
-  is_banchi_address: false
+  address_town: 東京都小金井市貫井北町
+  address_town_pos: [422, 545]
+  address_banchi: ３丁目　４
+  address_banchi_type: ban
   address_go: １０
   # 空欄のまま印刷する場合は '' を使用します。
   # Use '' to leave the box blank on the printout.
-  address_apartment: ''
-  household_person: 貫井　パッパ
-  legally_domiciled_first: 神奈川県横浜市
-  legally_domiciled_first_pos: [421, 480]
-  legally_domiciled_second: ３丁目　４
-  is_banchi_legally_domiciled: true
-  head_of_person_of_legally_domiciled: 貫井　パッパ
+  address_building: ''
+  head_of_household: 貫井　パッパ
+  domicile_town: 神奈川県横浜市
+  domicile_town_pos: [421, 480]
+  domicile_banchi: ３丁目　４
+  domicile_banchi_type: banchi
+  head_of_family_register: 貫井　パッパ
   father_name: 貫井　パッパ
   father_name_pos: [421, 410]
   mother_name: 貫井　はよ
   mother_name_pos: [421, 380]
-  relationship: 長
+  relationship_to_parents: 長
   marital_history:
-    # 0: 初婚、1: 死別、2: 離別
-    # 0: first marriage, 1: widowed, 2: divorced
-    marriage_cat: 0
+    # first_marriage: 初婚、widowed: 死別、divorced: 離別
+    # first_marriage, widowed (ended by death), or divorced
+    status: first_marriage
     year: 令和３
     month: ６
     day: １
-  job_type: 4
+  household_work_type: 4
 
-new_legally_domiciled:
+new_domicile:
   # husband または wife を指定します。
   # 外国人との婚姻の場合は、null にすると氏の選択欄が空欄になります。
   # Set husband or wife.
   # In a marriage with a foreign national, set null to leave the surname choice blank.
-  lastname_of: husband
+  surname_from: husband
 
   address: 東京都小金井市貫井北町１丁目１
   address_pos: [251, 335]
-  is_banchi_address: false
+  address_banchi_type: ban
 
-to_live_together:
+living_together_since:
   year: 令和3
   month: 6
 
@@ -130,34 +130,34 @@ witness1:
   birth_year: 昭和６０
   birth_month: １
   birth_day: ２３
-  address_first: 東京都新宿区西新宿
-  address_second: ２丁目　８
-  is_banchi_address: false
+  address_town: 東京都新宿区西新宿
+  address_banchi: ２丁目　８
+  address_banchi_type: ban
   address_go: １
   # 方書（建物名・部屋番号）です。
   # 号の右に3行まで書けます。
   # This is the building and room (方書).
   # Up to three lines fit to the right of 号.
-  address_apartment: ''
-  # 外国籍の証人は国籍のみを記入し、is_banchi_legally_domiciled を null にします。
-  # A foreign witness writes only their nationality here, with is_banchi_legally_domiciled set to null.
-  legally_domiciled_first: 東京都新宿区西新宿
-  legally_domiciled_second: ２丁目　８
-  is_banchi_legally_domiciled: true
+  address_building: ''
+  # 外国籍の証人は国籍のみを記入し、domicile_banchi_type を null にします。
+  # A foreign witness writes only their nationality here, with domicile_banchi_type set to null.
+  domicile_town: 東京都新宿区西新宿
+  domicile_banchi: ２丁目　８
+  domicile_banchi_type: banchi
 
 witness2:
   name: ''
   birth_year: 平成２
   birth_month: １１
   birth_day: ３
-  address_first: 神奈川県横浜市中区日本大通
-  address_second: １丁目　１
-  is_banchi_address: false
+  address_town: 神奈川県横浜市中区日本大通
+  address_banchi: １丁目　１
+  address_banchi_type: ban
   address_go: ２
-  address_apartment: |
+  address_building: |
     サンプル
     ハイツ
     ２０１
-  legally_domiciled_first: 神奈川県横浜市中区日本大通
-  legally_domiciled_second: １丁目　１
-  is_banchi_legally_domiciled: true
+  domicile_town: 神奈川県横浜市中区日本大通
+  domicile_banchi: １丁目　１
+  domicile_banchi_type: banchi
