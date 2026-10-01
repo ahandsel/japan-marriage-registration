@@ -16,6 +16,7 @@ Coordinates are PDF points measured from the bottom-left corner of the page.
   Touching fewer than all four breaks the remaining templates at generate time, and no check catches it earlier.
 * **Every entry is absolute.**
   `pos: [x, y]` with a per-field `size`, plus a `step` for a multi-line field.
+  A single-line text entry may also set `align: center` or `align: right`, so that `pos` x marks the middle or the right edge of the text, and `max_width`, which shrinks the font only for a value wider than that.
   A circle is `[x, y, r]`, and an ellipse is two opposite bounding-box corners.
   Nothing is derived from another field's position.
   Reject a refactor that computes one coordinate from another.

@@ -430,6 +430,9 @@ Its witness 住所 row prints no 番地/番/号, so set a witness's `address_ban
 
 All drawing positions live in per-template layout files, `src/layout/red.yaml`, `src/layout/black.yaml`, and `src/layout/cinnamoroll.yaml`, selected by the same name as the `-t/--template` flag or the `template:` config key.
 Every entry is absolute: `pos: [x, y]` is the text baseline in PDF points measured from the bottom-left corner, `size` is the font size in points, and the multi-line fields (`address_building` and `other.text`) also have a `step`, the distance between lines.
+A single-line text entry may also set `align: center` or `align: right`, and then `pos` x is the middle or the right edge of the text instead of its left edge.
+It may also set `max_width` in points, which shrinks the font only for a value that would be wider than that.
+The bundled layouts use them for the filing date, so a one-digit 令和 year, month, or day and a two-digit one both fit between the printed labels.
 Circles are `[x, y, r]`, and ellipses are two opposite bounding-box corners `[x1, y1, x2, y2]`.
 The `household_work_type_checks` entry maps each `household_work_type` value (1-6) to the absolute position of its ✓ mark.
 

@@ -123,6 +123,9 @@ Remember that `pdftotext` measures y from the _top_ of the page, while the layou
   `src/layout.js` loads that file, deep-merges an optional `layout:` block from the user config over it, applies the legacy `*_pos` overrides (only when the base layout is `red` - see Config shape below), validates the result, and returns the resolved layout object.
   Layout tuning means editing YAML, never `main.js`.
 * Every layout entry is absolute: `pos: [x, y]` plus a per-field `size`, and a `step` (line spacing) for the multi-line fields.
+  A single-line text entry may also set `align: center` or `align: right`, and then `pos` x marks the middle or the right edge of the text instead of its left edge.
+  It may also set `max_width` (points), which shrinks the font only for a value that would be wider than that.
+  The filing date uses both, so a one-digit and a two-digit 令和 year, month, or day stay clear of the printed labels: `red.yaml` centers the year, and `black.yaml` and `cinnamoroll.yaml` center all three and add `max_width`, because their slots are too narrow for two full-width digits at 12pt.
   Circles are `[x, y, r]`; ellipses are two opposite bounding-box corners.
   Nothing is derived from another field's position, and husband and wife are independent sibling sections with identical keys.
 * Each form field is one section function in `main.js` taking `(cfg, lay, cc)`: the config section (the text), the matching resolved layout section (the positions), and the canvas.
