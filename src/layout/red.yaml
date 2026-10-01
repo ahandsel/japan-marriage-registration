@@ -15,8 +15,8 @@ husband:
   first_name: { pos: [300, 590], size: 24 }
   first_name_kana: { pos: [305, 623], size: 12 }
   birth_year: { pos: [221, 569], size: 12 }
-  birth_month: { pos: [300, 569], size: 12 }
-  birth_day: { pos: [345, 569], size: 12 }
+  birth_month: { pos: [292, 569], size: 12 }
+  birth_day: { pos: [341, 569], size: 12 }
   address_town: { pos: [221, 545], size: 12 }
   address_banchi: { pos: [209, 524], size: 12 }
   address_go: { pos: [301, 524], size: 12 }
@@ -59,8 +59,8 @@ wife:
   first_name: { pos: [502, 590], size: 24 }
   first_name_kana: { pos: [502, 623], size: 12 }
   birth_year: { pos: [421, 569], size: 12 }
-  birth_month: { pos: [500, 569], size: 12 }
-  birth_day: { pos: [545, 569], size: 12 }
+  birth_month: { pos: [492, 569], size: 12 }
+  birth_day: { pos: [541, 569], size: 12 }
   address_town: { pos: [422, 545], size: 12 }
   address_banchi: { pos: [410, 524], size: 12 }
   address_go: { pos: [502, 524], size: 12 }
@@ -155,8 +155,8 @@ national_census:
 
 filing:
   year: { pos: [141, 716], size: 12 }
-  month: { pos: [181, 716], size: 12 }
-  day: { pos: [210, 716], size: 12 }
+  month: { pos: [170, 716], size: 12 }
+  day: { pos: [205, 716], size: 12 }
   office: { pos: [141, 680], size: 12 }
 
 other:
