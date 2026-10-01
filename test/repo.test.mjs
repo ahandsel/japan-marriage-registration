@@ -46,7 +46,43 @@ function scalarValues(node, prefix = '') {
   );
 }
 
+function privateValueMatches(cfg, publicValues, publicTexts) {
+  const matches = [];
+  for (const [key, value] of scalarValues(cfg)) {
+    const text = String(value);
+    // ASCII values and digit-only values in either width collide with unrelated numbers in the docs.
+    if (
+      !/[^\x00-\x7F]/.test(text) ||
+      /^[0-9０-９]+$/.test(text) ||
+      publicValues.has(text)
+    ) {
+      continue;
+    }
+    for (const [tracked, body] of publicTexts) {
+      if (body.includes(text)) {
+        matches.push(`${key} appears in ${tracked}`);
+      }
+    }
+  }
+  return matches;
+}
+
 describe('privacy', () => {
+  test('numeric widths do not cause leaks, while Japanese text remains checked', () => {
+    const cfg = {
+      filing: { year: '９', month: '１２', day: '2３', ascii: '24' },
+      husband: { last_name: '架空の氏名', address_town: '架空の住所９丁目' },
+      wife: { last_name: '公開サンプル' },
+    };
+    const matches = privateValueMatches(cfg, new Set(['公開サンプル']), [
+      ['sample.md', '９ １２ 2３ 24 架空の氏名 架空の住所９丁目 公開サンプル'],
+    ]);
+    assert.deepEqual(matches, [
+      'husband.last_name appears in sample.md',
+      'husband.address_town appears in sample.md',
+    ]);
+  });
+
   test('no private config or generated PDF is tracked', () => {
     const leaked = trackedFiles.filter(
       (f) =>
@@ -98,19 +134,11 @@ describe('privacy', () => {
       } catch {
         continue;
       }
-      for (const [key, value] of scalarValues(cfg)) {
-        const text = String(value);
-        // Only Japanese text is checked: short ASCII values (years, '03')
-        // collide with unrelated numbers in the docs.
-        if (!/[^\x00-\x7F]/.test(text) || publicValues.has(text)) {
-          continue;
-        }
-        for (const [tracked, body] of publicTexts) {
-          if (body.includes(text)) {
-            leaks.push(`${file}: ${key} appears in ${tracked}`);
-          }
-        }
-      }
+      leaks.push(
+        ...privateValueMatches(cfg, publicValues, publicTexts).map(
+          (match) => `${file}: ${match}`,
+        ),
+      );
     }
     assert.deepEqual(leaks, []);
   });
