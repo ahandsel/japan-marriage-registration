@@ -16,6 +16,8 @@ Nothing here writes into the repository: commands that create files (`--init-con
 
 ## What the suite proves, and what it does not
 
+The CLI tests reject typed witness signatures in either column, check that no PDF is created, and check that the error does not expose the entered name.
+
 The render tests read the generated PDF back with `pdftotext` and check that every non-blank value from the config lands at the position its layout entry names, on every bundled template, within 0.75 points.
 Precisely, they check the first whitespace-separated token of the first line of each value, and each ✓ mark.
 The later lines of a multi-line field, the `step` values, blank values, and the 番地/番 circles and ellipses are not checked, because `pdftotext` cannot see shapes and only the first token starts at `pos`.

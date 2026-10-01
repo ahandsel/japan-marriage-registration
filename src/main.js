@@ -681,8 +681,13 @@ function witnessInfo(cfg, lay, cc) {
   if (cfg === undefined || cfg === null) {
     return;
   }
-  // 署名 must be handwritten by the witness for the filing to be valid, so leave `name` empty ('') unless the printout is a draft or a sample.
-  drawText(cc, lay.name, cfg.name);
+  // Keep the signature box blank so each witness can personally sign the printout.
+  requireValue(lay.name, cfg.name);
+  if (cfg.name !== '') {
+    fail(
+      `❌ Config error: "${lay.name.keyPath}" must be '' - each witness must personally handwrite their signature after printing.`,
+    );
+  }
   drawText(cc, lay.birth_year, cfg.birth_year);
   drawText(cc, lay.birth_month, cfg.birth_month);
   drawText(cc, lay.birth_day, cfg.birth_day);

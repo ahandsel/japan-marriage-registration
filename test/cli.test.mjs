@@ -1252,3 +1252,27 @@ describe('scaffolding in a sandbox copy', () => {
     assert.ok(!fs.existsSync(path.join(sandbox, 'src/layout/nothing.yaml')));
   });
 });
+
+describe('witness signatures', () => {
+  for (const witness of ['witness1', 'witness2']) {
+    test(`${witness}: rejects a typed signature without exposing the name`, async (t) => {
+      const dir = makeTempDir(t);
+      const value = 'SAMPLE SIGNATURE';
+      const cfgPath = writeConfig(
+        dir,
+        'signature.yaml',
+        'config.yaml',
+        (cfg) => {
+          cfg[witness].name = value;
+        },
+      );
+      const out = path.join(dir, 'out.pdf');
+      const { code, stderr } = await runMain([cfgPath, '-o', out]);
+      assert.equal(code, 1);
+      assert.ok(stderr.includes(`${witness}.name`));
+      assert.match(stderr, /personally handwrite/);
+      assert.ok(!stderr.includes(value));
+      assert.ok(!fs.existsSync(out));
+    });
+  }
+});
