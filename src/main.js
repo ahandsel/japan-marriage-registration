@@ -428,6 +428,9 @@ function makeCanvas(page, font) {
     setFont(size) {
       fontSize = size;
     },
+    textWidth(text) {
+      return font.widthOfTextAtSize(String(text), fontSize);
+    },
     drawString(x, y, text) {
       // y is the text baseline.
       for (const line of String(text).split('\n')) {
@@ -493,7 +496,15 @@ function drawBanchiMark(cc, lay, key, value, ellipse, circle) {
 function drawText(cc, spec, text) {
   requireValue(spec, text);
   cc.setFont(spec.size);
-  cc.drawString(spec.pos[0], spec.pos[1], text);
+  // `max_width` shrinks the font only for a value that would overflow it, so a one-digit value keeps the size of the rest of the row.
+  if (spec.max_width !== undefined && cc.textWidth(text) > spec.max_width) {
+    cc.setFont((spec.size * spec.max_width) / cc.textWidth(text));
+  }
+  // `align` moves the left edge so that pos x marks the middle or the right edge of the text instead (see TEXT_ALIGNS in layout.js).
+  const width = cc.textWidth(text);
+  const shift =
+    spec.align === 'center' ? width / 2 : spec.align === 'right' ? width : 0;
+  cc.drawString(spec.pos[0] - shift, spec.pos[1], text);
 }
 
 function drawMultiline(cc, spec, text) {

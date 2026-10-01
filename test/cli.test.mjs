@@ -459,6 +459,36 @@ describe('config errors stop the run with a ❌ message, never a stack trace', (
     assert.match(stderr, /- "other\.text\.step" must be a positive line step/);
   });
 
+  test('align and max_width are accepted only on a single-line text entry, with valid values', async (t) => {
+    const dir = makeTempDir(t);
+    const cfgPath = writeConfig(dir, 'layout.yaml', 'config.yaml', (cfg) => {
+      cfg.layout = {
+        filing: {
+          month: { align: 'middle' },
+          day: { align: 'right', max_width: 20 },
+          year: { max_width: 0 },
+        },
+        other: { text: { align: 'center' } },
+      };
+    });
+    const { code, stderr } = await runMain([
+      cfgPath,
+      '-o',
+      path.join(dir, 'out.pdf'),
+    ]);
+    assert.equal(code, 1);
+    assert.match(
+      stderr,
+      /- "filing\.month\.align" must be left, center, right, or left out/,
+    );
+    assert.doesNotMatch(stderr, /filing\.day/);
+    assert.match(
+      stderr,
+      /- "filing\.year\.max_width" must be a positive width in points/,
+    );
+    assert.match(stderr, /- "other\.text\.align" is not a known layout key/);
+  });
+
   test('a layout: key that is not a mapping is rejected', async (t) => {
     const dir = makeTempDir(t);
     const cfgPath = writeConfig(dir, 'layout.yaml', 'config.yaml', (cfg) => {

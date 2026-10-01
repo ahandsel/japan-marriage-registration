@@ -172,12 +172,20 @@ const DESCENT_RATIO = 0.12;
 // never this close.
 export const POSITION_TOLERANCE = 0.75;
 
+// The point of a word that a layout `pos` x names, by the entry's `align`.
+function markX(word, align) {
+  if (align === 'center') {
+    return (word.xMin + word.xMax) / 2;
+  }
+  return align === 'right' ? word.xMax : word.xMin;
+}
+
 export function findWord(words, mark) {
   const expectedBottom = mark.baseline - DESCENT_RATIO * mark.size;
   return words.find(
     (w) =>
       w.text === mark.text &&
-      Math.abs(w.xMin - mark.x) <= POSITION_TOLERANCE &&
+      Math.abs(markX(w, mark.align) - mark.x) <= POSITION_TOLERANCE &&
       Math.abs(w.bottom - expectedBottom) <= POSITION_TOLERANCE,
   );
 }
@@ -199,10 +207,17 @@ export function expectedMarks(cfg, lay) {
       .split('\n')[0]
       .split(/[\s　]+/)
       .find(Boolean);
+    // A centered or right-aligned value is placed by its full width, so its
+    // first token lines up with `pos` only when it is the only token.
+    const aligned = spec.align === 'center' || spec.align === 'right';
+    if (aligned && first !== String(value).trim()) {
+      return;
+    }
     if (first) {
       marks.push({
         text: first,
         x: spec.pos[0],
+        align: spec.align,
         baseline: spec.pos[1],
         size: spec.size,
       });

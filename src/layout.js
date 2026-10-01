@@ -14,13 +14,18 @@ const LAYOUT_DIR = path.join(baseDir, 'layout');
 export const TEMPLATE_PREFIX = 'jp-marriage-registration-';
 const DEFAULT_LAYOUT = 'red';
 
+// The optional `align` of a 'text' entry says which part of the text `pos` x marks: its left edge (the default), its middle, or its right edge.
+// A slot whose value can be one or two digits (a 令和 year) uses center, so both widths stay clear of the printed labels on either side.
+// The optional `max_width` (points) shrinks the font for a value that would be wider than that, so two digits still fit a slot printed for one.
+const TEXT_ALIGNS = ['left', 'center', 'right'];
+
 function fail(message) {
   console.error(message);
   process.exit(1);
 }
 
 // --- schema ------------------------------------------------------------------
-// Leaf types: 'text' is { pos: [x, y], size }, 'multiline' adds a `step` (distance between lines), 'ellipse' is two opposite bounding-box corners [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one absolute position per household_work_type value (1-6).
+// Leaf types: 'text' is { pos: [x, y], size } with an optional `align` (see TEXT_ALIGNS) and `max_width`, 'multiline' adds a `step` (distance between lines), 'ellipse' is two opposite bounding-box corners [x1, y1, x2, y2], 'circle' is [x, y, r], and 'checks' is a ✓ size plus one absolute position per household_work_type value (1-6).
 
 const PERSON_SCHEMA = {
   last_name: 'text',
@@ -346,6 +351,20 @@ function validateLeaf(type, value, keyPath, errors) {
   checkNumbers(value.pos, 2, `${keyPath}.pos`, 'a position [x, y]', errors);
   checkSize(value.size, keyPath, errors);
   const known = ['pos', 'size'];
+  if (type === 'text') {
+    known.push('align', 'max_width');
+    if (
+      'max_width' in value &&
+      !(Number.isFinite(value.max_width) && value.max_width > 0)
+    ) {
+      errors.push(`"${keyPath}.max_width" must be a positive width in points.`);
+    }
+    if ('align' in value && !TEXT_ALIGNS.includes(value.align)) {
+      errors.push(
+        `"${keyPath}.align" must be ${TEXT_ALIGNS.join(', ')}, or left out for left; got ${JSON.stringify(value.align)}.`,
+      );
+    }
+  }
   if (type === 'multiline') {
     known.push('step');
     if (!Number.isFinite(value.step) || value.step <= 0) {
