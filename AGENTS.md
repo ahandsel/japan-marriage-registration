@@ -153,7 +153,12 @@ The one exception is a witness `address_building`, which was added after the wit
 A config file that is not valid YAML is reported with the parser's line and column, never as a stack trace.
 `address_banchi_type` and `domicile_banchi_type` take `banchi`, `ban`, or `null`, and `null` skips the 番地/番 mark in every section that has one.
 Any other value, including a missing key or the old boolean `true`/`false`, is an error (`requireBanchiType` in `main.js`), so a required mark can never go missing silently.
-The witness `name` should stay `''` because a witness signature must be handwritten.
+The witness `name` must be `''`; nonempty values are rejected, including in drafts and samples, because each witness must personally handwrite their signature after printing.
+Witness seals are optional.
+Foreign-name formatting requested during review belongs in the config: use a comma between surname and given names in a single full-name field, and append middle names to the first name without spaces.
+Accept `、`, `，`, and `,` as surname/given-name separators during config reviews.
+Do not flag an existing `、` as a missing separator or replace it.
+Do not infer nationality or surname boundaries in the renderer.
 See `config.yaml`, `src/template/marriage-registration-fields.md`, and both READMEs for the full field reference.
 The key names were changed on 2026-10-01 to make them easier to read (for example `address_first` became `address_town`, and `notification` became `filing`).
 `src/renamed-keys.js` maps every old config and layout key to its new name.

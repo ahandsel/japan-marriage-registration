@@ -175,3 +175,13 @@ Use this structure when you identify an issue:
 1. State the problem in one sentence.
 2. Explain why it matters in one sentence when the impact is not obvious.
 3. Suggest a specific change or a small replacement snippet.
+
+
+## Reviewed names and witness signatures
+
+Foreign-name formatting requested during review belongs in the config: use a comma between surname and given names in a single full-name field, and append middle names without spaces.
+Accept `、`, `，`, and `,` as surname/given-name separators during config reviews.
+Do not flag an existing `、` as a missing separator or replace it.
+Keep separate surname and given-name fields separate; do not infer nationality or name boundaries in the renderer.
+Witness `name` must be `''`; nonempty values are rejected, including in drafts and samples.
+Each witness must personally handwrite their signature after printing; witness seals are optional.

@@ -15,7 +15,12 @@ A tracked config is public.
   Flag any new config filename that could hold real data.
 * The top-level sections are `filing`, `husband`, `wife`, `new_domicile`, `living_together_since`, `national_census`, `other`, `witness1`, and `witness2`.
   `husband` and `wife` share one set of keys, and so do `witness1` and `witness2`, so a key added to one belongs in its sibling.
-* A witness `name` stays `''`, because a witness signature has to be handwritten.
+* A witness `name` must be `''`; nonempty values are rejected, including in drafts and samples.
+  Each witness must personally handwrite their signature after printing; seals are optional.
+* For reviewed foreign-name formatting, use a comma between surname and given names in single full-name fields, and append middle names without spaces.
+  Accept `、`, `，`, and `,` as surname/given-name separators during config reviews.
+  Do not flag an existing `、` as a missing separator or replace it.
+  Keep separate surname and given-name fields separate; the renderer does not infer nationality or name boundaries.
 * On the cinnamoroll template, `filing.office` and `head_of_household` stay `''`: the 品川区長殿 recipient is pre-printed, and that 住所 box has no 世帯主の氏名 row.
   Its spouse 住所 and 本籍 rows also pre-print 丁目, so `address_banchi` and `domicile_banchi` leave 丁目 out and hold two full-width spaces in its place (`３　　４`); the witness rows keep the usual `２丁目　８` shape.
 * Every top-level section is optional: deleting one leaves that part of the form blank for handwriting.

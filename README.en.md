@@ -331,6 +331,13 @@ husband:
 
 Fill in the `wife` section the same way (it has the same fields, and the form's right-hand column positions come from the layout file).
 
+For foreign names, apply the formatting requested during the form review: in a single full-name field (such as `father_name`, `mother_name`, or `head_of_household`), separate the surname and given names with a comma, for example `スミス，ジョンマイケル`.
+Accept `、`, `，`, and `,` as surname/given-name separators during config reviews.
+Do not flag an existing `、` as a missing separator or replace it.
+Append middle names to the first name without spaces, for example `first_name: ジョンマイケル`, and use the same grouping in `first_name_kana`.
+Keep `last_name` and `first_name` in their separate fields; do not add a comma between these boxes.
+The generator prints name values as entered and does not infer nationality or surname boundaries.
+
 `address_banchi_type` and `domicile_banchi_type` take `banchi` (ellipse around 番地), `ban` (circle around 番), or `null`, which draws no mark at all, for a foreign national's 本籍 or a form row that prints no 番地/番.
 Any other value, a typo such as `banch` or a missing key for example, stops the run with an error instead of quietly leaving the mark out.
 
@@ -340,6 +347,10 @@ Run `pnpm run migrate-config` to rename the keys in every `config-private*.yaml`
 
 `witness1` and `witness2` are the left and right columns of the 証人 witness box and share the same fields.
 Remove (or comment out) a whole section to leave that column blank for handwriting.
+
+Each witness must personally handwrite their name as a signature after printing; do not type it or have someone else write it in advance.
+Keep both witness `name` values as `''`; the generator rejects nonempty values, including in drafts and samples.
+A witness hanko/seal is optional, even if the template has an 印 box ([Ministry of Justice](https://www.moj.go.jp/ONLINE/FAMILYREGISTER/5-2)).
 
 ```yaml
 witness1:

@@ -12,6 +12,10 @@ filing:
   day: 5
   office: 東京都小金井市
 
+# 外国人の氏名を１つの項目に書く場合は、確認時の指示に従い、姓と名をコンマで区切ります（例：スミス，ジョンマイケル）。
+# ミドルネームは名に空白なしでつなげます。last_name と first_name は別々の項目のままにします。
+# For reviewed foreign names in one field, use a comma between surname and given names.
+# Append middle names without spaces; keep last_name and first_name in separate fields.
 husband:
   last_name: 山田
   last_name_kana: やまだ
@@ -121,8 +125,10 @@ other:
 # Remove (or comment out) a whole section to leave that column blank for handwriting.
 witness1:
   # 署名は必ず証人本人の自署が必要です。
-  # 通常は '' のままにして、印刷後に署名してもらってください。
+  # 必ず '' のままにして、印刷後に署名してもらってください。
   # The signature must be handwritten by the witness, so leave name as '' and have them sign the printout.
+  # 証人の押印は任意です。
+  # A witness hanko/seal is optional.
   name: ''
   birth_year: 昭和６０
   birth_month: １
