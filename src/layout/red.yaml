@@ -154,7 +154,9 @@ national_census:
   wife_job: { pos: [458, 168], size: 16 }
 
 filing:
-  year: { pos: [141, 716], size: 12 }
+  # 令和の年は1桁と2桁の両方があるため、令和と年の間の中央に揃えます。
+  # The 令和 year can be one or two digits, so it is centered in the gap between 令和 and 年.
+  year: { pos: [145, 716], size: 12, align: center }
   month: { pos: [170, 716], size: 12 }
   day: { pos: [205, 716], size: 12 }
   office: { pos: [141, 680], size: 12 }

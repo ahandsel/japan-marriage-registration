@@ -228,9 +228,11 @@ national_census:
 # The printed 令和 ends at x 172.0, and 年/月/日 start at x 198.3/226.0/254.8.
 # The printed labels sit at y 740.6-748, and the values are drawn on baseline 738.5.
 filing:
-  year: { pos: [180, 738.5], size: 12 }
-  month: { pos: [209.5, 738.5], size: 12 }
-  day: { pos: [234.5, 738.5], size: 12 }
+  # 月・日の欄は約21ptしかなく、全角2桁（24pt）が入らないため、各欄の中央に揃え、2桁のときだけ文字を縮めます。
+  # The month and day slots are about 21pt wide, too narrow for two full-width digits (24pt), so each value is centered between its labels and shrunk only when it has two digits.
+  year: { pos: [185.3, 738.5], size: 12, align: center, max_width: 24 }
+  month: { pos: [215.7, 738.5], size: 12, align: center, max_width: 19.5 }
+  day: { pos: [243.8, 738.5], size: 12, align: center, max_width: 19.5 }
   # 宛先は「品川区長殿」（x 173.4-260.2）と印刷済みで、この様式には届出先の空欄がありません。
   # 設定では `to: ''` のままにしてください。
   # 下の位置は、印字の左の同じ高さを示しているだけです。

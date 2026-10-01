@@ -236,9 +236,11 @@ national_census:
   wife_job: { pos: [443.7, 180], size: 13 }
 
 filing:
-  year: { pos: [173, 735], size: 12 }
-  month: { pos: [202, 735], size: 12 }
-  day: { pos: [232, 735], size: 12 }
+  # 年・月・日の欄は約20ptしかなく、全角2桁（24pt）が入らないため、各欄の中央に揃え、2桁のときだけ文字を縮めます。
+  # Each date slot is about 20pt wide, too narrow for two full-width digits (24pt), so each value is centered between its labels and shrunk only when it has two digits.
+  year: { pos: [178.8, 735], size: 12, align: center, max_width: 19 }
+  month: { pos: [208.5, 735], size: 12, align: center, max_width: 19 }
+  day: { pos: [238.3, 735], size: 12, align: center, max_width: 19 }
   # x 238.3 から始まる印字の「長 殿」の左に書きます。
   # This goes left of the printed 長 殿, which starts at x 238.3.
   office: { pos: [152, 702.5], size: 11 }
